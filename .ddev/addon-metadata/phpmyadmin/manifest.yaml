@@ -1,7 +1,7 @@
 name: phpmyadmin
 repository: ddev/ddev-phpmyadmin
 version: v1.0.0
-install_date: "2025-05-06T08:41:21+02:00"
+install_date: "2025-05-06T21:15:37+02:00"
 project_files:
     - docker-compose.phpmyadmin.yaml
     - docker-compose.phpmyadmin_norouter.yaml

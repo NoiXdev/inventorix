@@ -15,6 +15,8 @@ return new class extends Migration {
             $table->foreignUuid('model_id')->nullable()->constrained('asset_models')->nullOnDelete();
             $table->string('serial_number')->nullable();
             $table->date('buy_date')->nullable();
+            $table->string('buy_type')->nullable();
+            $table->float('buy_price')->nullable();
             $table->date('guarantee_end')->nullable();
             $table->string('invoice')->nullable();
             $table->timestamps();

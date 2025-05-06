@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BuyType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,8 @@ class Asset extends Model
         'guarantee_end',
         'invoice',
         'owner_id',
+        'buy_price',
+        'buy_type',
     ];
 
     public function assetType(): BelongsTo
@@ -47,6 +50,7 @@ class Asset extends Model
         return [
             'buy_date' => 'date',
             'guarantee_end' => 'date',
+            'buy_type' => BuyType::class
         ];
     }
 }

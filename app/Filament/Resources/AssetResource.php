@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\BuyType;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Models\Asset;
 use Filament\Forms\Components\DatePicker;
@@ -23,6 +24,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Pelmered\FilamentMoneyField\Forms\Components\MoneyInput;
 
 class AssetResource extends Resource
 {
@@ -121,6 +123,14 @@ class AssetResource extends Resource
                                 DatePicker::make('guarantee_end')
                                     ->label("Garantie Ende")
                                     ->nullable(),
+
+                                MoneyInput::make('buy_price')->decimals(2)
+                                    ->label('Kaufpreis / Mietpreis'),
+
+                                Select::make('buy_type')
+                                    ->label('Kaufart')
+                                    ->options(BuyType::class)
+                                    ->enum(BuyType::class),
 
                                 FileUpload::make('invoice'),
                             ]),
