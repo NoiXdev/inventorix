@@ -30,7 +30,10 @@ class ManufacturerResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Hersteller';
 
-    protected static ?string $navigationGroup = 'Stammdaten';
+    public static function getNavigationGroup(): ?string
+    {
+        return __('menu.general');
+    }
 
     public static function form(Form $form): Form
     {

@@ -32,6 +32,11 @@ class UserResource extends Resource
 
     protected static ?string $pluralModelLabel = "Mitarbeiter";
 
+    public static function getNavigationGroup(): ?string
+    {
+        return __('menu.general');
+    }
+
     public static function form(Form $form): Form
     {
         return $form
