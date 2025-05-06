@@ -62,6 +62,11 @@ class AssetResource extends Resource
                                 Select::make('asset_type_id')
                                     ->label('Type')
                                     ->relationship('assetType', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                    ])
                                     ->preload()
                                     ->searchable()
                                     ->required(),
@@ -73,6 +78,11 @@ class AssetResource extends Resource
                                 Select::make('manufacturer_id')
                                     ->label("Hersteller")
                                     ->relationship('manufacturer', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                    ])
                                     ->preload()
                                     ->searchable()
                                     ->required(),
