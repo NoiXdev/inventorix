@@ -9,6 +9,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -64,7 +65,6 @@ class AssetResource extends Resource
                                     ->columnSpan(2)
                                     ->label('Seriennummer'),
 
-
                                 Select::make('manufacturer_id')
                                     ->label("Hersteller")
                                     ->relationship('manufacturer', 'name')
@@ -82,6 +82,7 @@ class AssetResource extends Resource
                                     ->relationship('owner', 'name')
                                     ->searchable(),
                             ]),
+
                         Tabs\Tab::make('Kauf Informationen')
                             ->columns(2)
                             ->schema([
@@ -93,6 +94,14 @@ class AssetResource extends Resource
                                     ->nullable(),
 
                                 FileUpload::make('invoice'),
+                            ]),
+
+                        Tabs\Tab::make('Tags')
+                            ->columns(2)
+                            ->schema([
+                                SpatieTagsInput::make('tags')
+                                    ->label('')
+                                    ->columnSpanFull()
                             ]),
                     ]),
             ]);
