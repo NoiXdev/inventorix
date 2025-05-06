@@ -8,7 +8,6 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -26,13 +25,26 @@ class ManufacturerResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
-    protected static ?string $modelLabel = 'Hersteller';
-
-    protected static ?string $pluralModelLabel = 'Hersteller';
+    protected static ?int $navigationSort = 100;
 
     public static function getNavigationGroup(): ?string
     {
-        return __('menu.general');
+        return __('menu.assets-support');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Manufacturer::all()->count();
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('manufacturer.label-plural');
+    }
+
+    public static function getLabel(): ?string
+    {
+        return __('manufacturer.label');
     }
 
     public static function form(Form $form): Form

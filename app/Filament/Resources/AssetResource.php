@@ -19,6 +19,7 @@ use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -29,11 +30,18 @@ class AssetResource extends Resource
 
     protected static ?string $slug = 'assets';
 
+    protected static ?int $navigationSort = 0;
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function getNavigationGroup(): ?string
     {
         return __('menu.assets');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return Asset::all()->count();
     }
 
     public static function form(Form $form): Form
@@ -87,8 +95,14 @@ class AssetResource extends Resource
                                     ->searchable()
                                     ->required(),
 
-                                TextInput::make('model')
+                                Select::make('model_id')
+                                    ->relationship('model', 'name')
                                     ->label('Modell')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                    ])
                                     ->required(),
 
                                 Select::make('owner_id')
@@ -138,20 +152,24 @@ class AssetResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('model'),
+                TextColumn::make('model.name')
+                    ->sortable()
+                    ->searchable(),
 
                 TextColumn::make('serial_number'),
-
-                TextColumn::make('buy_date')
-                    ->date(),
-
-                TextColumn::make('guarantee_end')
-                    ->date(),
-
-                TextColumn::make('invoice'),
             ])
             ->filters([
-                //
+                SelectFilter::make('asset_type_id')
+                    ->multiple()
+                    ->relationship('assetType', 'name'),
+
+                SelectFilter::make('manufacturer_id')
+                    ->multiple()
+                    ->relationship('manufacturer', 'name'),
+
+                SelectFilter::make('owner_id')
+                    ->multiple()
+                    ->relationship('owner', 'name'),
             ])
             ->actions([
                 EditAction::make(),

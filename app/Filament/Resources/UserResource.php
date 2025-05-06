@@ -32,6 +32,8 @@ class UserResource extends Resource
 
     protected static ?string $pluralModelLabel = "Mitarbeiter";
 
+    protected static ?int $navigationSort = 500;
+
     public static function getNavigationGroup(): ?string
     {
         return __('menu.general');

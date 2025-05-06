@@ -9,10 +9,10 @@ return new class extends Migration {
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('asset_type_id')->constrained('asset_types');
-            $table->foreignUuid('manufacturer_id')->constrained('manufacturers');
-            $table->foreignUuid('owner_id')->nullable();
-            $table->string('model');
+            $table->foreignUuid('asset_type_id')->constrained('asset_types')->cascadeOnDelete();
+            $table->foreignUuid('manufacturer_id')->constrained('manufacturers')->cascadeOnDelete();
+            $table->foreignUuid('owner_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('model_id')->nullable()->constrained('asset_models')->nullOnDelete();
             $table->string('serial_number')->nullable();
             $table->date('buy_date')->nullable();
             $table->date('guarantee_end')->nullable();

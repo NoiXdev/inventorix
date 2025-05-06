@@ -2,7 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\AssetTypeResource\Pages;
+use App\Filament\Resources\AssetModelResource\Pages;
+use App\Models\AssetModel;
 use App\Models\AssetType;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
@@ -17,11 +18,11 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class AssetTypeResource extends Resource
+class AssetModelResource extends Resource
 {
-    protected static ?string $model = AssetType::class;
+    protected static ?string $model = AssetModel::class;
 
-    protected static ?string $slug = 'asset-types';
+    protected static ?string $slug = 'asset-models';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -32,21 +33,20 @@ class AssetTypeResource extends Resource
         return __('menu.assets-support');
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return AssetType::all()->count();
-    }
-
     public static function getPluralLabel(): ?string
     {
-        return __('type.label-plural');
+        return __('models.label-plural');
     }
 
     public static function getLabel(): ?string
     {
-        return __('type.label');
+        return __('models.label');
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return AssetModel::all()->count();
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -56,11 +56,11 @@ class AssetTypeResource extends Resource
                     ->schema([
                         Placeholder::make('created_at')
                             ->label('Erstellt am')
-                            ->content(fn(?AssetType $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                            ->content(fn(?AssetModel $record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
                         Placeholder::make('updated_at')
                             ->label('Letzte Änderung am')
-                            ->content(fn(?AssetType $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                            ->content(fn(?AssetModel $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                     ]),
 
                 Tabs::make('Tabs')
