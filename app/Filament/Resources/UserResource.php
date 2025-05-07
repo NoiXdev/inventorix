@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\Place;
 use App\Models\User;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Grid;
@@ -38,6 +39,11 @@ class UserResource extends Resource
     public static function getNavigationGroup(): ?string
     {
         return __('menu.general');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return User::where('login_enabled', '=', true)->count() . '/' . User::where('login_enabled', '=', false)->count();
     }
 
     public static function form(Form $form): Form
