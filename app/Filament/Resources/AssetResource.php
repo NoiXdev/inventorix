@@ -101,7 +101,6 @@ class AssetResource extends Resource
                                     ->searchable()
                                     ->required(),
 
-
                                 Select::make('manufacturer_id')
                                     ->label("Hersteller")
                                     ->relationship('manufacturer', 'name')
@@ -133,6 +132,20 @@ class AssetResource extends Resource
                                     ->label("Aktueller Besitzer")
                                     ->preload()
                                     ->relationship('owner', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('firstname')
+                                            ->label('Vorname')
+                                            ->required(),
+
+                                        TextInput::make('lastname')
+                                            ->label('Nachname')
+                                            ->required(),
+
+                                        TextInput::make('name')
+                                            ->label('Benutzername')
+                                            ->columnSpanFull()
+                                            ->required(),
+                                    ])
                                     ->searchable(),
 
                                 Select::make('place_id')

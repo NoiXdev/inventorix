@@ -4,14 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
@@ -58,18 +57,10 @@ class UserResource extends Resource
                 Tabs::make('Tabs')
                     ->columnSpanFull()
                     ->tabs([
+
                         Tabs\Tab::make('Allgemein')
                             ->columns()
                             ->schema([
-                                TextInput::make('name')
-                                    ->label('Benutzername')
-                                    ->required(),
-
-                                TextInput::make('email')
-                                    ->label('E-Mail Adresse')
-                                    ->email()
-                                    ->required(),
-
                                 TextInput::make('firstname')
                                     ->label('Vorname')
                                     ->required(),
@@ -78,13 +69,36 @@ class UserResource extends Resource
                                     ->label('Nachname')
                                     ->required(),
 
-                                TextInput::make('password')
-                                    ->label('Passwort')
-                                    ->hiddenOn('edit')
+                                TextInput::make('name')
+                                    ->label('Benutzername')
+                                    ->columnSpanFull()
                                     ->required(),
+                            ]),
+
+                        Tabs\Tab::make('Login')
+                            ->columns()
+                            ->schema([
 
                                 Toggle::make('login_enabled')
-                                    ->label('Login in dieses Panel aktivieren')
+                                    ->live()
+                                    ->columnSpanFull()
+                                    ->label('Login in dieses Panel aktivieren'),
+
+                                TextInput::make('email')
+                                    ->label('E-Mail Adresse')
+                                    ->visible(static function (Get $get) {
+                                        return (bool)$get('login_enabled');
+                                    })
+                                    ->email()
+                                    ->required(),
+
+                                TextInput::make('password')
+                                    ->label('Passwort')
+                                    ->visible(static function (Get $get) {
+                                        return (bool)$get('login_enabled');
+                                    })
+                                    ->hiddenOn('edit')
+                                    ->required(),
                             ]),
                     ])
             ]);
