@@ -48,6 +48,11 @@ class Asset extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
+    public function place(): BelongsTo
+    {
+        return $this->belongsTo(Place::class, 'place_id');
+    }
+
     protected function casts(): array
     {
         return [

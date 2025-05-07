@@ -134,6 +134,17 @@ class AssetResource extends Resource
                                     ->preload()
                                     ->relationship('owner', 'name')
                                     ->searchable(),
+
+                                Select::make('place_id')
+                                    ->label("Ort")
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                    ])
+                                    ->preload()
+                                    ->relationship('place', 'name')
+                                    ->searchable(),
                             ]),
 
                         Tabs\Tab::make('Kauf Informationen')

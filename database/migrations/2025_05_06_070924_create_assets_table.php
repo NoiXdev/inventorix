@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->foreignUuid('asset_type_id')->constrained('asset_types')->cascadeOnDelete();
             $table->foreignUuid('manufacturer_id')->constrained('manufacturers')->cascadeOnDelete();
             $table->foreignUuid('owner_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('place_id')->nullable()->constrained('places')->nullOnDelete();
             $table->foreignUuid('model_id')->nullable()->constrained('asset_models')->nullOnDelete();
             $table->string('serial_number')->nullable();
             $table->date('buy_date')->nullable();
