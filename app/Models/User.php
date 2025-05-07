@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Events\UserCreatingEvent;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -28,6 +29,14 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'remember_token',
     ];
+    protected $dispatchesEvents = [
+        'creating' => UserCreatingEvent::class
+    ];
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->login_enabled;
+    }
 
     protected function casts(): array
     {
@@ -35,10 +44,5 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'login_enabled' => 'boolean'
         ];
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->login_enabled;
     }
 }

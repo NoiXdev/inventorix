@@ -233,11 +233,6 @@ class AssetResource extends Resource
                                         TextInput::make('lastname')
                                             ->label('Nachname')
                                             ->required(),
-
-                                        TextInput::make('name')
-                                            ->label('Benutzername')
-                                            ->columnSpanFull()
-                                            ->required(),
                                     ])
                                     ->searchable(),
 

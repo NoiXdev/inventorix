@@ -70,8 +70,9 @@ class UserResource extends Resource
                                     ->required(),
 
                                 TextInput::make('name')
-                                    ->label('Benutzername')
+                                    ->label('Anzeigename')
                                     ->columnSpanFull()
+                                    ->hiddenOn('create')
                                     ->required(),
                             ]),
 
@@ -109,7 +110,7 @@ class UserResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label('Benutzername')
+                    ->label('Anzeigename')
                     ->toggleable()
                     ->toggledHiddenByDefault()
                     ->searchable()
