@@ -150,8 +150,11 @@ class AssetResource extends Resource
                                 ->label('Create new ID')
                                 ->live(),
                         ])
+                        ->successRedirectUrl(static function (Asset $replica) {
+                            return AssetResource::getUrl('edit', ['record' => $replica]);
+                        })
                         ->beforeReplicaSaved(static function (Asset $replica, array $data): void {
-                            if (isset($data['new_id']) && !empty($data['new_id'])){
+                            if (isset($data['new_id']) && !empty($data['new_id'])) {
                                 $replica->id = $data['new_id'];
                             }
                         })
