@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Tabs;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
@@ -73,7 +75,16 @@ class UserResource extends Resource
                                     ->label('Anzeigename')
                                     ->columnSpanFull()
                                     ->hiddenOn('create')
+                                    ->suffixAction(
+                                        Action::make('created_name')
+                                            ->icon('heroicon-o-arrow-path')
+                                            ->requiresConfirmation()
+                                            ->action(function (Set $set, Get $get) {
+                                                $set('name', $get('firstname') . ' ' . $get('lastname'));
+                                            })
+                                    )
                                     ->required(),
+
                             ]),
 
                         Tabs\Tab::make('Login')
