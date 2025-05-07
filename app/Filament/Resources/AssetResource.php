@@ -8,11 +8,13 @@ use App\Models\Asset;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -51,6 +53,7 @@ class AssetResource extends Resource
         return $form
             ->schema([
                 Grid::make()
+                    ->columns(3)
                     ->hiddenOn('create')
                     ->schema([
                         Placeholder::make('created_at')
@@ -60,6 +63,9 @@ class AssetResource extends Resource
                         Placeholder::make('updated_at')
                             ->label('Letzte Änderung am')
                             ->content(fn(?Asset $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+
+                        View::make('forms.components.qr-code')
+                            ->label('QR Code'),
                     ]),
 
 
@@ -69,6 +75,12 @@ class AssetResource extends Resource
                         Tabs\Tab::make('Allgemein')
                             ->columns(3)
                             ->schema([
+
+
+                                Hidden::make('id')
+                                    ->default(fn() => request()->get('forceId'))
+                                    ->hiddenOn('edit'),
+
                                 Select::make('asset_type_id')
                                     ->label('Type')
                                     ->relationship('assetType', 'name')

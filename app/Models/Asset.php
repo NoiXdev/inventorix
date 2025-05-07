@@ -13,6 +13,7 @@ class Asset extends Model
     use HasUuids, HasTags;
 
     protected $fillable = [
+        'id',
         'asset_type_id',
         'manufacturer_id',
         'model_id',

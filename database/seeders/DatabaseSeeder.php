@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
+            'id' => '0196a784-0621-73e0-9d6c-9a17800854d1',
             'name' => 'noix',
             'firstname' => 'noix',
             'lastname' => 'support',
