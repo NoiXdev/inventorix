@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Facades\Filament;
+use App\Filament\Widgets\StatsWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -49,6 +49,7 @@ class AppPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->widgets([
+                StatsWidget::class,
                 Widgets\AccountWidget::class,
             ])
             ->middleware([
@@ -64,7 +65,6 @@ class AppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->renderHook('panels::global-search.before', fn() => \Blade::render('@livewire("scanner")'));
+            ]);
     }
 }
