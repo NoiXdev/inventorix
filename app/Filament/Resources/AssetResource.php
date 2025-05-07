@@ -94,18 +94,22 @@ class AssetResource extends Resource
             ->filters([
                 SelectFilter::make('state')
                     ->multiple()
+                    ->searchable()
                     ->options(AssetState::class),
 
                 SelectFilter::make('asset_type_id')
                     ->multiple()
+                    ->searchable()
                     ->relationship('assetType', 'name'),
 
                 SelectFilter::make('manufacturer_id')
                     ->multiple()
+                    ->searchable()
                     ->relationship('manufacturer', 'name'),
 
                 SelectFilter::make('owner_id')
                     ->multiple()
+                    ->searchable()
                     ->relationship('owner', 'name'),
 
                 Filter::make('buy_price_null')
@@ -209,6 +213,7 @@ class AssetResource extends Resource
                                 Select::make('model_id')
                                     ->relationship('model', 'name')
                                     ->label('Modell')
+                                    ->searchable()
                                     ->createOptionForm([
                                         TextInput::make('name')
                                             ->label('Name')
