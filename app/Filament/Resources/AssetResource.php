@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\AssetState;
 use App\Enums\BuyType;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Models\Asset;
@@ -76,10 +77,17 @@ class AssetResource extends Resource
                             ->columns(3)
                             ->schema([
 
-
                                 Hidden::make('id')
                                     ->default(fn() => request()->get('forceId'))
                                     ->hiddenOn('edit'),
+
+                                Select::make('state')
+                                    ->label('State')
+                                    ->preload()
+                                    ->enum(AssetState::class)
+                                    ->options(AssetState::class)
+                                    ->searchable()
+                                    ->required(),
 
                                 Select::make('asset_type_id')
                                     ->label('Type')
@@ -93,9 +101,6 @@ class AssetResource extends Resource
                                     ->searchable()
                                     ->required(),
 
-                                TextInput::make('serial_number')
-                                    ->columnSpan(2)
-                                    ->label('Seriennummer'),
 
                                 Select::make('manufacturer_id')
                                     ->label("Hersteller")
@@ -108,6 +113,11 @@ class AssetResource extends Resource
                                     ->preload()
                                     ->searchable()
                                     ->required(),
+
+                                TextInput::make('serial_number')
+                                    ->columnSpan(2)
+                                    ->columnSpanFull()
+                                    ->label('Seriennummer'),
 
                                 Select::make('model_id')
                                     ->relationship('model', 'name')
@@ -162,6 +172,11 @@ class AssetResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('state')
+                    ->badge()
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('assetType.name')
                     ->searchable()
                     ->sortable(),
@@ -181,6 +196,10 @@ class AssetResource extends Resource
                 TextColumn::make('serial_number'),
             ])
             ->filters([
+                SelectFilter::make('state')
+                    ->multiple()
+                    ->options(AssetState::class),
+
                 SelectFilter::make('asset_type_id')
                     ->multiple()
                     ->relationship('assetType', 'name'),

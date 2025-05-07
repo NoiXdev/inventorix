@@ -9,6 +9,7 @@ return new class extends Migration {
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->string('state')->default(\App\Enums\AssetState::NEW->value);
             $table->foreignUuid('asset_type_id')->constrained('asset_types')->cascadeOnDelete();
             $table->foreignUuid('manufacturer_id')->constrained('manufacturers')->cascadeOnDelete();
             $table->foreignUuid('owner_id')->nullable()->constrained('users')->nullOnDelete();
