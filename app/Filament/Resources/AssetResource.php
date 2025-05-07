@@ -18,11 +18,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\View;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ReplicateAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -131,8 +134,33 @@ class AssetResource extends Resource
                     })
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+
+                ActionGroup::make([
+                    ReplicateAction::make()
+                        ->requiresConfirmation()
+                        ->form([
+                            TextInput::make('new_id')
+                                ->required()
+                                ->visible(static function (Get $get) {
+                                    return !(bool)$get('override_id');
+                                })
+                                ->label('Override ID'),
+
+                            Toggle::make('override_id')
+                                ->label('Create new ID')
+                                ->live(),
+                        ])
+                        ->beforeReplicaSaved(static function (Asset $replica, array $data): void {
+                            if (isset($data['new_id']) && !empty($data['new_id'])){
+                                $replica->id = $data['new_id'];
+                            }
+                        })
+                        ->excludeAttributes([
+                            'invoice'
+                        ]),
+                    EditAction::make(),
+                    DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
