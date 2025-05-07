@@ -15,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\View;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -23,11 +24,13 @@ use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Pelmered\FilamentMoneyField\Forms\Components\MoneyInput;
+use Pelmered\FilamentMoneyField\Tables\Columns\MoneyColumn;
 
 class AssetResource extends Resource
 {
@@ -47,6 +50,91 @@ class AssetResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return Asset::all()->count();
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('state')
+                    ->badge()
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('assetType.name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('manufacturer.name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('owner.name')
+                    ->toggleable()
+                    ->searchable()
+                    ->toggledHiddenByDefault()
+                    ->sortable(),
+
+                TextColumn::make('model.name')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('serial_number')
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
+                    ->label('Seriennummer'),
+
+                MoneyColumn::make('buy_price')
+                    ->toggleable()
+                    ->toggledHiddenByDefault()
+                    ->sortable()
+                    ->searchable()
+                    ->label('Kaufpreis')
+            ])
+            ->filters([
+                SelectFilter::make('state')
+                    ->multiple()
+                    ->options(AssetState::class),
+
+                SelectFilter::make('asset_type_id')
+                    ->multiple()
+                    ->relationship('assetType', 'name'),
+
+                SelectFilter::make('manufacturer_id')
+                    ->multiple()
+                    ->relationship('manufacturer', 'name'),
+
+                SelectFilter::make('owner_id')
+                    ->multiple()
+                    ->relationship('owner', 'name'),
+
+                Filter::make('buy_price_null')
+                    ->form([
+                        Toggle::make('show_empty_price')
+                            ->label('Zeige Ohne Preise')
+                    ])
+                    ->indicateUsing(static function (array $data) {
+                        if ((bool)$data['show_empty_price']) {
+                            return 'Zeige Ohne Preise';
+                        }
+                    })
+                    ->query(static function (Builder $query, array $data): Builder {
+                        if ((bool)$data['show_empty_price']) {
+                            $query->where('buy_price', '=', null);
+                            $query->orWhere('buy_price', '=', '');
+                        }
+                        return $query;
+                    })
+            ])
+            ->actions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function form(Form $form): Form
@@ -171,6 +259,7 @@ class AssetResource extends Resource
                                     ->nullable(),
 
                                 MoneyInput::make('buy_price')->decimals(2)
+                                    ->nullable()
                                     ->label('Kaufpreis / Mietpreis'),
 
                                 Select::make('buy_type')
@@ -189,61 +278,6 @@ class AssetResource extends Resource
                                     ->columnSpanFull()
                             ]),
                     ]),
-            ]);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->columns([
-                TextColumn::make('state')
-                    ->badge()
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('assetType.name')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('manufacturer.name')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('owner.name')
-                    ->searchable()
-                    ->sortable(),
-
-                TextColumn::make('model.name')
-                    ->sortable()
-                    ->searchable(),
-
-                TextColumn::make('serial_number'),
-            ])
-            ->filters([
-                SelectFilter::make('state')
-                    ->multiple()
-                    ->options(AssetState::class),
-
-                SelectFilter::make('asset_type_id')
-                    ->multiple()
-                    ->relationship('assetType', 'name'),
-
-                SelectFilter::make('manufacturer_id')
-                    ->multiple()
-                    ->relationship('manufacturer', 'name'),
-
-                SelectFilter::make('owner_id')
-                    ->multiple()
-                    ->relationship('owner', 'name'),
-            ])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
