@@ -50,6 +50,19 @@ class AssetResource extends Resource
         return __('menu.assets');
     }
 
+    public static function getLabel(): ?string
+    {
+        if (request()->has('replicated')) {
+            return __('asset.label-copy');
+        }
+        return __('asset.label');
+    }
+
+    public static function getPluralLabel(): ?string
+    {
+        return __('asset.label-plural');
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return Asset::all()->count();
@@ -151,7 +164,7 @@ class AssetResource extends Resource
                                 ->live(),
                         ])
                         ->successRedirectUrl(static function (Asset $replica) {
-                            return AssetResource::getUrl('edit', ['record' => $replica]);
+                            return AssetResource::getUrl('edit', ['record' => $replica, 'replicated' => true]);
                         })
                         ->beforeReplicaSaved(static function (Asset $replica, array $data): void {
                             if (isset($data['new_id']) && !empty($data['new_id'])) {
@@ -176,6 +189,7 @@ class AssetResource extends Resource
     {
         return $form
             ->schema([
+
                 Grid::make()
                     ->columns(3)
                     ->hiddenOn('create')
