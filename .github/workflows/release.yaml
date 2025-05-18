@@ -1,0 +1,17 @@
+name: Release
+run-name: Create Release for ${{github.event.repository.name}} ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency: release
+
+permissions:
+  contents: write
+
+jobs:
+
+  release:
+    uses: NoiXdev/github-workflows/.github/workflows/create_compose_changelog_version_release.yaml@main
+    secrets: inherit
