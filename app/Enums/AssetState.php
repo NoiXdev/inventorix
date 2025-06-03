@@ -2,9 +2,11 @@
 
 namespace App\Enums;
 
+use Filament\Support\Colors\Color;
+use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
 
-enum AssetState: string implements HasLabel
+enum AssetState: string implements HasLabel, HasColor
 {
     case NEW = 'new';
     case SOLD = 'sold';
@@ -30,4 +32,17 @@ enum AssetState: string implements HasLabel
         };
     }
 
+    public function getColor(): string|array|null
+    {
+        return match ($this) {
+            self::NEW => Color::Amber,
+            self::DEFECT => Color::Red,
+            self::SOLD => Color::Orange,
+            self::STORAGE => Color::Gray,
+            self::LEND => Color::Slate,
+            self::IN_USE => Color::Green,
+            self::UNDER_REPAIR => Color::Yellow,
+            self::NEED_REPAIR => Color::Fuchsia,
+        };
+    }
 }
