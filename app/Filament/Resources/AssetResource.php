@@ -6,6 +6,7 @@ use App\Enums\AssetState;
 use App\Enums\BuyType;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Models\Asset;
+use App\Models\AssetModel;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -81,7 +82,7 @@ class AssetResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('manufacturer.name')
+                TextColumn::make('model.manufacturer.name')
                     ->searchable()
                     ->sortable(),
 
@@ -238,34 +239,6 @@ class AssetResource extends Resource
                                     ->searchable()
                                     ->required(),
 
-                                Select::make('manufacturer_id')
-                                    ->label("Hersteller")
-                                    ->relationship('manufacturer', 'name')
-                                    ->createOptionForm([
-                                        TextInput::make('name')
-                                            ->label('Name')
-                                            ->required(),
-                                    ])
-                                    ->preload()
-                                    ->searchable()
-                                    ->required(),
-
-                                TextInput::make('serial_number')
-                                    ->columnSpan(2)
-                                    ->columnSpanFull()
-                                    ->label('Seriennummer'),
-
-                                Select::make('model_id')
-                                    ->relationship('model', 'name')
-                                    ->label('Modell')
-                                    ->searchable()
-                                    ->createOptionForm([
-                                        TextInput::make('name')
-                                            ->label('Name')
-                                            ->required(),
-                                    ])
-                                    ->required(),
-
                                 Select::make('owner_id')
                                     ->label("Aktueller Besitzer")
                                     ->preload()
@@ -291,6 +264,56 @@ class AssetResource extends Resource
                                     ->preload()
                                     ->relationship('place', 'name')
                                     ->searchable(),
+                            ]),
+
+                        Tabs\Tab::make('Informationen')
+                            ->columns(2)
+                            ->schema([
+
+                                TextInput::make('serial_number')
+                                    ->columnSpan(2)
+                                    ->columnSpanFull()
+                                    ->label('Seriennummer'),
+
+                                Select::make('model_id')
+                                    ->relationship('model', 'name')
+                                    ->label('Modell')
+                                    ->searchable()
+                                    ->getSearchResultsUsing(static function (string $search) {
+                                        $items = [];
+                                        AssetModel::where('name', 'like', '%' . $search . '%')
+                                            ->orWhereHas('manufacturer', function (Builder $query) use ($search) {
+                                                $query->where('name', 'like', '%' . $search . '%');
+                                            })
+                                            ->limit(50)
+                                            ->each(static function (AssetModel $model) use (&$items) {
+                                                $items[$model->id] = '(' . $model->manufacturer->name . ') ' . $model->name;
+                                            });
+                                        return $items;
+                                    })
+                                    ->getOptionLabelUsing(static function ($value): string {
+                                        $model = AssetModel::find($value);
+                                        return '(' . $model->manufacturer->name . ') ' . $model->name;
+                                    })
+                                    ->createOptionForm([
+
+                                        Select::make('manufacturer')
+                                            ->relationship('manufacturer', 'name')
+                                            ->label('Hersteller')
+                                            ->preload()
+                                            ->createOptionForm([
+                                                TextInput::make('name')
+                                                    ->label('Name')
+                                                    ->required()
+                                                    ->unique(),
+                                            ])
+                                            ->searchable(),
+
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required(),
+                                    ]),
+
                             ]),
 
                         Tabs\Tab::make('Kauf Informationen')

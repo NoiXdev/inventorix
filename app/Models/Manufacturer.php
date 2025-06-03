@@ -12,4 +12,9 @@ class Manufacturer extends Model
     protected $fillable = [
         'name',
     ];
+
+    public function models()
+    {
+        return $this->hasMany(AssetModel::class, 'manufacturer_id');
+    }
 }

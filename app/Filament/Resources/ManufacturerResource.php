@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ManufacturerResource\Pages;
+use App\Models\AssetModel;
 use App\Models\Manufacturer;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
@@ -35,11 +36,6 @@ class ManufacturerResource extends Resource
     public static function getNavigationBadge(): ?string
     {
         return Manufacturer::all()->count();
-    }
-
-    public static function getPluralLabel(): ?string
-    {
-        return __('manufacturer.label-plural');
     }
 
     public static function getLabel(): ?string
@@ -86,9 +82,23 @@ class ManufacturerResource extends Resource
                     ->label('Name')
                     ->searchable()
                     ->sortable(),
-            ])
-            ->filters([
-                //
+
+                TextColumn::make('models_count')
+                    ->label('Modele')
+                    ->counts('models')
+                    ->badge()
+                    ->sortable(),
+
+                TextColumn::make('assets_count')
+                    ->label('Assets')
+                    ->badge()
+                    ->getStateUsing(static function (Manufacturer $record): int {
+                        $counter = 0;
+                        $record->models()->each(static function (AssetModel $model) use (&$counter) {
+                            $counter += $model->assets()->count();
+                        });
+                        return $counter;
+                    }),
             ])
             ->actions([
                 EditAction::make(),

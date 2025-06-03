@@ -16,7 +16,6 @@ class Asset extends Model
     protected $fillable = [
         'id',
         'asset_type_id',
-        'manufacturer_id',
         'model_id',
         'serial_number',
         'buy_date',
@@ -31,11 +30,6 @@ class Asset extends Model
     public function assetType(): BelongsTo
     {
         return $this->belongsTo(AssetType::class);
-    }
-
-    public function manufacturer(): BelongsTo
-    {
-        return $this->belongsTo(Manufacturer::class);
     }
 
     public function model(): BelongsTo

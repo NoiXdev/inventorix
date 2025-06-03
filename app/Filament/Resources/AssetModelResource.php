@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssetModelResource\Pages;
 use App\Models\AssetModel;
-use App\Models\AssetType;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Tabs;
@@ -16,6 +15,7 @@ use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class AssetModelResource extends Resource
@@ -47,6 +47,7 @@ class AssetModelResource extends Resource
     {
         return AssetModel::all()->count();
     }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -69,6 +70,7 @@ class AssetModelResource extends Resource
                         Tabs\Tab::make('Allgemein')
                             ->columns()
                             ->schema([
+
                                 TextInput::make('name')
                                     ->label('Name')
                                     ->required(),
@@ -85,9 +87,23 @@ class AssetModelResource extends Resource
                     ->label('Name')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('manufacturer.name')
+                    ->label('Hersteller')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('assets_count')
+                    ->label('Assets')
+                    ->counts('assets')
+                    ->badge()
+                    ->sortable(),
             ])
             ->filters([
-                //
+                SelectFilter::make('manufacturer')
+                    ->relationship('manufacturer', 'name')
+                    ->multiple()
+                    ->label('Hersteller'),
             ])
             ->actions([
                 EditAction::make(),
