@@ -7,6 +7,7 @@ use App\Models\AssetModel;
 use App\Models\Manufacturer;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -68,6 +69,19 @@ class ManufacturerResource extends Resource
                                 TextInput::make('name')
                                     ->label('Name')
                                     ->required(),
+
+                                Select::make('models')
+                                    ->label('Modelle')
+                                    ->searchable()
+                                    ->multiple()
+                                    ->relationship('models', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required()
+                                            ->unique(),
+                                    ])
+                                    ->required()
                             ]),
                     ])
 
