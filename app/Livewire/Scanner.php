@@ -18,7 +18,6 @@ class Scanner extends Component
 
     public function change()
     {
-        ray($this->serialNumber);
         $this->validate();
 
         $existingAsset = Asset::find($this->serialNumber);
