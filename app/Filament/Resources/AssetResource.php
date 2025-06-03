@@ -7,14 +7,18 @@ use App\Enums\BuyType;
 use App\Filament\Resources\AssetResource\Pages;
 use App\Models\Asset;
 use App\Models\AssetModel;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieTagsInput;
 use Filament\Forms\Components\Tabs;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\View;
@@ -85,6 +89,13 @@ class AssetResource extends Resource
                 TextColumn::make('model.manufacturer.name')
                     ->searchable()
                     ->sortable(),
+
+                TextColumn::make('incidents_count')
+                    ->toggleable()
+                    ->counts('incidents')
+                    ->badge()
+                    ->label('Vorfälle')
+                    ->toggledHiddenByDefault(),
 
                 TextColumn::make('owner.name')
                     ->toggleable()
@@ -344,6 +355,71 @@ class AssetResource extends Resource
                                 SpatieTagsInput::make('tags')
                                     ->label('')
                                     ->columnSpanFull()
+                            ]),
+
+                        Tabs\Tab::make('Vorfälle')
+                            ->columns(1)
+                            ->badge(static function (Asset $record): int {
+                                return $record->incidents()->count();
+                            })
+                            ->schema([
+
+                                Repeater::make('incidents')
+                                    ->relationship('incidents')
+                                    ->label('Vorfälle')
+                                    ->addActionLabel('Vorfall hinzufügen')
+                                    ->columns(1)
+                                    ->minItems(0)
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->itemLabel(static function (array $state): string {
+                                        $label = [];
+
+                                        if (!isset($state['open_date']) && !isset($state['closed_date'])) {
+                                            $label[] = '[Neu]';
+                                        }
+
+                                        if (isset($state['open_date']) && !isset($state['closed_date'])) {
+                                            $label[] = '[Offen]';
+                                        }
+
+                                        if (isset($state['open_date'], $state['closed_date'])) {
+                                            $label[] = '[Geschlossen]';
+                                        }
+
+                                        if (isset($state['open_date'])) {
+                                            $label[] = Carbon::parse($state['open_date'])->format('d.m.Y');
+                                        }
+
+                                        if (isset($state['title'])) {
+                                            $label[] = $state['title'];
+                                        }
+
+                                        return implode(', ', $label);
+                                    })
+                                    ->schema([
+
+                                        Grid::make(3)
+                                            ->schema([
+                                                DateTimePicker::make('open_date')
+                                                    ->label('Vorfalls Datum')
+                                                    ->required(),
+
+                                                DateTimePicker::make('closed_date')
+                                                    ->nullable()
+                                                    ->label('Lösung Datum'),
+                                            ]),
+
+                                        TextInput::make('title')
+                                            ->label('Titel')
+                                            ->required(),
+
+                                        Textarea::make('notes')
+                                            ->label('Notizen')
+                                            ->columnSpanFull()
+                                            ->nullable(),
+                                    ]),
+
                             ]),
                     ]),
             ]);

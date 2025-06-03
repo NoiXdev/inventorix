@@ -7,6 +7,7 @@ use App\Enums\BuyType;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Tags\HasTags;
 
 class Asset extends Model
@@ -45,6 +46,12 @@ class Asset extends Model
     public function place(): BelongsTo
     {
         return $this->belongsTo(Place::class, 'place_id');
+    }
+
+    public function incidents(): HasMany
+    {
+        return $this->hasMany(Incident::class, 'asset_id')
+            ->orderBy('open_date', 'asc');
     }
 
     protected function casts(): array
