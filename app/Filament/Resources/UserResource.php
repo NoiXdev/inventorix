@@ -3,7 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Models\Place;
+use App\Models\Asset;
 use App\Models\User;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Grid;
@@ -21,6 +21,7 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Novadaemon\FilamentCombobox\Combobox;
 
 class UserResource extends Resource
 {
@@ -116,6 +117,22 @@ class UserResource extends Resource
                                         return (bool)$get('login_enabled');
                                     })
                                     ->hiddenOn('edit')
+                                    ->required(),
+                            ]),
+
+                        Tabs\Tab::make('Assets')
+                            ->columns()
+                            ->schema([
+                                Combobox::make('assets')
+                                    ->multiple()
+                                    ->label('')
+                                    ->columnSpanFull()
+                                    ->height('500px')
+                                    ->relationship('assets', 'id')
+                                    ->getOptionLabelFromRecordUsing(static function (Asset $asset) {
+                                        return '(' . $asset->model->manufacturer->name . ') ' . $asset->model->name;
+                                    })
+                                    ->searchable()
                                     ->required(),
                             ]),
                     ])
