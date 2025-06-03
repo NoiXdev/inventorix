@@ -6,6 +6,7 @@ use App\Filament\Resources\AssetModelResource\Pages;
 use App\Models\AssetModel;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -74,6 +75,18 @@ class AssetModelResource extends Resource
                                 TextInput::make('name')
                                     ->label('Name')
                                     ->required(),
+
+                                Select::make('manufacturer')
+                                    ->label('Hersteller')
+                                    ->searchable()
+                                    ->relationship('manufacturer', 'name')
+                                    ->createOptionForm([
+                                        TextInput::make('name')
+                                            ->label('Name')
+                                            ->required()
+                                            ->unique(),
+                                    ])
+                                    ->required()
                             ]),
                     ])
             ]);
