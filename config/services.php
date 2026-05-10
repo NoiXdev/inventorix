@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'microsoft-azure' => [
+        'enabled'       => filter_var(env('MS_LOGIN_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'client_id'     => env('MS_CLIENT_ID'),
+        'client_secret' => env('MS_CLIENT_SECRET'),
+        'redirect'      => env('MS_REDIRECT_URI'),
+        'tenant'        => env('MS_TENANT_ID'),
+    ],
+
 ];

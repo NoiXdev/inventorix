@@ -29,5 +29,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="MS_LOGIN_ENABLED" value="true"/>
+        <env name="MS_TENANT_ID" value="test-tenant-id"/>
     </php>
 </phpunit>
