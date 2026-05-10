@@ -2,19 +2,21 @@
 
 ## Goal
 
-Add Microsoft Entra ID (single-tenant) sign-in to the Filament panel as the
-primary authentication method, while keeping the existing email/password form
-on the same login page as a break-glass fallback.
+Add **optional** Microsoft Entra ID (single-tenant) sign-in to the Filament
+panel as a secondary authentication method alongside the existing
+email/password form. The feature is toggled via `.env`; when disabled, no
+button is shown, no routes are registered, and behavior is identical to today.
 
 ## Decisions (from brainstorming)
 
 | Area | Decision |
 |---|---|
-| Coexistence | Entra ID primary, email/password remains as break-glass fallback on the same page. |
+| Feature toggle | Optional, controlled by `MS_LOGIN_ENABLED` in `.env` (default `false`). |
+| Coexistence | Default Filament login page, "Login via Entra ID" button injected above the form. Email/password remains the primary fallback. |
 | Tenant scope | Single tenant — only the configured Entra tenant. |
 | Provisioning | Pre-provisioned only. SSO never creates users. |
 | Matching | Entra Object ID (`oid`) primary, email fallback when `entra_id` is `NULL` (auto-link on first SSO login). |
-| Login UI | Custom Filament login page with a prominent "Sign in with Microsoft" button above the email/password form. |
+| Login UI | Default Filament login page + render hook injecting a single "Login via Entra ID" button. No custom Login class, no custom Blade view. |
 | Attribute sync | Sync `firstname`, `lastname`, `name`, `email` from Microsoft Graph claims on every SSO login. |
 
 ## Library
@@ -26,10 +28,15 @@ The provider drives `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/...`
 with the configured single tenant ID, so non-tenant accounts are rejected at
 Microsoft's authorize endpoint before they ever reach our callback.
 
+All composer / artisan commands during implementation run through ddev (e.g.
+`ddev composer require socialiteproviders/microsoft-azure`,
+`ddev artisan migrate`).
+
 ## Architecture
 
 ```
 routes/web.php
+  // Both routes registered ONLY when config('services.microsoft-azure.enabled') is true.
   GET /auth/microsoft/redirect   → MicrosoftAuthController@redirect    (name: auth.microsoft.redirect)
   GET /auth/microsoft/callback   → MicrosoftAuthController@callback    (name: auth.microsoft.callback)
 
@@ -40,22 +47,40 @@ app/Exceptions/Auth/EntraTenantMismatchException.php
 app/Exceptions/Auth/EntraUserNotProvisionedException.php
 app/Exceptions/Auth/EntraLoginDisabledException.php
 
-app/Filament/Pages/Auth/Login.php                (extends \Filament\Pages\Auth\Login)
-resources/views/filament/pages/auth/login.blade.php
+resources/views/filament/auth/entra-button.blade.php
+  // Renders the "Login via Entra ID" button + optional flashed error alert.
+  // Returns nothing if the feature flag is off (defense-in-depth, alongside route guard).
 
-app/Providers/AppServiceProvider.php             (registers SocialiteWasCalled listener)
-app/Providers/Filament/AppPanelProvider.php      (->login(\App\Filament\Pages\Auth\Login::class))
+app/Providers/AppServiceProvider.php              (SocialiteWasCalled listener — only when enabled)
+app/Providers/Filament/AppPanelProvider.php       (renderHook injecting the Blade partial)
 
-config/services.php                              (microsoft-azure block)
+config/services.php                               (microsoft-azure block, includes 'enabled')
 
 database/migrations/<ts>_add_entra_id_to_users_table.php
 ```
 
+**No custom `App\Filament\Pages\Auth\Login` class. No override of the Filament
+login Blade view.** The button is added via Filament's `renderHook` system.
+
 ## Components
+
+### Feature flag
+
+Single source of truth: `config('services.microsoft-azure.enabled')`, derived
+from `MS_LOGIN_ENABLED` (boolean, default `false`).
+
+When `false`:
+- The two `/auth/microsoft/*` routes are not registered.
+- The render hook returns an empty string (the button is not shown).
+- The `SocialiteWasCalled` listener is not registered.
+- The migration still runs (`entra_id` column is harmless when unused).
+
+The toggle is read at boot. Flipping it requires clearing config cache
+(`ddev artisan config:clear`).
 
 ### `MicrosoftAuthController`
 
-Two methods, ~50 LOC.
+Two methods, ~50 LOC. Identical to the prior design.
 
 ```php
 public function redirect(): RedirectResponse
@@ -124,37 +149,67 @@ EntraLoginDisabledException         — "Your account is disabled. Contact an ad
 
 All translatable via Laravel's `__()`.
 
-### Custom login page
+### Login button injection (no custom page)
 
-`App\Filament\Pages\Auth\Login` extends `\Filament\Pages\Auth\Login` and sets:
-
-```php
-protected static string $view = 'filament.pages.auth.login';
-```
-
-The view renders:
-
-1. An optional alert reading `session('entra_error')`.
-2. A full-width outlined "Sign in with Microsoft" button linking to
-   `route('auth.microsoft.redirect')`.
-3. An `<hr>` divider with "or" label.
-4. `{{ $this->form }}` for the email/password form (unchanged behavior).
-5. The original submit/remember-me block.
-
-Wired via `AppPanelProvider`:
+`AppPanelProvider::panel()` adds a render hook:
 
 ```php
-->login(\App\Filament\Pages\Auth\Login::class)
+->renderHook(
+    'panels::auth.login.form.before',
+    fn () => view('filament.auth.entra-button'),
+)
 ```
+
+`resources/views/filament/auth/entra-button.blade.php`:
+
+```blade
+@if (config('services.microsoft-azure.enabled'))
+    @if (session('entra_error'))
+        <div class="fi-fo-field-wrp-error mb-4 text-danger-600 text-sm">
+            {{ session('entra_error') }}
+        </div>
+    @endif
+
+    <a
+        href="{{ route('auth.microsoft.redirect') }}"
+        class="fi-btn fi-btn-color-gray fi-btn-outlined fi-btn-size-md fi-btn-fullwidth mb-4"
+    >
+        {{ __('Login via Entra ID') }}
+    </a>
+
+    <div class="fi-fo-field-wrp-label mb-4 text-center text-sm text-gray-500">
+        {{ __('or sign in with email') }}
+    </div>
+@endif
+```
+
+The render hook constant is
+`\Filament\View\PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE`
+(`panels::auth.login.form.before`), confirmed present in Filament 3.3.
 
 ### Socialite provider registration
 
-In `AppServiceProvider::boot()`:
+In `AppServiceProvider::boot()`, gated by the feature flag:
 
 ```php
-Event::listen(SocialiteWasCalled::class, function ($event) {
-    $event->extendSocialite('microsoft-azure', \SocialiteProviders\Azure\Provider::class);
-});
+if (config('services.microsoft-azure.enabled')) {
+    Event::listen(SocialiteWasCalled::class, function ($event) {
+        $event->extendSocialite('microsoft-azure', \SocialiteProviders\Azure\Provider::class);
+    });
+}
+```
+
+### Route registration
+
+In `routes/web.php`, gated by the feature flag:
+
+```php
+if (config('services.microsoft-azure.enabled')) {
+    Route::get('/auth/microsoft/redirect', [MicrosoftAuthController::class, 'redirect'])
+        ->name('auth.microsoft.redirect');
+    Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback'])
+        ->name('auth.microsoft.callback');
+}
 ```
 
 ### Configuration
@@ -163,6 +218,7 @@ Event::listen(SocialiteWasCalled::class, function ($event) {
 
 ```php
 'microsoft-azure' => [
+    'enabled'       => filter_var(env('MS_LOGIN_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'client_id'     => env('MS_CLIENT_ID'),
     'client_secret' => env('MS_CLIENT_SECRET'),
     'redirect'      => env('MS_REDIRECT_URI'),
@@ -173,6 +229,7 @@ Event::listen(SocialiteWasCalled::class, function ($event) {
 `.env.example` additions:
 
 ```
+MS_LOGIN_ENABLED=false
 MS_CLIENT_ID=
 MS_CLIENT_SECRET=
 MS_TENANT_ID=
@@ -189,11 +246,14 @@ Schema::table('users', function (Blueprint $table) {
 });
 ```
 
+The column is added regardless of the feature flag — it's harmless when unused
+and avoids a second migration if the flag is later flipped on.
+
 ## Data flow
 
 ### Happy path (existing user, first SSO login)
 
-1. User clicks "Sign in with Microsoft" → `GET /auth/microsoft/redirect`.
+1. User clicks "Login via Entra ID" → `GET /auth/microsoft/redirect`.
 2. Controller redirects to Microsoft authorize endpoint with `state`, `nonce`,
    scopes `openid profile email`.
 3. User authenticates and consents at Microsoft.
@@ -218,6 +278,14 @@ Schema::table('users', function (Blueprint $table) {
 | Anything else (network, etc.) | "Microsoft sign-in failed. Please try again." (logged via `report()`) |
 
 All rejections redirect to `filament.app.auth.login` and flash `entra_error`.
+The render-hook view reads the flash value and shows it above the button.
+
+### Disabled-flag flow
+
+When `MS_LOGIN_ENABLED=false`:
+- `/auth/microsoft/redirect` and `/auth/microsoft/callback` return 404.
+- The login page renders identically to today (no button, no alert area).
+- No Socialite driver is registered.
 
 ## Security
 
@@ -229,6 +297,8 @@ All rejections redirect to `filament.app.auth.login` and flash `entra_error`.
 - **All exceptions reported** via `report()`; only user-safe messages flashed.
 - **Case-insensitive email match** via `LOWER(email)` to avoid driver
   inconsistencies between SQLite and others.
+- **Feature flag** acts as a kill switch — flipping `MS_LOGIN_ENABLED=false`
+  and clearing config cache disables every entry point in one place.
 
 ## Edge cases
 
@@ -243,10 +313,14 @@ All rejections redirect to `filament.app.auth.login` and flash `entra_error`.
 - **Two local users with same email**: prevented by the existing unique
   constraint on `users.email`.
 - **Break-glass password login**: untouched; same form on the same page.
+- **Feature flag flipped at runtime**: requires `ddev artisan config:clear`
+  for routes and the listener to re-evaluate. Documented.
 
 ## Testing
 
-`tests/Feature/Auth/MicrosoftLoginTest.php`:
+`tests/Feature/Auth/MicrosoftLoginTest.php` (feature flag forced on per-test
+via `config()->set('services.microsoft-azure.enabled', true)` and route
+re-registration helper or `RefreshApplication`):
 
 1. `callback_logs_in_existing_user_matched_by_entra_id`
 2. `callback_links_existing_user_by_email_when_entra_id_is_null`
@@ -254,6 +328,11 @@ All rejections redirect to `filament.app.auth.login` and flash `entra_error`.
 4. `callback_rejects_disabled_user`
 5. `callback_rejects_wrong_tenant`
 6. `callback_redirects_with_generic_error_on_unexpected_failure`
+7. `routes_return_404_when_feature_disabled` — with
+   `MS_LOGIN_ENABLED=false` ensure both routes are 404.
+8. `login_page_does_not_render_button_when_feature_disabled` — render the
+   login page, assert "Login via Entra ID" is absent.
+9. `login_page_renders_button_when_feature_enabled` — assert button is present.
 
 `tests/Unit/Auth/EntraIdAuthServiceTest.php`:
 
@@ -262,6 +341,8 @@ All rejections redirect to `filament.app.auth.login` and flash `entra_error`.
 Tests use `Socialite::shouldReceive('driver->user')->andReturn(...)` with a
 fabricated `SocialiteUser` (id, email, name, raw payload including `tid`).
 Config for `services.microsoft-azure.tenant` is set per-test via `config()->set()`.
+
+Test runner: `ddev artisan test`.
 
 No browser/E2E test — login page rendering is covered by Filament; the only
 custom interaction (clicking the Microsoft button) is a plain `<a>` link.
@@ -272,14 +353,17 @@ Performed once after implementation:
 
 - [ ] App registration created in Entra portal (single-tenant), redirect URI
       `<APP_URL>/auth/microsoft/callback` registered.
-- [ ] `.env` populated with `MS_CLIENT_ID`, `MS_CLIENT_SECRET`, `MS_TENANT_ID`,
-      `MS_REDIRECT_URI`.
+- [ ] `.env` populated with `MS_LOGIN_ENABLED=true`, `MS_CLIENT_ID`,
+      `MS_CLIENT_SECRET`, `MS_TENANT_ID`, `MS_REDIRECT_URI`.
+- [ ] `ddev artisan config:clear` then load login page → button is visible.
 - [ ] Sign in via Microsoft button → redirected → consent → land on panel.
 - [ ] Sign out, sign in with a non-tenant Microsoft account → rejected with
       tenant-mismatch message.
 - [ ] Disable a user (`login_enabled = false`), attempt SSO → rejected with
       disabled-account message.
 - [ ] Email/password fallback still works.
+- [ ] Set `MS_LOGIN_ENABLED=false`, `ddev artisan config:clear`, load login
+      page → button is gone, `/auth/microsoft/redirect` returns 404.
 
 ## Out of scope
 
