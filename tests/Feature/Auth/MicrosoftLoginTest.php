@@ -130,4 +130,26 @@ class MicrosoftLoginTest extends TestCase
         $response->assertSessionHas('entra_error', __('This Microsoft account is not from the authorized tenant.'));
         $this->assertGuest();
     }
+
+    public function test_callback_redirects_with_generic_error_on_unexpected_failure(): void
+    {
+        $driver = Mockery::mock();
+        $driver->shouldReceive('user')->andThrow(new \RuntimeException('boom'));
+        $driver->shouldReceive('scopes')->andReturnSelf();
+        Socialite::shouldReceive('driver')->with('microsoft-azure')->andReturn($driver);
+
+        $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
+
+        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertSessionHas('entra_error', __('Microsoft sign-in failed. Please try again.'));
+        $this->assertGuest();
+    }
+
+    public function test_routes_return_404_when_feature_disabled(): void
+    {
+        config()->set('services.microsoft-azure.enabled', false);
+
+        $this->get('/auth/microsoft/redirect')->assertNotFound();
+        $this->get('/auth/microsoft/callback?code=x&state=y')->assertNotFound();
+    }
 }
