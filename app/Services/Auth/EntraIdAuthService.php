@@ -25,6 +25,21 @@ class EntraIdAuthService
         $user = User::query()->where('entra_id', $msUser->id)->first();
 
         if ($user === null) {
+            $email = $this->extractEmail($msUser);
+            if ($email !== null) {
+                $user = User::query()
+                    ->whereNull('entra_id')
+                    ->whereRaw('LOWER(email) = ?', [strtolower($email)])
+                    ->first();
+
+                if ($user !== null) {
+                    $user->entra_id = $msUser->id;
+                    $user->save();
+                }
+            }
+        }
+
+        if ($user === null) {
             throw new EntraUserNotProvisionedException();
         }
 
@@ -33,5 +48,14 @@ class EntraIdAuthService
         }
 
         return $user;
+    }
+
+    private function extractEmail(SocialiteUser $msUser): ?string
+    {
+        $email = $msUser->email
+            ?? ($msUser->user['mail'] ?? null)
+            ?? ($msUser->user['userPrincipalName'] ?? null);
+
+        return ($email === null || $email === '') ? null : $email;
     }
 }

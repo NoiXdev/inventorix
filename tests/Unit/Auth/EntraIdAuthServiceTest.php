@@ -77,4 +77,56 @@ class EntraIdAuthServiceTest extends TestCase
 
         $this->assertTrue($existing->is($resolved));
     }
+
+    public function test_resolve_user_links_existing_user_by_email_when_entra_id_is_null(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        $existing = User::factory()->create([
+            'entra_id'      => null,
+            'email'         => 'alice@3b.de',
+            'login_enabled' => true,
+        ]);
+
+        $svc = new EntraIdAuthService();
+        $resolved = $svc->resolveUser($this->makeSocialiteUser());
+
+        $this->assertTrue($existing->is($resolved));
+        $this->assertSame('oid-abc-123', $resolved->fresh()->entra_id);
+    }
+
+    public function test_resolve_user_email_match_is_case_insensitive(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        User::factory()->create([
+            'entra_id'      => null,
+            'email'         => 'Alice@3B.de',
+            'login_enabled' => true,
+        ]);
+
+        $svc = new EntraIdAuthService();
+        $resolved = $svc->resolveUser($this->makeSocialiteUser([
+            'email' => 'alice@3b.de',
+        ]));
+
+        $this->assertSame('oid-abc-123', $resolved->fresh()->entra_id);
+    }
+
+    public function test_resolve_user_falls_back_to_user_principal_name_when_mail_is_null(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        User::factory()->create([
+            'entra_id'      => null,
+            'email'         => 'alice@3b.de',
+            'login_enabled' => true,
+        ]);
+
+        $svc = new EntraIdAuthService();
+        $msUser = $this->makeSocialiteUser([
+            'email' => null,
+            'user'  => ['mail' => null, 'userPrincipalName' => 'alice@3b.de'],
+        ]);
+        $resolved = $svc->resolveUser($msUser);
+
+        $this->assertSame('oid-abc-123', $resolved->fresh()->entra_id);
+    }
 }
