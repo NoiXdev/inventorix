@@ -15,9 +15,9 @@ class EntraIdAuthServiceTest extends TestCase
     private function makeSocialiteUser(array $overrides = []): SocialiteUser
     {
         $u = new SocialiteUser();
-        $u->id    = $overrides['id']    ?? 'oid-abc-123';
-        $u->email = $overrides['email'] ?? 'alice@3b.de';
-        $u->name  = $overrides['name']  ?? 'Alice Example';
+        $u->id    = array_key_exists('id', $overrides)    ? $overrides['id']    : 'oid-abc-123';
+        $u->email = array_key_exists('email', $overrides) ? $overrides['email'] : 'alice@3b.de';
+        $u->name  = array_key_exists('name', $overrides)  ? $overrides['name']  : 'Alice Example';
         $u->user  = array_merge([
             'tid'               => 'test-tenant-id',
             'givenName'         => 'Alice',
@@ -128,5 +128,50 @@ class EntraIdAuthServiceTest extends TestCase
         $resolved = $svc->resolveUser($msUser);
 
         $this->assertSame('oid-abc-123', $resolved->fresh()->entra_id);
+    }
+
+    public function test_resolve_user_throws_not_provisioned_when_no_match(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+
+        $svc = new EntraIdAuthService();
+
+        $this->expectException(\App\Exceptions\Auth\EntraUserNotProvisionedException::class);
+
+        $svc->resolveUser($this->makeSocialiteUser());
+    }
+
+    public function test_resolve_user_throws_not_provisioned_when_email_and_upn_are_null(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        User::factory()->create([
+            'entra_id'      => null,
+            'email'         => 'alice@3b.de',
+            'login_enabled' => true,
+        ]);
+
+        $svc = new EntraIdAuthService();
+
+        $this->expectException(\App\Exceptions\Auth\EntraUserNotProvisionedException::class);
+
+        $svc->resolveUser($this->makeSocialiteUser([
+            'email' => null,
+            'user'  => ['mail' => null, 'userPrincipalName' => null],
+        ]));
+    }
+
+    public function test_resolve_user_throws_login_disabled_when_user_is_disabled(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        User::factory()->create([
+            'entra_id'      => 'oid-abc-123',
+            'login_enabled' => false,
+        ]);
+
+        $svc = new EntraIdAuthService();
+
+        $this->expectException(\App\Exceptions\Auth\EntraLoginDisabledException::class);
+
+        $svc->resolveUser($this->makeSocialiteUser());
     }
 }
