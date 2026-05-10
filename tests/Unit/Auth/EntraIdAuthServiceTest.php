@@ -174,4 +174,52 @@ class EntraIdAuthServiceTest extends TestCase
 
         $svc->resolveUser($this->makeSocialiteUser());
     }
+
+    public function test_sync_attributes_overwrites_firstname_lastname_name_email(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        $user = User::factory()->create([
+            'firstname' => 'Old',
+            'lastname'  => 'Name',
+            'name'      => 'Old Name',
+            'email'     => 'old@local.test',
+            'entra_id'  => 'oid-abc-123',
+        ]);
+
+        $svc = new EntraIdAuthService();
+        $svc->syncAttributes($user, $this->makeSocialiteUser([
+            'user' => [
+                'givenName'         => 'Alice',
+                'surname'           => 'Example',
+                'displayName'       => 'Alice Example',
+                'mail'              => 'alice@3b.de',
+                'userPrincipalName' => 'alice@3b.de',
+            ],
+        ]));
+
+        $fresh = $user->fresh();
+        $this->assertSame('Alice', $fresh->firstname);
+        $this->assertSame('Example', $fresh->lastname);
+        $this->assertSame('Alice Example', $fresh->name);
+        $this->assertSame('alice@3b.de', $fresh->email);
+    }
+
+    public function test_sync_attributes_uses_user_principal_name_when_mail_missing(): void
+    {
+        config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
+        $user = User::factory()->create(['entra_id' => 'oid-abc-123']);
+
+        $svc = new EntraIdAuthService();
+        $svc->syncAttributes($user, $this->makeSocialiteUser([
+            'user' => [
+                'givenName'         => 'Alice',
+                'surname'           => 'Example',
+                'displayName'       => 'Alice Example',
+                'mail'              => null,
+                'userPrincipalName' => 'alice@3b.de',
+            ],
+        ]));
+
+        $this->assertSame('alice@3b.de', $user->fresh()->email);
+    }
 }
