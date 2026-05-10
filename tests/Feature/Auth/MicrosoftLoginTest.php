@@ -85,4 +85,49 @@ class MicrosoftLoginTest extends TestCase
         $this->assertAuthenticatedAs($user);
         $this->assertSame('oid-abc-123', $user->fresh()->entra_id);
     }
+
+    public function test_callback_rejects_unknown_user(): void
+    {
+        $this->fakeSocialiteReturning($this->makeSocialiteUser());
+
+        $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
+
+        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertSessionHas('entra_error');
+        $this->assertGuest();
+    }
+
+    public function test_callback_rejects_disabled_user(): void
+    {
+        User::factory()->create([
+            'entra_id'      => 'oid-abc-123',
+            'login_enabled' => false,
+        ]);
+
+        $this->fakeSocialiteReturning($this->makeSocialiteUser());
+
+        $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
+
+        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertSessionHas('entra_error', __('Your account is disabled. Contact an administrator.'));
+        $this->assertGuest();
+    }
+
+    public function test_callback_rejects_wrong_tenant(): void
+    {
+        User::factory()->create([
+            'entra_id'      => 'oid-abc-123',
+            'login_enabled' => true,
+        ]);
+
+        $this->fakeSocialiteReturning($this->makeSocialiteUser([
+            'user' => ['tid' => 'some-other-tenant'],
+        ]));
+
+        $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
+
+        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertSessionHas('entra_error', __('This Microsoft account is not from the authorized tenant.'));
+        $this->assertGuest();
+    }
 }
