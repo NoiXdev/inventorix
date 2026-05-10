@@ -68,4 +68,21 @@ class MicrosoftLoginTest extends TestCase
         $this->assertSame('Example', $fresh->lastname);
         $this->assertSame('alice@3b.de', $fresh->email);
     }
+
+    public function test_callback_links_existing_user_by_email_when_entra_id_is_null(): void
+    {
+        $user = User::factory()->create([
+            'entra_id'      => null,
+            'email'         => 'alice@3b.de',
+            'login_enabled' => true,
+        ]);
+
+        $this->fakeSocialiteReturning($this->makeSocialiteUser());
+
+        $this->get('/auth/microsoft/callback?code=fake&state=fake')
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('oid-abc-123', $user->fresh()->entra_id);
+    }
 }
