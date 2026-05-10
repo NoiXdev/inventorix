@@ -152,4 +152,20 @@ class MicrosoftLoginTest extends TestCase
         $this->get('/auth/microsoft/redirect')->assertNotFound();
         $this->get('/auth/microsoft/callback?code=x&state=y')->assertNotFound();
     }
+
+    public function test_login_page_renders_button_when_feature_enabled(): void
+    {
+        $this->get(route('filament.app.auth.login'))
+            ->assertOk()
+            ->assertSeeText(__('Login via Entra ID'));
+    }
+
+    public function test_login_page_does_not_render_button_when_feature_disabled(): void
+    {
+        config()->set('services.microsoft-azure.enabled', false);
+
+        $this->get(route('filament.app.auth.login'))
+            ->assertOk()
+            ->assertDontSeeText(__('Login via Entra ID'));
+    }
 }
