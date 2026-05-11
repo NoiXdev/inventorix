@@ -42,10 +42,8 @@ class HandoverService
             $disk = config('handover.disk');
             $signaturePath = "handovers/{$handoverId}/signature.png";
 
-            Storage::disk($disk)->put(
-                $signaturePath,
-                base64_decode($data->signaturePngBase64, true),
-            );
+            $signatureBytes = $this->decodeSignature($data->signaturePngBase64);
+            Storage::disk($disk)->put($signaturePath, $signatureBytes);
 
             try {
                 $handover = Handover::create([
@@ -103,5 +101,23 @@ class HandoverService
                 throw $e;
             }
         });
+    }
+
+    private function decodeSignature(string $base64): string
+    {
+        $decoded = base64_decode($base64, true);
+        if ($decoded === false) {
+            throw new \InvalidArgumentException('Signature payload is not valid base64.');
+        }
+
+        if (strlen($decoded) > (int) config('handover.signature.max_bytes')) {
+            throw new \InvalidArgumentException('Signature exceeds max bytes.');
+        }
+
+        if (substr($decoded, 0, 8) !== "\x89PNG\r\n\x1a\n") {
+            throw new \InvalidArgumentException('Signature is not a PNG.');
+        }
+
+        return $decoded;
     }
 }

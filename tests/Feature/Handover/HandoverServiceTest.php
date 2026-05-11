@@ -380,6 +380,86 @@ class HandoverServiceTest extends TestCase
         }
     }
 
+    public function test_invalid_base64_payload_throws(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: 'not-base64!!!',
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        app(HandoverService::class)->commit($data);
+    }
+
+    public function test_non_png_payload_throws(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: base64_encode('GIF87a' . str_repeat('x', 100)),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        app(HandoverService::class)->commit($data);
+    }
+
+    public function test_too_large_signature_throws(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+
+        $tooBig = "\x89PNG\r\n\x1a\n" . str_repeat('x', config('handover.signature.max_bytes') + 1);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: base64_encode($tooBig),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $this->expectException(\InvalidArgumentException::class);
+        app(HandoverService::class)->commit($data);
+    }
+
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): \App\Models\Handover
     {
         $manager = User::factory()->create();
