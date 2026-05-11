@@ -95,6 +95,9 @@ class HandoverService
                         ->log('handover_completed');
                 }
 
+                \App\Jobs\GenerateHandoverPdf::dispatch($handover->id)
+                    ->afterCommit();
+
                 return $handover;
             } catch (\Throwable $e) {
                 Storage::disk($disk)->delete($signaturePath);
