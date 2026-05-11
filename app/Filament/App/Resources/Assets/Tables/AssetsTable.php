@@ -108,6 +108,10 @@ class AssetsTable
             ])
             ->recordActions([
                 ActionGroup::make([
+                    \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+                        'handover',
+                        fn (Asset $record): array => [$record->id],
+                    ),
                     ReplicateAction::make()
                         ->requiresConfirmation()
                         ->form([
@@ -139,6 +143,10 @@ class AssetsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+                        'handover_bulk',
+                        fn ($livewire) => $livewire->getSelectedTableRecords()->pluck('id')->all(),
+                    )->label(trans('handover.action.bulk')),
                     DeleteBulkAction::make(),
                 ]),
             ]);

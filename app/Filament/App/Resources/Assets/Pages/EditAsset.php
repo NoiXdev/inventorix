@@ -13,6 +13,10 @@ class EditAsset extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+                'handover_header',
+                fn () => [$this->record->id],
+            ),
             DeleteAction::make(),
         ];
     }
