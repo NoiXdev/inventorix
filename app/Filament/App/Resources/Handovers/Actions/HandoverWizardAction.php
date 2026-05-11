@@ -160,12 +160,56 @@ class HandoverWizardAction
     protected static function stepSign(): Step
     {
         return Step::make(trans('handover.wizard.step.sign'))
-            ->schema([]);
+            ->schema([
+                Placeholder::make('confirm_recipient')
+                    ->label(trans('handover.recipient.name'))
+                    ->content(fn (callable $get): string => (string) $get('recipient_name')),
+
+                ViewField::make('signature_png')
+                    ->view('components.handover.signature-pad', [
+                        'width'  => config('handover.signature.width'),
+                        'height' => config('handover.signature.height'),
+                    ])
+                    ->required()
+                    ->rules(['required', 'string', 'min:1']),
+            ]);
     }
 
     /** @param array<string, mixed> $data */
     protected static function commit(array $data): void
     {
-        // filled in Task 18
+        $type = HandoverType::from((string) $data['type']);
+        $recipientKind = RecipientKind::from((string) $data['recipient_kind']);
+
+        $dataObj = new HandoverData(
+            type: $type,
+            recipientKind: $recipientKind,
+            recipientUserId: $recipientKind === RecipientKind::INTERNAL ? (string) $data['recipient_user_id'] : null,
+            recipientName: (string) $data['recipient_name'],
+            recipientEmail: ! empty($data['recipient_email']) ? (string) $data['recipient_email'] : null,
+            assetIds: array_values((array) $data['asset_ids']),
+            accessories: ! empty($data['accessories']) ? (string) $data['accessories'] : null,
+            conditionNotes: ! empty($data['condition_notes']) ? (string) $data['condition_notes'] : null,
+            termsText: (string) $data['terms_text'],
+            signaturePngBase64: (string) $data['signature_png'],
+            signatureIp: request()->ip(),
+            signatureUserAgent: substr((string) request()->userAgent(), 0, 512),
+            createdById: (string) auth()->id(),
+        );
+
+        try {
+            app(HandoverService::class)->commit($dataObj);
+        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+            Notification::make()
+                ->danger()
+                ->title(trans('handover.notification.state_conflict'))
+                ->send();
+            return;
+        }
+
+        Notification::make()
+            ->success()
+            ->title(trans('handover.notification.success'))
+            ->send();
     }
 }
