@@ -697,7 +697,6 @@ public function getActivitylogOptions(): LogOptions
         ->logOnly([
             'asset_type_id',
             'model_id',
-            'manufacturer_id',
             'owner_id',
             'place_id',
             'serial_number',
@@ -713,6 +712,8 @@ public function getActivitylogOptions(): LogOptions
         ->useLogName('asset');
 }
 ```
+
+(Note: `manufacturer_id` is intentionally absent — migration `2025_06_03_070938_new_manufacturer_model_logic.php` dropped that column from `assets` and moved the relationship to `asset_models`. The Asset Filament resource currently has no manufacturer field; manufacturer info is read transitively via `asset.model.manufacturer`.)
 
 - [ ] **Step 4: Run the test, confirm all 4 pass**
 

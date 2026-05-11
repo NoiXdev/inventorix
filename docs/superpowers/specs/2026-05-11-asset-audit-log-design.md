@@ -103,9 +103,11 @@ public function getActivitylogOptions(): LogOptions
 
 Allowlists:
 
-- **Asset:** `asset_type_id`, `model_id`, `manufacturer_id`, `owner_id`,
+- **Asset:** `asset_type_id`, `model_id`, `owner_id`,
   `place_id`, `serial_number`, `buy_date`, `buy_type`, `buy_price`,
-  `guarantee_end`, `invoice`, `state`
+  `guarantee_end`, `invoice`, `state` (`manufacturer_id` was moved to
+  `asset_models` by migration `2025_06_03_070938_new_manufacturer_model_logic.php`
+  and no longer exists on the `assets` table)
 - **Incident:** all fillable fields (the existing migration is the source of truth)
 
 This produces `created` / `updated` / `deleted` rows automatically.
