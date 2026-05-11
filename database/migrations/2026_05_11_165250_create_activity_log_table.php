@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('causer_id', 36)->nullable();
             $table->index(['causer_type', 'causer_id'], 'causer');
             $table->json('properties')->nullable();
+            $table->json('attribute_changes')->nullable();
             $table->uuid('batch_uuid')->nullable();
             $table->timestamps();
             $table->index(['subject_type', 'subject_id', 'created_at'], 'subject_timeline');
