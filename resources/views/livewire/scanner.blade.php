@@ -1,4 +1,4 @@
-<div>
+<div class="flex items-center gap-3">
     <x-filament::modal id="scanner-modal" width="3xl" close-event-name="scanner-modal-close">
         <x-slot name="trigger">
             <x-filament::button color="success" id="scanner-start-button" >

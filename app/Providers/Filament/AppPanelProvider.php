@@ -8,20 +8,23 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages;
+use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
 use Filament\Support\Colors\Color;
-use Filament\Support\Enums\MaxWidth;
+use Filament\Support\Enums\Width;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AppPanelProvider extends PanelProvider
@@ -29,36 +32,34 @@ class AppPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         FilamentAsset::register([
-            Js::make('scanner', \Vite::asset('resources/js/plugins/scanner.ts'))->module()
+            Js::make('scanner', \Vite::asset('resources/js/plugins/scanner.ts'))->module(),
+            Css::make('overrides', Vite::asset('resources/css/app.css'))
         ]);
 
         return $panel
-            ->default()
             ->id('app')
-            ->brandLogo('/asset/logo/header.png')
-            ->brandLogoHeight('3rem')
-            ->path('/')
-            ->maxContentWidth(MaxWidth::Full)
+            ->path('app')
+            ->default()
+            ->maxContentWidth(Width::Full)
             ->login()
             ->spa()
-            ->brandName("Inventorix")
+            ->brandLogo('/asset/logo/header.png')
+            ->brandLogoHeight('3rem')
+            ->brandName('Inventorix')
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->renderHook('panels::global-search.before', fn() => \Blade::render('@livewire("scanner")'))
-            ->renderHook(
-                PanelsRenderHook::AUTH_LOGIN_FORM_BEFORE,
-                fn () => view('filament.auth.entra-button'),
-            )
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\Filament\App\Resources')
+            ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\Filament\App\Pages')
             ->pages([
-                Pages\Dashboard::class,
-                Evaluation::class,
+                Dashboard::class,
             ])
+            ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn() => \Blade::render('@livewire("scanner")'))
+            ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.app.auth.entra-button'),
+            )
             ->widgets([
-                StatsWidget::class,
-                Widgets\AccountWidget::class,
+                AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -66,7 +67,7 @@ class AppPanelProvider extends PanelProvider
                 StartSession::class,
                 AuthenticateSession::class,
                 ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
+                PreventRequestForgery::class,
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,

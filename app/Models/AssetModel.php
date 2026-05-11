@@ -2,18 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+#[Fillable(['name', 'manufacturer_id'])]
 class AssetModel extends Model
 {
     use HasUuids;
-    protected $fillable = [
-        'name',
-        'manufacturer_id',
-    ];
 
     public function manufacturer(): BelongsTo
     {

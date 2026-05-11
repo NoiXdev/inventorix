@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use SocialiteProviders\Azure\Provider;
+use SocialiteProviders\Manager\SocialiteWasCalled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,12 +22,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        \Illuminate\Support\Facades\Event::listen(
-            \SocialiteProviders\Manager\SocialiteWasCalled::class,
+        Event::listen(
+            SocialiteWasCalled::class,
             function ($event) {
                 $event->extendSocialite(
                     'microsoft-azure',
-                    \SocialiteProviders\Azure\Provider::class,
+                    Provider::class,
                 );
             },
         );

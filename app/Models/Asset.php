@@ -4,29 +4,17 @@ namespace App\Models;
 
 use App\Enums\AssetState;
 use App\Enums\BuyType;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Tags\HasTags;
 
+#[Fillable(['state', 'asset_type_id', 'owner_id', 'place_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
 class Asset extends Model
 {
     use HasUuids, HasTags;
-
-    protected $fillable = [
-        'id',
-        'asset_type_id',
-        'model_id',
-        'serial_number',
-        'buy_date',
-        'guarantee_end',
-        'invoice',
-        'owner_id',
-        'buy_price',
-        'buy_type',
-        'state',
-    ];
 
     public function assetType(): BelongsTo
     {
