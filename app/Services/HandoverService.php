@@ -47,46 +47,51 @@ class HandoverService
                 base64_decode($data->signaturePngBase64, true),
             );
 
-            $handover = Handover::create([
-                'id' => $handoverId,
-                'type' => $data->type->value,
-                'recipient_kind' => $data->recipientKind->value,
-                'recipient_user_id' => $data->recipientUserId,
-                'recipient_name' => $data->recipientName,
-                'recipient_email' => $data->recipientEmail,
-                'accessories' => $data->accessories,
-                'condition_notes' => $data->conditionNotes,
-                'terms_text' => $data->termsText,
-                'signature_path' => $signaturePath,
-                'signature_ip' => $data->signatureIp,
-                'signature_user_agent' => $data->signatureUserAgent,
-                'signed_at' => now(),
-                'created_by' => $data->createdById,
-            ]);
-
-            $stateTo = $data->type->stateTo()->value;
-            $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientUserId : null;
-
-            foreach ($data->assetIds as $assetId) {
-                $asset = $assets[$assetId];
-                $stateFrom = $asset->state->value;
-                $ownerFrom = $asset->owner_id;
-
-                $handover->assets()->attach($assetId, [
-                    'id' => (string) Str::uuid(),
-                    'state_from' => $stateFrom,
-                    'state_to' => $stateTo,
-                    'owner_from_id' => $ownerFrom,
-                    'owner_to_id' => $ownerTo,
+            try {
+                $handover = Handover::create([
+                    'id' => $handoverId,
+                    'type' => $data->type->value,
+                    'recipient_kind' => $data->recipientKind->value,
+                    'recipient_user_id' => $data->recipientUserId,
+                    'recipient_name' => $data->recipientName,
+                    'recipient_email' => $data->recipientEmail,
+                    'accessories' => $data->accessories,
+                    'condition_notes' => $data->conditionNotes,
+                    'terms_text' => $data->termsText,
+                    'signature_path' => $signaturePath,
+                    'signature_ip' => $data->signatureIp,
+                    'signature_user_agent' => $data->signatureUserAgent,
+                    'signed_at' => now(),
+                    'created_by' => $data->createdById,
                 ]);
 
-                $asset->update([
-                    'state' => $stateTo,
-                    'owner_id' => $ownerTo,
-                ]);
+                $stateTo = $data->type->stateTo()->value;
+                $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientUserId : null;
+
+                foreach ($data->assetIds as $assetId) {
+                    $asset = $assets[$assetId];
+                    $stateFrom = $asset->state->value;
+                    $ownerFrom = $asset->owner_id;
+
+                    $handover->assets()->attach($assetId, [
+                        'id' => (string) Str::uuid(),
+                        'state_from' => $stateFrom,
+                        'state_to' => $stateTo,
+                        'owner_from_id' => $ownerFrom,
+                        'owner_to_id' => $ownerTo,
+                    ]);
+
+                    $asset->update([
+                        'state' => $stateTo,
+                        'owner_id' => $ownerTo,
+                    ]);
+                }
+
+                return $handover;
+            } catch (\Throwable $e) {
+                Storage::disk($disk)->delete($signaturePath);
+                throw $e;
             }
-
-            return $handover;
         });
     }
 }

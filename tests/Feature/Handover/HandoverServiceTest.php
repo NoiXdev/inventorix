@@ -130,6 +130,99 @@ class HandoverServiceTest extends TestCase
         ]);
     }
 
+    public function test_state_conflict_throws_and_leaves_no_db_rows(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::IN_USE->value]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,                   // requires NEW or STORAGE
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        try {
+            app(HandoverService::class)->commit($data);
+            $this->fail('Expected HandoverStateConflictException');
+        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+            $this->assertSame([$asset->id], $e->assetIds);
+        }
+
+        $this->assertDatabaseCount('handovers', 0);
+        $this->assertDatabaseCount('handover_asset', 0);
+        $this->assertCount(0, Storage::disk('local')->allFiles('handovers'));
+    }
+
+    public function test_unknown_asset_id_throws_state_conflict(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: ['00000000-0000-0000-0000-000000000000'],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $this->expectException(\App\Exceptions\HandoverStateConflictException::class);
+        app(HandoverService::class)->commit($data);
+    }
+
+    public function test_throwing_inside_transaction_deletes_signature_file(): void
+    {
+        $recipient = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+
+        // Force the inner Handover insert to fail via a non-existent created_by UUID;
+        // SQLite enforces the FK because Laravel enables it on connection open.
+        $bogusManagerId = (string) \Illuminate\Support\Str::uuid();
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $bogusManagerId,
+        );
+
+        $this->expectException(\Throwable::class);
+
+        try {
+            app(HandoverService::class)->commit($data);
+        } finally {
+            $this->assertCount(0, Storage::disk('local')->allFiles('handovers'));
+        }
+    }
+
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): \App\Models\Handover
     {
         $manager = User::factory()->create();
