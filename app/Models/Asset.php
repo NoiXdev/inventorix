@@ -6,6 +6,7 @@ use App\Enums\AssetState;
 use App\Enums\BuyType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,7 +15,7 @@ use Spatie\Tags\HasTags;
 #[Fillable(['state', 'asset_type_id', 'owner_id', 'place_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
 class Asset extends Model
 {
-    use HasUuids, HasTags;
+    use HasUuids, HasTags, HasFactory;
 
     public function assetType(): BelongsTo
     {
