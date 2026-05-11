@@ -370,7 +370,7 @@ git commit -m "test(factories): add factories for AssetType, Manufacturer, Asset
 In `app/Models/User.php`, add to the import block:
 
 ```php
-use Spatie\Activitylog\Traits\CausesActivity;
+use Spatie\Activitylog\Models\Concerns\CausesActivity;
 ```
 
 In the class `use` line, append `CausesActivity`:
@@ -522,8 +522,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['asset_id', 'notes', 'title', 'open_date', 'closed_date'])]
 class Incident extends Model
@@ -678,8 +678,8 @@ Edit `app/Models/Asset.php`. Add imports:
 
 ```php
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\LogOptions;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 ```
 
 Update the in-class `use` line:
