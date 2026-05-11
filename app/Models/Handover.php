@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 #[Fillable([
+    'id',
     'type', 'recipient_kind',
     'recipient_user_id', 'recipient_name', 'recipient_email',
     'accessories', 'condition_notes', 'terms_text',
