@@ -4,6 +4,8 @@ namespace App\Filament\App\Resources\Assets\RelationManagers;
 
 use App\Models\Asset;
 use App\Support\History\SummaryBuilder;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -29,6 +31,32 @@ class HistoryRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([]);
+    }
+
+    public function add_noteAction(): Action
+    {
+        return Action::make('add_note')
+            ->label(trans('history.add_note'))
+            ->modalHeading(trans('history.add_note'))
+            ->modalSubmitActionLabel(trans('history.add_note_save'))
+            ->schema([
+                Textarea::make('body')
+                    ->label(trans('history.add_note_body'))
+                    ->required()
+                    ->minLength(1)
+                    ->maxLength(2000)
+                    ->rows(4),
+            ])
+            ->action(function (array $data): void {
+                /** @var Asset $asset */
+                $asset = $this->getOwnerRecord();
+
+                activity('asset')
+                    ->performedOn($asset)
+                    ->causedBy(auth()->user())
+                    ->withProperties(['body' => $data['body']])
+                    ->log('note');
+            });
     }
 
     protected function getTableQuery(): Builder
@@ -113,7 +141,9 @@ class HistoryRelationManager extends RelationManager
                     ->wrap(),
             ])
             ->filters([])
-            ->headerActions([])
+            ->headerActions([
+                $this->add_noteAction(),
+            ])
             ->recordActions([])
             ->toolbarActions([]);
     }

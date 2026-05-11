@@ -108,4 +108,44 @@ class HistoryRelationManagerTest extends TestCase
         ])
             ->assertCanSeeTableRecords(collect([$genericUpdated]));
     }
+
+    public function test_add_note_action_writes_a_note_activity_against_the_asset(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->callAction('add_note', data: ['body' => 'Found dent on lid'])
+            ->assertHasNoActionErrors();
+
+        $activity = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_type', Asset::class)
+            ->where('subject_id', $asset->id)
+            ->where('description', 'note')
+            ->first();
+
+        $this->assertNotNull($activity);
+        $this->assertSame('Found dent on lid', $activity->properties['body']);
+        $this->assertSame((string) $user->id, (string) $activity->causer_id);
+    }
+
+    public function test_add_note_action_requires_a_body(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->callAction('add_note', data: ['body' => ''])
+            ->assertHasActionErrors(['body']);
+    }
 }
