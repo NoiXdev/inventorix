@@ -12,11 +12,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Models\Concerns\CausesActivity;
 
 #[Fillable(['name', 'firstname', 'lastname', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
 class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable, HasUuids;
+    use HasFactory, Notifiable, HasUuids, CausesActivity;
 
     protected $hidden = [
         'password',
