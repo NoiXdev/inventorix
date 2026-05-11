@@ -34,10 +34,22 @@ class HandoverWizardAction
             ->modalWidth('5xl')
             ->fillForm(function () use ($assetIds): array {
                 $ids = is_callable($assetIds) ? $assetIds() : $assetIds;
+                $ids = array_values(array_filter($ids));
+
+                $defaultType = HandoverType::ISSUE->value;
+                if (! empty($ids)) {
+                    $firstAsset = \App\Models\Asset::query()->find($ids[0]);
+                    if ($firstAsset !== null) {
+                        $defaultType = match ($firstAsset->state) {
+                            \App\Enums\AssetState::IN_USE, \App\Enums\AssetState::LEND => HandoverType::RETURN_->value,
+                            default => HandoverType::ISSUE->value,
+                        };
+                    }
+                }
 
                 return [
-                    'asset_ids' => array_values(array_filter($ids)),
-                    'type' => HandoverType::ISSUE->value,
+                    'asset_ids' => $ids,
+                    'type' => $defaultType,
                     'recipient_kind' => RecipientKind::INTERNAL->value,
                     'terms_text' => (string) config('handover.terms'),
                     'signature_png' => '',

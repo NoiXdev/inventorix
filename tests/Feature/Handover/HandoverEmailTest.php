@@ -44,7 +44,7 @@ class HandoverEmailTest extends TestCase
             createdById: $manager->id,
         ));
 
-        Mail::assertQueued(HandoverSigned::class, function (HandoverSigned $mail): bool {
+        Mail::assertSent(HandoverSigned::class, function (HandoverSigned $mail): bool {
             return $mail->hasTo('alice@example.com');
         });
     }
@@ -73,6 +73,6 @@ class HandoverEmailTest extends TestCase
             createdById: $manager->id,
         ));
 
-        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
     }
 }

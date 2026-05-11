@@ -29,6 +29,11 @@ class GenerateHandoverPdf implements ShouldQueue
         $disk = config('handover.disk');
 
         $signatureBytes = Storage::disk($disk)->get($handover->signature_path);
+
+        if ($signatureBytes === null) {
+            throw new \RuntimeException("Signature file missing: {$handover->signature_path}");
+        }
+
         $signatureBase64 = base64_encode($signatureBytes);
 
         $pdf = Pdf::loadView('pdf.handover', [
