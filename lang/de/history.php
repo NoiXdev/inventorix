@@ -34,4 +34,15 @@ return [
         'system'        => 'System',
         'former_user'   => 'System (ehemaliger Nutzer)',
     ],
+
+    'column' => [
+        'user'  => 'Benutzer',
+        'event' => 'Ereignis',
+    ],
+
+    'filter' => [
+        'event' => 'Ereignis',
+        'from'  => 'Von',
+        'until' => 'Bis',
+    ],
 ];

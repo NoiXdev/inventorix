@@ -130,7 +130,7 @@ class HistoryRelationManager extends RelationManager
                     ->sortable(),
 
                 TextColumn::make('causer_label')
-                    ->label('User')
+                    ->label(trans('history.column.user'))
                     ->state(function (Activity $record): string {
                         if ($record->causer_id === null) {
                             return trans('history.causer.system');
@@ -142,7 +142,7 @@ class HistoryRelationManager extends RelationManager
                     }),
 
                 TextColumn::make('description')
-                    ->label('Event')
+                    ->label(trans('history.column.event'))
                     ->formatStateUsing(fn (string $state) => \Illuminate\Support\Facades\Lang::has('history.event.' . $state) ? trans('history.event.' . $state) : $state)
                     ->badge(),
 
@@ -153,7 +153,7 @@ class HistoryRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('event_kind')
-                    ->label('Event')
+                    ->label(trans('history.filter.event'))
                     ->multiple()
                     ->options([
                         'created'        => trans('history.event.created'),
@@ -170,8 +170,8 @@ class HistoryRelationManager extends RelationManager
                     }),
                 Filter::make('date_range')
                     ->schema([
-                        DatePicker::make('from')->label('From'),
-                        DatePicker::make('until')->label('Until'),
+                        DatePicker::make('from')->label(trans('history.filter.from')),
+                        DatePicker::make('until')->label(trans('history.filter.until')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
