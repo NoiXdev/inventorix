@@ -17,7 +17,7 @@ class IncidentFactory extends Factory
             'asset_id'    => Asset::factory(),
             'title'       => fake()->sentence(3),
             'notes'       => fake()->paragraph(),
-            'open_date'   => now(),
+            'open_date'   => now()->format('Y-m-d H:i:s'),
             'closed_date' => null,
         ];
     }
