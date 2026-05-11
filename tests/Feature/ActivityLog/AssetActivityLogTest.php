@@ -73,4 +73,80 @@ class AssetActivityLogTest extends TestCase
 
         $this->assertSame((string) $user->id, (string) $activity->causer_id);
     }
+
+    public function test_owner_change_writes_an_owner_changed_activity(): void
+    {
+        $asset = Asset::factory()->create();
+        $newOwner = User::factory()->create();
+        $oldOwnerId = $asset->owner_id;
+
+        $asset->update(['owner_id' => $newOwner->id]);
+
+        $activity = Activity::query()
+            ->where('subject_id', $asset->id)
+            ->where('description', 'owner_changed')
+            ->first();
+
+        $this->assertNotNull($activity);
+        $this->assertSame($oldOwnerId, $activity->properties['from']);
+        $this->assertSame($newOwner->id, $activity->properties['to']);
+    }
+
+    public function test_place_change_writes_a_place_changed_activity(): void
+    {
+        $asset = Asset::factory()->create();
+        $newPlace = \App\Models\Place::factory()->create();
+        $oldPlaceId = $asset->place_id;
+
+        $asset->update(['place_id' => $newPlace->id]);
+
+        $activity = Activity::query()
+            ->where('subject_id', $asset->id)
+            ->where('description', 'place_changed')
+            ->first();
+
+        $this->assertNotNull($activity);
+        $this->assertSame($oldPlaceId, $activity->properties['from']);
+        $this->assertSame($newPlace->id, $activity->properties['to']);
+    }
+
+    public function test_state_change_writes_a_state_changed_activity(): void
+    {
+        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
+
+        $asset->update(['state' => AssetState::IN_USE->value]);
+
+        $activity = Activity::query()
+            ->where('subject_id', $asset->id)
+            ->where('description', 'state_changed')
+            ->first();
+
+        $this->assertNotNull($activity);
+        $this->assertSame(AssetState::NEW->value, $activity->properties['from']);
+        $this->assertSame(AssetState::IN_USE->value, $activity->properties['to']);
+    }
+
+    public function test_a_semantic_change_also_keeps_the_generic_updated_row(): void
+    {
+        $asset = Asset::factory()->create();
+        $newOwner = User::factory()->create();
+
+        $asset->update(['owner_id' => $newOwner->id]);
+
+        $this->assertSame(
+            1,
+            Activity::query()
+                ->where('subject_id', $asset->id)
+                ->where('description', 'updated')
+                ->count(),
+            'generic updated row should still be written',
+        );
+        $this->assertSame(
+            1,
+            Activity::query()
+                ->where('subject_id', $asset->id)
+                ->where('description', 'owner_changed')
+                ->count(),
+        );
+    }
 }

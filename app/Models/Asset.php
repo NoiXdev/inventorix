@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\AssetState;
 use App\Enums\BuyType;
+use App\Observers\AssetObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,6 +17,7 @@ use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Tags\HasTags;
 
 #[Fillable(['state', 'asset_type_id', 'owner_id', 'place_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
+#[ObservedBy(AssetObserver::class)]
 class Asset extends Model
 {
     use HasUuids, HasTags, HasFactory, LogsActivity;
