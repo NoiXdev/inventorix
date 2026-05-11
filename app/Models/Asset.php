@@ -48,6 +48,15 @@ class Asset extends Model
             ->orderBy('open_date', 'asc');
     }
 
+    public function handovers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Handover::class, 'handover_asset')
+            ->using(HandoverAsset::class)
+            ->withPivot(['id', 'state_from', 'state_to', 'owner_from_id', 'owner_to_id'])
+            ->withTimestamps()
+            ->orderByDesc('handovers.signed_at');
+    }
+
     protected function casts(): array
     {
         return [
