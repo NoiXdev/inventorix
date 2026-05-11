@@ -18,7 +18,7 @@ class QrCodeGenerator extends Page implements HasForms
 
     protected static string|null|\BackedEnum $navigationIcon = 'heroicon-o-document-text';
 
-    protected string $view = 'filament.pages.qr-code-generator';
+    protected string $view = 'filament.app.pages.qr-code-generator';
 
     public ?array $data = [
         'amount' => 20,
