@@ -85,6 +85,16 @@ class HandoverService
                         'state' => $stateTo,
                         'owner_id' => $ownerTo,
                     ]);
+
+                    activity('asset')
+                        ->performedOn($asset->fresh())
+                        ->causedBy(\Illuminate\Support\Facades\Auth::id() ?: $data->createdById)
+                        ->withProperties([
+                            'handover_id' => $handover->id,
+                            'type' => $data->type->value,
+                            'recipient_name' => $data->recipientName,
+                        ])
+                        ->log('handover_completed');
                 }
 
                 return $handover;

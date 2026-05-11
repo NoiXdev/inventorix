@@ -339,6 +339,47 @@ class HandoverServiceTest extends TestCase
         $this->assertDatabaseCount('handovers', 0);
     }
 
+    public function test_commit_writes_handover_completed_activity_per_asset(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $this->actingAs($manager);
+        $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $b = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: $recipient->email,
+            assetIds: [$a->id, $b->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $handover = app(HandoverService::class)->commit($data);
+
+        foreach ([$a->id, $b->id] as $assetId) {
+            $activity = \Spatie\Activitylog\Models\Activity::query()
+                ->where('subject_type', Asset::class)
+                ->where('subject_id', $assetId)
+                ->where('description', 'handover_completed')
+                ->first();
+
+            $this->assertNotNull($activity, "No handover_completed activity for asset {$assetId}");
+            $this->assertSame('asset', $activity->log_name);
+            $this->assertSame($handover->id, $activity->properties['handover_id']);
+            $this->assertSame(HandoverType::ISSUE->value, $activity->properties['type']);
+            $this->assertSame($recipient->name, $activity->properties['recipient_name']);
+        }
+    }
+
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): \App\Models\Handover
     {
         $manager = User::factory()->create();
