@@ -51,17 +51,20 @@ audit page — surfaces them automatically with no data backfill.
 ## Data model
 
 The package's published migration is modified before running so the
-polymorphic columns are UUID-compatible (Asset and Incident use `HasUuids`):
+polymorphic `subject_id` can hold both UUIDs (Asset) and bigints (Incident).
+The Incident table uses an auto-increment bigint PK today (`$table->id()`)
+while Asset and User use `HasUuids` — `string(36)` accommodates both
+(UUIDs are 36 chars; int64 max is 19 chars as text):
 
 | column | type | notes |
 |---|---|---|
 | `id` | bigIncrements | PK |
 | `log_name` | string, nullable, indexed | `"asset"` or `"incident"` |
 | `description` | string | machine code: `created`, `updated`, `deleted`, `owner_changed`, `place_changed`, `state_changed`, `note` |
-| `subject_type` | string, nullable | model class |
-| `subject_id` | **uuid**, nullable | overridden from the package default |
+| `subject_type` | string, nullable, indexed | model class |
+| `subject_id` | **string(36), nullable, indexed** | overridden from the package's `unsignedBigInteger` default |
 | `causer_type` | string, nullable | `App\Models\User` |
-| `causer_id` | unsignedBigInteger, nullable | users table uses bigint PKs today |
+| `causer_id` | **string(36), nullable, indexed** | User uses UUID PKs |
 | `properties` | json, nullable | see "Event payloads" below |
 | `created_at`, `updated_at` | timestamps | |
 
