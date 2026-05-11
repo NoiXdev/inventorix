@@ -31,4 +31,34 @@ class HistoryRelationManagerTest extends TestCase
                     ->get()
             );
     }
+
+    public function test_history_includes_incident_events_for_this_asset(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+        $incident = \App\Models\Incident::factory()->create(['asset_id' => $asset->id]);
+
+        $otherAsset = Asset::factory()->create();
+        $otherIncident = \App\Models\Incident::factory()->create(['asset_id' => $otherAsset->id]);
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->assertCanSeeTableRecords(
+                \Spatie\Activitylog\Models\Activity::query()
+                    ->where(function ($q) use ($asset, $incident) {
+                        $q->where(fn ($q) => $q->where('subject_type', Asset::class)->where('subject_id', $asset->id))
+                          ->orWhere(fn ($q) => $q->where('subject_type', \App\Models\Incident::class)->where('subject_id', (string) $incident->id));
+                    })->get()
+            )
+            ->assertCanNotSeeTableRecords(
+                \Spatie\Activitylog\Models\Activity::query()
+                    ->where('subject_type', \App\Models\Incident::class)
+                    ->where('subject_id', (string) $otherIncident->id)
+                    ->get()
+            );
+    }
 }

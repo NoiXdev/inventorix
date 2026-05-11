@@ -36,9 +36,26 @@ class HistoryRelationManager extends RelationManager
         /** @var Asset $asset */
         $asset = $this->getOwnerRecord();
 
+        $incidentIds = \App\Models\Incident::query()
+            ->where('asset_id', $asset->id)
+            ->pluck('id')
+            ->map(fn ($id) => (string) $id)
+            ->all();
+
         return Activity::query()
-            ->where('subject_type', Asset::class)
-            ->where('subject_id', $asset->id);
+            ->where(function (Builder $q) use ($asset, $incidentIds): void {
+                $q->where(function (Builder $inner) use ($asset): void {
+                    $inner->where('subject_type', Asset::class)
+                          ->where('subject_id', $asset->id);
+                });
+
+                if (! empty($incidentIds)) {
+                    $q->orWhere(function (Builder $inner) use ($incidentIds): void {
+                        $inner->where('subject_type', \App\Models\Incident::class)
+                              ->whereIn('subject_id', $incidentIds);
+                    });
+                }
+            });
     }
 
     public function table(Table $table): Table
