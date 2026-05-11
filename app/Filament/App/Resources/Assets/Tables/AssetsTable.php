@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\Assets\Tables;
 
 use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\AssetResource;
+use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use App\Models\Asset;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -65,7 +66,7 @@ class AssetsTable
                     ->toggledHiddenByDefault()
                     ->sortable()
                     ->searchable()
-                    ->label('Kaufpreis')
+                    ->label('Kaufpreis'),
             ])
             ->filters([
                 SelectFilter::make('state')
@@ -91,24 +92,25 @@ class AssetsTable
                 Filter::make('buy_price_null')
                     ->schema([
                         Toggle::make('show_empty_price')
-                            ->label('Zeige Ohne Preise')
+                            ->label('Zeige Ohne Preise'),
                     ])
                     ->indicateUsing(static function (array $data) {
-                        if ((bool)$data['show_empty_price']) {
+                        if ((bool) $data['show_empty_price']) {
                             return 'Zeige Ohne Preise';
                         }
                     })
                     ->query(static function (Builder $query, array $data): Builder {
-                        if ((bool)$data['show_empty_price']) {
+                        if ((bool) $data['show_empty_price']) {
                             $query->where('buy_price', '=', null);
                             $query->orWhere('buy_price', '=', '');
                         }
+
                         return $query;
-                    })
+                    }),
             ])
             ->recordActions([
                 ActionGroup::make([
-                    \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+                    HandoverWizardAction::make(
                         'handover',
                         fn (Asset $record): array => [$record->id],
                     ),
@@ -118,7 +120,7 @@ class AssetsTable
                             TextInput::make('new_id')
                                 ->required()
                                 ->visible(static function (Get $get) {
-                                    return !(bool)$get('override_id');
+                                    return ! (bool) $get('override_id');
                                 })
                                 ->label('Override ID'),
 
@@ -130,12 +132,12 @@ class AssetsTable
                             return AssetResource::getUrl('edit', ['record' => $replica, 'replicated' => true]);
                         })
                         ->beforeReplicaSaved(static function (Asset $replica, array $data): void {
-                            if (isset($data['new_id']) && !empty($data['new_id'])) {
+                            if (isset($data['new_id']) && ! empty($data['new_id'])) {
                                 $replica->id = $data['new_id'];
                             }
                         })
                         ->excludeAttributes([
-                            'invoice'
+                            'invoice',
                         ]),
                     EditAction::make(),
                     DeleteAction::make(),
@@ -143,7 +145,7 @@ class AssetsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+                    HandoverWizardAction::make(
                         'handover_bulk',
                         fn ($livewire) => $livewire->getSelectedTableRecords()->pluck('id')->all(),
                     )->label(trans('handover.action.bulk')),

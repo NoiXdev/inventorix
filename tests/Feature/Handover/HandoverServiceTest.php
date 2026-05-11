@@ -6,11 +6,15 @@ use App\DataObjects\HandoverData;
 use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
+use App\Exceptions\HandoverStateConflictException;
 use App\Models\Asset;
+use App\Models\Handover;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class HandoverServiceTest extends TestCase
@@ -155,7 +159,7 @@ class HandoverServiceTest extends TestCase
         try {
             app(HandoverService::class)->commit($data);
             $this->fail('Expected HandoverStateConflictException');
-        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+        } catch (HandoverStateConflictException $e) {
             $this->assertSame([$asset->id], $e->assetIds);
         }
 
@@ -185,7 +189,7 @@ class HandoverServiceTest extends TestCase
             createdById: $manager->id,
         );
 
-        $this->expectException(\App\Exceptions\HandoverStateConflictException::class);
+        $this->expectException(HandoverStateConflictException::class);
         app(HandoverService::class)->commit($data);
     }
 
@@ -196,7 +200,7 @@ class HandoverServiceTest extends TestCase
 
         // Force the inner Handover insert to fail via a non-existent created_by UUID;
         // SQLite enforces the FK because Laravel enables it on connection open.
-        $bogusManagerId = (string) \Illuminate\Support\Str::uuid();
+        $bogusManagerId = (string) Str::uuid();
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -330,7 +334,7 @@ class HandoverServiceTest extends TestCase
         try {
             app(HandoverService::class)->commit($data);
             $this->fail('Expected conflict');
-        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+        } catch (HandoverStateConflictException $e) {
             $this->assertSame([$invalid->id], $e->assetIds);
         }
 
@@ -366,7 +370,7 @@ class HandoverServiceTest extends TestCase
         $handover = app(HandoverService::class)->commit($data);
 
         foreach ([$a->id, $b->id] as $assetId) {
-            $activity = \Spatie\Activitylog\Models\Activity::query()
+            $activity = Activity::query()
                 ->where('subject_type', Asset::class)
                 ->where('subject_id', $assetId)
                 ->where('description', 'handover_completed')
@@ -422,7 +426,7 @@ class HandoverServiceTest extends TestCase
             accessories: null,
             conditionNotes: null,
             termsText: 'Terms snapshot',
-            signaturePngBase64: base64_encode('GIF87a' . str_repeat('x', 100)),
+            signaturePngBase64: base64_encode('GIF87a'.str_repeat('x', 100)),
             signatureIp: null,
             signatureUserAgent: null,
             createdById: $manager->id,
@@ -438,7 +442,7 @@ class HandoverServiceTest extends TestCase
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
 
-        $tooBig = "\x89PNG\r\n\x1a\n" . str_repeat('x', config('handover.signature.max_bytes') + 1);
+        $tooBig = "\x89PNG\r\n\x1a\n".str_repeat('x', config('handover.signature.max_bytes') + 1);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -460,7 +464,7 @@ class HandoverServiceTest extends TestCase
         app(HandoverService::class)->commit($data);
     }
 
-    private function dispatch(HandoverType $type, User $recipient, Asset $asset): \App\Models\Handover
+    private function dispatch(HandoverType $type, User $recipient, Asset $asset): Handover
     {
         $manager = User::factory()->create();
 

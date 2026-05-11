@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use Exception;
 
-class QrCodeGeneratorException extends Exception
-{
-}
+class QrCodeGeneratorException extends Exception {}

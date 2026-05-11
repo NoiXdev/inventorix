@@ -13,10 +13,10 @@ class EntraIdAuthService
     public function assertTenantMatches(SocialiteUser $msUser): void
     {
         $expected = config('services.microsoft-azure.tenant');
-        $actual   = $msUser->user['tid'] ?? null;
+        $actual = $msUser->user['tid'] ?? null;
 
         if ($expected === null || $actual === null || $actual !== $expected) {
-            throw new EntraTenantMismatchException();
+            throw new EntraTenantMismatchException;
         }
     }
 
@@ -40,11 +40,11 @@ class EntraIdAuthService
         }
 
         if ($user === null) {
-            throw new EntraUserNotProvisionedException();
+            throw new EntraUserNotProvisionedException;
         }
 
         if (! $user->login_enabled) {
-            throw new EntraLoginDisabledException();
+            throw new EntraLoginDisabledException;
         }
 
         return $user;
@@ -54,16 +54,16 @@ class EntraIdAuthService
     {
         $raw = $msUser->user;
 
-        $first = $raw['givenName']   ?? $user->firstname;
-        $last  = $raw['surname']     ?? $user->lastname;
-        $name  = $raw['displayName'] ?? trim($first . ' ' . $last);
+        $first = $raw['givenName'] ?? $user->firstname;
+        $last = $raw['surname'] ?? $user->lastname;
+        $name = $raw['displayName'] ?? trim($first.' '.$last);
         $email = $raw['mail'] ?? $raw['userPrincipalName'] ?? $msUser->email ?? $user->email;
 
         $user->forceFill([
             'firstname' => $first,
-            'lastname'  => $last,
-            'name'      => $name,
-            'email'     => $email,
+            'lastname' => $last,
+            'name' => $name,
+            'email' => $email,
         ])->save();
     }
 

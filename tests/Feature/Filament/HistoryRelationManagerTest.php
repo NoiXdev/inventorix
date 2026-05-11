@@ -2,11 +2,14 @@
 
 namespace Tests\Feature\Filament;
 
+use App\Filament\App\Resources\Assets\Pages\EditAsset;
 use App\Filament\App\Resources\Assets\RelationManagers\HistoryRelationManager;
 use App\Models\Asset;
+use App\Models\Incident;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class HistoryRelationManagerTest extends TestCase
@@ -23,10 +26,10 @@ class HistoryRelationManagerTest extends TestCase
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->assertCanSeeTableRecords(
-                \Spatie\Activitylog\Models\Activity::query()
+                Activity::query()
                     ->where('subject_id', $asset->id)
                     ->get()
             );
@@ -38,25 +41,25 @@ class HistoryRelationManagerTest extends TestCase
         $this->actingAs($user);
 
         $asset = Asset::factory()->create();
-        $incident = \App\Models\Incident::factory()->create(['asset_id' => $asset->id]);
+        $incident = Incident::factory()->create(['asset_id' => $asset->id]);
 
         $otherAsset = Asset::factory()->create();
-        $otherIncident = \App\Models\Incident::factory()->create(['asset_id' => $otherAsset->id]);
+        $otherIncident = Incident::factory()->create(['asset_id' => $otherAsset->id]);
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->assertCanSeeTableRecords(
-                \Spatie\Activitylog\Models\Activity::query()
+                Activity::query()
                     ->where(function ($q) use ($asset, $incident) {
                         $q->where(fn ($q) => $q->where('subject_type', Asset::class)->where('subject_id', $asset->id))
-                          ->orWhere(fn ($q) => $q->where('subject_type', \App\Models\Incident::class)->where('subject_id', (string) $incident->id));
+                            ->orWhere(fn ($q) => $q->where('subject_type', Incident::class)->where('subject_id', (string) $incident->id));
                     })->get()
             )
             ->assertCanNotSeeTableRecords(
-                \Spatie\Activitylog\Models\Activity::query()
-                    ->where('subject_type', \App\Models\Incident::class)
+                Activity::query()
+                    ->where('subject_type', Incident::class)
                     ->where('subject_id', (string) $otherIncident->id)
                     ->get()
             );
@@ -71,7 +74,7 @@ class HistoryRelationManagerTest extends TestCase
         $newOwner = User::factory()->create();
         $asset->update(['owner_id' => $newOwner->id]);
 
-        $rows = \Spatie\Activitylog\Models\Activity::query()
+        $rows = Activity::query()
             ->where('subject_id', $asset->id)
             ->get();
 
@@ -83,7 +86,7 @@ class HistoryRelationManagerTest extends TestCase
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->assertCanSeeTableRecords(collect([$semantic]))
             ->assertCanNotSeeTableRecords(collect([$genericUpdated]));
@@ -97,14 +100,14 @@ class HistoryRelationManagerTest extends TestCase
         $asset = Asset::factory()->create();
         $asset->update(['serial_number' => 'SN-NEW']);
 
-        $genericUpdated = \Spatie\Activitylog\Models\Activity::query()
+        $genericUpdated = Activity::query()
             ->where('subject_id', $asset->id)
             ->where('description', 'updated')
             ->first();
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->assertCanSeeTableRecords(collect([$genericUpdated]));
     }
@@ -118,12 +121,12 @@ class HistoryRelationManagerTest extends TestCase
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->callAction('add_note', data: ['body' => 'Found dent on lid'])
             ->assertHasNoActionErrors();
 
-        $activity = \Spatie\Activitylog\Models\Activity::query()
+        $activity = Activity::query()
             ->where('subject_type', Asset::class)
             ->where('subject_id', $asset->id)
             ->where('description', 'note')
@@ -143,7 +146,7 @@ class HistoryRelationManagerTest extends TestCase
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->callAction('add_note', data: ['body' => ''])
             ->assertHasActionErrors(['body']);
@@ -158,12 +161,12 @@ class HistoryRelationManagerTest extends TestCase
         $newOwner = User::factory()->create();
         $asset->update(['owner_id' => $newOwner->id, 'serial_number' => 'X']);
 
-        $ownerChanged = \Spatie\Activitylog\Models\Activity::query()
+        $ownerChanged = Activity::query()
             ->where('subject_id', $asset->id)->where('description', 'owner_changed')->first();
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->filterTable('event_kind', ['owner_changed'])
             ->assertCanSeeTableRecords(collect([$ownerChanged]));
@@ -180,7 +183,7 @@ class HistoryRelationManagerTest extends TestCase
 
         Livewire::test(HistoryRelationManager::class, [
             'ownerRecord' => $asset,
-            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+            'pageClass' => EditAsset::class,
         ])
             ->assertSeeText(trans('history.causer.former_user'));
     }

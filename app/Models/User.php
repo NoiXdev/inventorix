@@ -3,7 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Events\UserCreatingEvent;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,7 +16,7 @@ use Spatie\Activitylog\Models\Concerns\CausesActivity;
 #[Fillable(['name', 'firstname', 'lastname', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
 class User extends Authenticatable implements FilamentUser
 {
-    use HasFactory, Notifiable, HasUuids, CausesActivity;
+    use CausesActivity, HasFactory, HasUuids, Notifiable;
 
     protected $hidden = [
         'password',
@@ -33,7 +32,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             'password' => 'hashed',
-            'login_enabled' => 'boolean'
+            'login_enabled' => 'boolean',
         ];
     }
 

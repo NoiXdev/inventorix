@@ -9,7 +9,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Schema;
-use Illuminate\Http\RedirectResponse;
 use Livewire\Features\SupportRedirects\Redirector;
 
 class QrCodeGenerator extends Page implements HasForms
@@ -22,7 +21,7 @@ class QrCodeGenerator extends Page implements HasForms
 
     public ?array $data = [
         'amount' => 20,
-        'type' => QrCodeGeneratorType::TXT
+        'type' => QrCodeGeneratorType::TXT,
     ];
 
     public function form(Schema $schema): Schema

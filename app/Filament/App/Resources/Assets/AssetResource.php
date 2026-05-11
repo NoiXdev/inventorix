@@ -2,6 +2,9 @@
 
 namespace App\Filament\App\Resources\Assets;
 
+use App\Filament\App\Resources\Assets\Pages\CreateAsset;
+use App\Filament\App\Resources\Assets\Pages\EditAsset;
+use App\Filament\App\Resources\Assets\Pages\ListAssets;
 use App\Filament\App\Resources\Assets\RelationManagers\HistoryRelationManager;
 use App\Filament\App\Resources\Assets\RelationManagers\IncidentsRelationManager;
 use App\Filament\App\Resources\Assets\Schemas\AssetForm;
@@ -36,6 +39,7 @@ class AssetResource extends Resource
         if (request()->has('replicated')) {
             return __('asset.label-copy');
         }
+
         return __('asset.label');
     }
 
@@ -75,9 +79,9 @@ class AssetResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\App\Resources\Assets\Pages\ListAssets::route('/'),
-            'create' => \App\Filament\App\Resources\Assets\Pages\CreateAsset::route('/create'),
-            'edit' => \App\Filament\App\Resources\Assets\Pages\EditAsset::route('/{record}/edit'),
+            'index' => ListAssets::route('/'),
+            'create' => CreateAsset::route('/create'),
+            'edit' => EditAsset::route('/{record}/edit'),
         ];
     }
 
@@ -95,7 +99,7 @@ class AssetResource extends Resource
     }
 
     /**
-     * @param Asset $record
+     * @param  Asset  $record
      */
     public static function getGlobalSearchResultDetails(Model $record): array
     {

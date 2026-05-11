@@ -2,8 +2,6 @@
 
 namespace App\Filament\App\Resources\Places\Schemas;
 
-use App\Models\Place;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -38,7 +36,7 @@ class PlaceForm
                                     ->label('Name')
                                     ->required(),
                             ]),
-                    ])
+                    ]),
             ]);
     }
 }

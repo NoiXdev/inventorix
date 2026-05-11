@@ -27,22 +27,22 @@ class HandoverWizardTest extends TestCase
         $this->actingAs($manager);
 
         $asset = Asset::factory()->create([
-            'state'    => AssetState::STORAGE->value,
+            'state' => AssetState::STORAGE->value,
             'owner_id' => null,
         ]);
 
         Livewire::test(ListHandovers::class)
             ->callAction('new_handover', data: [
-                'type'              => HandoverType::ISSUE->value,
-                'asset_ids'         => [$asset->id],
-                'recipient_kind'    => RecipientKind::INTERNAL->value,
+                'type' => HandoverType::ISSUE->value,
+                'asset_ids' => [$asset->id],
+                'recipient_kind' => RecipientKind::INTERNAL->value,
                 'recipient_user_id' => $recipient->id,
-                'recipient_name'    => $recipient->name,
-                'recipient_email'   => $recipient->email,
-                'accessories'       => 'charger',
-                'condition_notes'   => null,
-                'terms_text'        => 'Snapshot',
-                'signature_png'     => 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                'recipient_name' => $recipient->name,
+                'recipient_email' => $recipient->email,
+                'accessories' => 'charger',
+                'condition_notes' => null,
+                'terms_text' => 'Snapshot',
+                'signature_png' => 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
             ])
             ->assertHasNoActionErrors();
 

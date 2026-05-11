@@ -30,7 +30,7 @@ class UserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return User::where('login_enabled', '=', true)->count() . '/' . User::where('login_enabled', '=', false)->count();
+        return User::where('login_enabled', '=', true)->count().'/'.User::where('login_enabled', '=', false)->count();
     }
 
     public static function getPluralLabel(): ?string

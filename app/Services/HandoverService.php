@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\DataObjects\HandoverData;
 use App\Exceptions\HandoverStateConflictException;
+use App\Jobs\GenerateHandoverPdf;
 use App\Models\Asset;
 use App\Models\Handover;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -86,7 +88,7 @@ class HandoverService
 
                     activity('asset')
                         ->performedOn($asset->fresh())
-                        ->causedBy(\Illuminate\Support\Facades\Auth::id() ?: $data->createdById)
+                        ->causedBy(Auth::id() ?: $data->createdById)
                         ->withProperties([
                             'handover_id' => $handover->id,
                             'type' => $data->type->value,
@@ -95,7 +97,7 @@ class HandoverService
                         ->log('handover_completed');
                 }
 
-                \App\Jobs\GenerateHandoverPdf::dispatch($handover->id)
+                GenerateHandoverPdf::dispatch($handover->id)
                     ->afterCommit();
 
                 return $handover;

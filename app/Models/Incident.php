@@ -17,7 +17,7 @@ class Incident extends Model
     protected function casts(): array
     {
         return [
-            'open_date'   => 'datetime',
+            'open_date' => 'datetime',
             'closed_date' => 'datetime',
         ];
     }

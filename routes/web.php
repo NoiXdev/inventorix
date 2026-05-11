@@ -20,6 +20,7 @@ Route::middleware(['signed'])
         abort_unless($handover->pdf_path, 404);
 
         $disk = config('handover.disk');
+
         return Storage::disk($disk)->download($handover->pdf_path, "handover-{$handover->id}.pdf");
     })
     ->name('handover.pdf');

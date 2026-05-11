@@ -3,6 +3,7 @@
 namespace App\Support\History;
 
 use App\Enums\AssetState;
+use App\Enums\HandoverType;
 use App\Models\Incident;
 use App\Models\Place;
 use App\Models\User;
@@ -20,7 +21,7 @@ class SummaryBuilder
                 ? trans('history.summary.incident_removed')
                 : trans('history.summary.incident_prefix', ['id' => $activity->subject_id]);
 
-            return $prefix . $body;
+            return $prefix.$body;
         }
 
         return $body;
@@ -29,23 +30,23 @@ class SummaryBuilder
     private function bodyFor(Activity $activity): string
     {
         return match ($activity->description) {
-            'created'        => trans('history.summary.created'),
-            'deleted'        => trans('history.summary.deleted'),
-            'updated'        => trans('history.summary.fields_changed', [
+            'created' => trans('history.summary.created'),
+            'deleted' => trans('history.summary.deleted'),
+            'updated' => trans('history.summary.fields_changed', [
                 'count' => count($activity->attribute_changes['attributes'] ?? []),
             ]),
-            'owner_changed'  => $this->userArrow($activity),
-            'place_changed'  => $this->placeArrow($activity),
-            'state_changed'  => $this->stateArrow($activity),
-            'note'           => trans('history.event.note') . ': ' . Str::limit(
+            'owner_changed' => $this->userArrow($activity),
+            'place_changed' => $this->placeArrow($activity),
+            'state_changed' => $this->stateArrow($activity),
+            'note' => trans('history.event.note').': '.Str::limit(
                 (string) ($activity->properties['body'] ?? ''),
                 80,
             ),
             'handover_completed' => trans('handover.history.summary.handover_completed', [
-                'type'      => \App\Enums\HandoverType::tryFrom((string) ($activity->properties['type'] ?? ''))?->getLabel() ?? '',
+                'type' => HandoverType::tryFrom((string) ($activity->properties['type'] ?? ''))?->getLabel() ?? '',
                 'recipient' => (string) ($activity->properties['recipient_name'] ?? ''),
             ]),
-            default          => (string) $activity->description,
+            default => (string) $activity->description,
         };
     }
 
@@ -79,7 +80,7 @@ class SummaryBuilder
     private function arrow(mixed $fromKey, mixed $toKey, callable $resolve): string
     {
         return ($fromKey === null ? '—' : ($resolve($fromKey) ?? '—'))
-            . ' → '
-            . ($toKey === null ? '—' : ($resolve($toKey) ?? '—'));
+            .' → '
+            .($toKey === null ? '—' : ($resolve($toKey) ?? '—'));
     }
 }

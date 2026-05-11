@@ -22,18 +22,19 @@ class MicrosoftLoginTest extends TestCase
 
     private function makeSocialiteUser(array $overrides = []): SocialiteUser
     {
-        $u = new SocialiteUser();
-        $u->id    = $overrides['id']    ?? 'oid-abc-123';
+        $u = new SocialiteUser;
+        $u->id = $overrides['id'] ?? 'oid-abc-123';
         $u->email = $overrides['email'] ?? 'alice@3b.de';
-        $u->name  = $overrides['name']  ?? 'Alice Example';
-        $u->user  = array_merge([
-            'tid'               => 'test-tenant-id',
-            'givenName'         => 'Alice',
-            'surname'           => 'Example',
-            'displayName'       => 'Alice Example',
-            'mail'              => 'alice@3b.de',
+        $u->name = $overrides['name'] ?? 'Alice Example';
+        $u->user = array_merge([
+            'tid' => 'test-tenant-id',
+            'givenName' => 'Alice',
+            'surname' => 'Example',
+            'displayName' => 'Alice Example',
+            'mail' => 'alice@3b.de',
             'userPrincipalName' => 'alice@3b.de',
         ], $overrides['user'] ?? []);
+
         return $u;
     }
 
@@ -48,11 +49,11 @@ class MicrosoftLoginTest extends TestCase
     public function test_callback_logs_in_existing_user_matched_by_entra_id(): void
     {
         $user = User::factory()->create([
-            'entra_id'      => 'oid-abc-123',
-            'email'         => 'unrelated@elsewhere.test',
-            'firstname'     => 'Old',
-            'lastname'      => 'Name',
-            'name'          => 'Old Name',
+            'entra_id' => 'oid-abc-123',
+            'email' => 'unrelated@elsewhere.test',
+            'firstname' => 'Old',
+            'lastname' => 'Name',
+            'name' => 'Old Name',
             'login_enabled' => true,
         ]);
 
@@ -72,8 +73,8 @@ class MicrosoftLoginTest extends TestCase
     public function test_callback_links_existing_user_by_email_when_entra_id_is_null(): void
     {
         $user = User::factory()->create([
-            'entra_id'      => null,
-            'email'         => 'alice@3b.de',
+            'entra_id' => null,
+            'email' => 'alice@3b.de',
             'login_enabled' => true,
         ]);
 
@@ -100,7 +101,7 @@ class MicrosoftLoginTest extends TestCase
     public function test_callback_rejects_disabled_user(): void
     {
         User::factory()->create([
-            'entra_id'      => 'oid-abc-123',
+            'entra_id' => 'oid-abc-123',
             'login_enabled' => false,
         ]);
 
@@ -116,7 +117,7 @@ class MicrosoftLoginTest extends TestCase
     public function test_callback_rejects_wrong_tenant(): void
     {
         User::factory()->create([
-            'entra_id'      => 'oid-abc-123',
+            'entra_id' => 'oid-abc-123',
             'login_enabled' => true,
         ]);
 

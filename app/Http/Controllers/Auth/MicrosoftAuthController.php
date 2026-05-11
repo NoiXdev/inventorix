@@ -40,6 +40,7 @@ class MicrosoftAuthController
                 ->with('entra_error', $e->getUserMessage());
         } catch (Throwable $e) {
             report($e);
+
             return redirect()->route('filament.app.auth.login')
                 ->with('entra_error', __('Microsoft sign-in failed. Please try again.'));
         }

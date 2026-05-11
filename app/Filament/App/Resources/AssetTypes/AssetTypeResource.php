@@ -2,6 +2,9 @@
 
 namespace App\Filament\App\Resources\AssetTypes;
 
+use App\Filament\App\Resources\AssetTypes\Pages\CreateAssetType;
+use App\Filament\App\Resources\AssetTypes\Pages\EditAssetType;
+use App\Filament\App\Resources\AssetTypes\Pages\ListAssetTypes;
 use App\Filament\App\Resources\AssetTypes\Schemas\AssetTypeForm;
 use App\Filament\App\Resources\AssetTypes\Schemas\AssetTypeInfolist;
 use App\Filament\App\Resources\AssetTypes\Tables\AssetTypesTable;
@@ -60,9 +63,9 @@ class AssetTypeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\App\Resources\AssetTypes\Pages\ListAssetTypes::route('/'),
-            'create' => \App\Filament\App\Resources\AssetTypes\Pages\CreateAssetType::route('/create'),
-            'edit' => \App\Filament\App\Resources\AssetTypes\Pages\EditAssetType::route('/{record}/edit'),
+            'index' => ListAssetTypes::route('/'),
+            'create' => CreateAssetType::route('/create'),
+            'edit' => EditAssetType::route('/{record}/edit'),
         ];
     }
 

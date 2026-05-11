@@ -52,7 +52,7 @@ class HandoverResource extends Resource
     {
         return [
             'index' => ListHandovers::route('/'),
-            'view'  => ViewHandover::route('/{record}'),
+            'view' => ViewHandover::route('/{record}'),
         ];
     }
 

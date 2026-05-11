@@ -2,8 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Evaluation;
-use App\Filament\Widgets\StatsWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,7 +16,6 @@ use Filament\Support\Enums\Width;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -33,7 +30,7 @@ class AppPanelProvider extends PanelProvider
     {
         FilamentAsset::register([
             Js::make('scanner', \Vite::asset('resources/js/plugins/scanner.ts'))->module(),
-            Css::make('overrides', Vite::asset('resources/css/app.css'))
+            Css::make('overrides', Vite::asset('resources/css/app.css')),
         ]);
 
         return $panel
@@ -55,7 +52,7 @@ class AppPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
-            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn() => \Blade::render('@livewire("scanner")'))
+            ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => \Blade::render('@livewire("scanner")'))
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.app.auth.entra-button'),
             )
             ->widgets([

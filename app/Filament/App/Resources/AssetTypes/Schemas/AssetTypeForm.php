@@ -2,8 +2,6 @@
 
 namespace App\Filament\App\Resources\AssetTypes\Schemas;
 
-use App\Models\AssetType;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -38,7 +36,7 @@ class AssetTypeForm
                                     ->label('Name')
                                     ->required(),
                             ]),
-                    ])
+                    ]),
             ]);
     }
 }

@@ -11,7 +11,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieTagsInput;
@@ -45,7 +44,6 @@ class AssetForm
                         View::make('forms.components.qr-code'),
                     ]),
 
-
                 Tabs::make('Tabs')
                     ->columnSpanFull()
                     ->tabs([
@@ -54,7 +52,7 @@ class AssetForm
                             ->schema([
 
                                 Hidden::make('id')
-                                    ->default(fn() => request()->get('forceId'))
+                                    ->default(fn () => request()->get('forceId'))
                                     ->hiddenOn('edit'),
 
                                 Select::make('state')
@@ -78,7 +76,7 @@ class AssetForm
                                     ->required(),
 
                                 Select::make('owner_id')
-                                    ->label("Aktueller Besitzer")
+                                    ->label('Aktueller Besitzer')
                                     ->preload()
                                     ->relationship('owner', 'name')
                                     ->createOptionForm([
@@ -93,7 +91,7 @@ class AssetForm
                                     ->searchable(),
 
                                 Select::make('place_id')
-                                    ->label("Ort")
+                                    ->label('Ort')
                                     ->createOptionForm([
                                         TextInput::make('name')
                                             ->label('Name')
@@ -119,19 +117,21 @@ class AssetForm
                                     ->searchable()
                                     ->getSearchResultsUsing(static function (string $search) {
                                         $items = [];
-                                        AssetModel::where('name', 'like', '%' . $search . '%')
+                                        AssetModel::where('name', 'like', '%'.$search.'%')
                                             ->orWhereHas('manufacturer', function (Builder $query) use ($search) {
-                                                $query->where('name', 'like', '%' . $search . '%');
+                                                $query->where('name', 'like', '%'.$search.'%');
                                             })
                                             ->limit(50)
                                             ->each(static function (AssetModel $model) use (&$items) {
-                                                $items[$model->id] = '(' . $model->manufacturer->name . ') ' . $model->name;
+                                                $items[$model->id] = '('.$model->manufacturer->name.') '.$model->name;
                                             });
+
                                         return $items;
                                     })
                                     ->getOptionLabelUsing(static function ($value): string {
                                         $model = AssetModel::find($value);
-                                        return '(' . $model->manufacturer->name . ') ' . $model->name;
+
+                                        return '('.$model->manufacturer->name.') '.$model->name;
                                     })
                                     ->createOptionForm([
 
@@ -158,14 +158,14 @@ class AssetForm
                             ->columns(2)
                             ->schema([
                                 DatePicker::make('buy_date')
-                                    ->label("Kaufdatum"),
+                                    ->label('Kaufdatum'),
 
                                 DatePicker::make('guarantee_end')
-                                    ->label("Garantie Ende")
+                                    ->label('Garantie Ende')
                                     ->nullable(),
 
                                 TextInput::make('buy_price')
-                                    //->decimals(2)
+                                    // ->decimals(2)
                                     ->nullable()
                                     ->label('Kaufpreis / Mietpreis'),
 
@@ -182,7 +182,7 @@ class AssetForm
                             ->schema([
                                 SpatieTagsInput::make('tags')
                                     ->label('')
-                                    ->columnSpanFull()
+                                    ->columnSpanFull(),
                             ]),
 
                         Tabs\Tab::make('Vorfälle')
@@ -204,11 +204,11 @@ class AssetForm
                                     ->itemLabel(static function (array $state): string {
                                         $label = [];
 
-                                        if (!isset($state['open_date']) && !isset($state['closed_date'])) {
+                                        if (! isset($state['open_date']) && ! isset($state['closed_date'])) {
                                             $label[] = '[Neu]';
                                         }
 
-                                        if (isset($state['open_date']) && !isset($state['closed_date'])) {
+                                        if (isset($state['open_date']) && ! isset($state['closed_date'])) {
                                             $label[] = '[Offen]';
                                         }
 

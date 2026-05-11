@@ -10,8 +10,11 @@ class HandoverAsset extends Pivot
     use HasUuids;
 
     protected $table = 'handover_asset';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
+
     public $timestamps = true;
 
     protected $fillable = [

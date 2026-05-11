@@ -2,6 +2,9 @@
 
 namespace App\Filament\App\Resources\AssetModels;
 
+use App\Filament\App\Resources\AssetModels\Pages\CreateAssetModel;
+use App\Filament\App\Resources\AssetModels\Pages\EditAssetModel;
+use App\Filament\App\Resources\AssetModels\Pages\ListAssetModels;
 use App\Filament\App\Resources\AssetModels\RelationManagers\AssetsRelationManager;
 use App\Filament\App\Resources\AssetModels\Schemas\AssetModelForm;
 use App\Filament\App\Resources\AssetModels\Schemas\AssetModelInfolist;
@@ -70,9 +73,9 @@ class AssetModelResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\App\Resources\AssetModels\Pages\ListAssetModels::route('/'),
-            'create' => \App\Filament\App\Resources\AssetModels\Pages\CreateAssetModel::route('/create'),
-            'edit' => \App\Filament\App\Resources\AssetModels\Pages\EditAssetModel::route('/{record}/edit'),
+            'index' => ListAssetModels::route('/'),
+            'create' => CreateAssetModel::route('/create'),
+            'edit' => EditAssetModel::route('/{record}/edit'),
         ];
     }
 
@@ -90,7 +93,7 @@ class AssetModelResource extends Resource
     }
 
     /**
-     * @param AssetModel $record
+     * @param  AssetModel  $record
      */
     public static function getGlobalSearchResultDetails(Model $record): array
     {

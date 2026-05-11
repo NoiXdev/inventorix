@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['name', 'manufacturer_id'])]
 class AssetModel extends Model
 {
-    use HasUuids, HasFactory;
+    use HasFactory, HasUuids;
 
     public function manufacturer(): BelongsTo
     {

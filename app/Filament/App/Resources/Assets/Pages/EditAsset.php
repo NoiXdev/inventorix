@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\Assets\Pages;
 
 use App\Filament\App\Resources\Assets\AssetResource;
+use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
@@ -13,7 +14,7 @@ class EditAsset extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            \App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction::make(
+            HandoverWizardAction::make(
                 'handover_header',
                 fn () => [$this->record->id],
             ),

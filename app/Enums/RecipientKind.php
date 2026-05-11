@@ -11,6 +11,6 @@ enum RecipientKind: string implements HasLabel
 
     public function getLabel(): ?string
     {
-        return trans('handover.recipient_kind.' . $this->value);
+        return trans('handover.recipient_kind.'.$this->value);
     }
 }

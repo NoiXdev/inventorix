@@ -7,6 +7,7 @@ use App\Enums\RecipientKind;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -69,7 +70,7 @@ class HandoversTable
             ->recordActions([
                 ViewAction::make(),
                 Action::make('download_pdf')
-                    ->icon(\Filament\Support\Icons\Heroicon::OutlinedArrowDownTray)
+                    ->icon(Heroicon::OutlinedArrowDownTray)
                     ->label(trans('handover.list.pdf_download'))
                     ->visible(fn ($record): bool => $record->pdf_path !== null)
                     ->url(fn ($record): string => URL::temporarySignedRoute(

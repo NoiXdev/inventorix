@@ -4,16 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Enums\QrCodeGeneratorType;
 use App\Exceptions\QrCodeGeneratorException;
-use App\Filament\Pages\QrCodeGenerator;
 use App\Models\Asset;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class QrCodeGeneratorController
 {
     /**
      * @throws QrCodeGeneratorException
+     *
      * @noinspection PhpInconsistentReturnPointsInspection
      */
     public function generate(Request $request)
@@ -21,15 +20,16 @@ class QrCodeGeneratorController
         $amount = $request->get('amount', 10);
         $type = $request->get('type', QrCodeGeneratorType::TXT->value);
 
-        if (QrCodeGeneratorType::tryFrom($type) === null)
-            throw new QrCodeGeneratorException("$type is not allowed. Allowed types are: " . join(", ", array_map(fn($case) => $case->value, QrCodeGeneratorType::cases())));
+        if (QrCodeGeneratorType::tryFrom($type) === null) {
+            throw new QrCodeGeneratorException("$type is not allowed. Allowed types are: ".implode(', ', array_map(fn ($case) => $case->value, QrCodeGeneratorType::cases())));
+        }
 
         $generatedCodes = [];
 
         while (count($generatedCodes) < $amount) {
             $uuid = Uuid::uuid4();
 
-            if(!Asset::find($uuid)){
+            if (! Asset::find($uuid)) {
                 $generatedCodes[] = $uuid;
             }
         }
@@ -47,6 +47,6 @@ class QrCodeGeneratorController
             default:
                 break;
         }
-        //todo: Add default and create Excepetion
+        // todo: Add default and create Excepetion
     }
 }

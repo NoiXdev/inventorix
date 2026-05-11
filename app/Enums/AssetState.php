@@ -6,7 +6,7 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
 
-enum AssetState: string implements HasLabel, HasColor
+enum AssetState: string implements HasColor, HasLabel
 {
     case NEW = 'new';
     case SOLD = 'sold';

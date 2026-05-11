@@ -2,8 +2,6 @@
 
 namespace App\Filament\App\Resources\Manufacturers\Schemas;
 
-use App\Models\Manufacturer;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -50,9 +48,9 @@ class ManufacturerForm
                                             ->required()
                                             ->unique(),
                                     ])
-                                    ->required()
+                                    ->required(),
                             ]),
-                    ])
+                    ]),
             ]);
     }
 }

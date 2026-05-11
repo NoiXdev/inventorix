@@ -48,9 +48,9 @@ class AssetModelForm
                                             ->required()
                                             ->unique(),
                                     ])
-                                    ->required()
+                                    ->required(),
                             ]),
-                    ])
+                    ]),
             ]);
     }
 }

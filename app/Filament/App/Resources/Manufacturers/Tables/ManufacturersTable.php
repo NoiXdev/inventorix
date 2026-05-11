@@ -36,6 +36,7 @@ class ManufacturersTable
                         $record->models()->each(static function (AssetModel $model) use (&$counter) {
                             $counter += $model->assets()->count();
                         });
+
                         return $counter;
                     }),
             ])

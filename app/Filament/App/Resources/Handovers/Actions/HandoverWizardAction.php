@@ -5,7 +5,9 @@ namespace App\Filament\App\Resources\Handovers\Actions;
 use App\DataObjects\HandoverData;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
+use App\Exceptions\HandoverStateConflictException;
 use App\Models\Asset;
+use App\Models\User;
 use App\Services\HandoverService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
@@ -14,15 +16,15 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\View as ViewField;
 use Filament\Schemas\Components\Wizard\Step;
-use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 
 class HandoverWizardAction
 {
     /**
-     * @param array<int, string>|callable $assetIds  asset IDs to pre-fill, or closure returning them
+     * @param  array<int, string>|callable  $assetIds  asset IDs to pre-fill, or closure returning them
      */
     public static function make(string $name, array|callable $assetIds = []): Action
     {
@@ -32,6 +34,7 @@ class HandoverWizardAction
             ->modalWidth('5xl')
             ->fillForm(function () use ($assetIds): array {
                 $ids = is_callable($assetIds) ? $assetIds() : $assetIds;
+
                 return [
                     'asset_ids' => array_values(array_filter($ids)),
                     'type' => HandoverType::ISSUE->value,
@@ -73,13 +76,14 @@ class HandoverWizardAction
                             return [];
                         }
                         $allowed = array_map(fn ($s) => $s->value, $type->allowedStateFrom());
+
                         return Asset::query()
                             ->whereIn('state', $allowed)
                             ->with('model')
                             ->limit(200)
                             ->get()
                             ->mapWithKeys(fn (Asset $a) => [
-                                $a->id => trim((optional($a->model)->name ?? '') . ' — ' . ($a->serial_number ?? $a->id)),
+                                $a->id => trim((optional($a->model)->name ?? '').' — '.($a->serial_number ?? $a->id)),
                             ])
                             ->all();
                     })
@@ -101,7 +105,7 @@ class HandoverWizardAction
 
                 Select::make('recipient_user_id')
                     ->label(trans('handover.recipient.select_user'))
-                    ->options(fn () => \App\Models\User::query()
+                    ->options(fn () => User::query()
                         ->where('login_enabled', true)
                         ->orderBy('name')
                         ->pluck('name', 'id')
@@ -114,7 +118,7 @@ class HandoverWizardAction
                         if ($state === null) {
                             return;
                         }
-                        $u = \App\Models\User::find($state);
+                        $u = User::find($state);
                         if ($u) {
                             $set('recipient_name', (string) $u->name);
                             $set('recipient_email', (string) $u->email);
@@ -170,8 +174,8 @@ class HandoverWizardAction
                 ViewField::make('signature_pad_ui')
                     ->view('components.handover.signature-pad', [
                         'statePath' => 'signature_png',
-                        'width'     => config('handover.signature.width'),
-                        'height'    => config('handover.signature.height'),
+                        'width' => config('handover.signature.width'),
+                        'height' => config('handover.signature.height'),
                     ]),
             ]);
     }
@@ -200,11 +204,12 @@ class HandoverWizardAction
 
         try {
             app(HandoverService::class)->commit($dataObj);
-        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+        } catch (HandoverStateConflictException $e) {
             Notification::make()
                 ->danger()
                 ->title(trans('handover.notification.state_conflict'))
                 ->send();
+
             return;
         }
 

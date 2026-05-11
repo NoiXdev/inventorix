@@ -14,10 +14,10 @@ class IncidentFactory extends Factory
     public function definition(): array
     {
         return [
-            'asset_id'    => Asset::factory(),
-            'title'       => fake()->sentence(3),
-            'notes'       => fake()->paragraph(),
-            'open_date'   => now()->format('Y-m-d H:i:s'),
+            'asset_id' => Asset::factory(),
+            'title' => fake()->sentence(3),
+            'notes' => fake()->paragraph(),
+            'open_date' => now()->format('Y-m-d H:i:s'),
             'closed_date' => null,
         ];
     }

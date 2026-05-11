@@ -9,7 +9,7 @@ class AssetObserver
     private const FIELD_EVENT_MAP = [
         'owner_id' => 'owner_changed',
         'place_id' => 'place_changed',
-        'state'    => 'state_changed',
+        'state' => 'state_changed',
     ];
 
     public function updating(Asset $asset): void
@@ -20,7 +20,7 @@ class AssetObserver
             }
 
             $from = $asset->getOriginal($field);
-            $to   = $asset->getAttribute($field);
+            $to = $asset->getAttribute($field);
 
             // Serialize backed enums to their scalar value so the JSON column
             // stores 'new', not an AssetState object representation.
@@ -36,7 +36,7 @@ class AssetObserver
                 ->causedBy(auth()->user())
                 ->withProperties([
                     'from' => $from,
-                    'to'   => $to,
+                    'to' => $to,
                 ])
                 ->log($event);
         }

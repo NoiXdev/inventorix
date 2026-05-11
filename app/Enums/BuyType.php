@@ -8,6 +8,7 @@ enum BuyType: string implements HasLabel
 {
     case ONCE = 'once';
     case ABO = 'abo';
+
     public function getLabel(): ?string
     {
         return match ($this) {
@@ -15,5 +16,4 @@ enum BuyType: string implements HasLabel
             self::ABO => 'Einmalig (gekauft)',
         };
     }
-
 }

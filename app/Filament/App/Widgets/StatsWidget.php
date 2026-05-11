@@ -3,7 +3,6 @@
 namespace App\Filament\App\Widgets;
 
 use App\Models\Asset;
-use App\Models\AssetModel;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 

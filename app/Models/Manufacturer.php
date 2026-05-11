@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['name'])]
 class Manufacturer extends Model
 {
-    use HasUuids, HasFactory;
+    use HasFactory, HasUuids;
 
     public function models()
     {
