@@ -132,4 +132,19 @@ class SummaryBuilderTest extends TestCase
         $result = (new SummaryBuilder())->forActivity($activity);
         $this->assertStringStartsWith(trans('history.summary.incident_removed'), $result);
     }
+
+    public function test_handover_completed_summary_renders_type_and_recipient(): void
+    {
+        $activity = new \Spatie\Activitylog\Models\Activity();
+        $activity->description = 'handover_completed';
+        $activity->subject_type = \App\Models\Asset::class;
+        $activity->subject_id = (string) \Illuminate\Support\Str::uuid();
+        $activity->properties = new \Illuminate\Support\Collection([
+            'type' => 'issue',
+            'recipient_name' => 'Alice',
+        ]);
+
+        $out = (new \App\Support\History\SummaryBuilder())->forActivity($activity);
+        $this->assertStringContainsString('Alice', $out);
+    }
 }

@@ -41,6 +41,10 @@ class SummaryBuilder
                 (string) ($activity->properties['body'] ?? ''),
                 80,
             ),
+            'handover_completed' => trans('handover.history.summary.handover_completed', [
+                'type'      => \App\Enums\HandoverType::tryFrom((string) ($activity->properties['type'] ?? ''))?->getLabel() ?? '',
+                'recipient' => (string) ($activity->properties['recipient_name'] ?? ''),
+            ]),
             default          => (string) $activity->description,
         };
     }

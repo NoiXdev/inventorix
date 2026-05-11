@@ -163,6 +163,7 @@ class HistoryRelationManager extends RelationManager
                         'owner_changed'  => trans('history.event.owner_changed'),
                         'place_changed'  => trans('history.event.place_changed'),
                         'state_changed'  => trans('history.event.state_changed'),
+                        'handover_completed' => trans('handover.history.event.handover_completed'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         $values = $data['values'] ?? [];
