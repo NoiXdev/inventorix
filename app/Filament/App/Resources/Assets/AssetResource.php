@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Assets;
 
+use App\Filament\App\Resources\Assets\RelationManagers\HistoryRelationManager;
 use App\Filament\App\Resources\Assets\RelationManagers\IncidentsRelationManager;
 use App\Filament\App\Resources\Assets\Schemas\AssetForm;
 use App\Filament\App\Resources\Assets\Schemas\AssetInfolist;
@@ -67,6 +68,7 @@ class AssetResource extends Resource
     {
         return [
             IncidentsRelationManager::class,
+            HistoryRelationManager::class,
         ];
     }
 
