@@ -91,13 +91,70 @@ class HandoverWizardAction
     protected static function stepRecipient(): Step
     {
         return Step::make(trans('handover.wizard.step.recipient'))
-            ->schema([]); // filled in next task
+            ->schema([
+                Radio::make('recipient_kind')
+                    ->options(collect(RecipientKind::cases())->mapWithKeys(
+                        fn (RecipientKind $k) => [$k->value => $k->getLabel()]
+                    )->all())
+                    ->required()
+                    ->live(),
+
+                Select::make('recipient_user_id')
+                    ->label(trans('handover.recipient.select_user'))
+                    ->options(fn () => \App\Models\User::query()
+                        ->where('login_enabled', true)
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all())
+                    ->searchable()
+                    ->required()
+                    ->visible(fn (callable $get) => $get('recipient_kind') === RecipientKind::INTERNAL->value)
+                    ->live()
+                    ->afterStateUpdated(function (callable $set, ?string $state): void {
+                        if ($state === null) {
+                            return;
+                        }
+                        $u = \App\Models\User::find($state);
+                        if ($u) {
+                            $set('recipient_name', (string) $u->name);
+                            $set('recipient_email', (string) $u->email);
+                        }
+                    }),
+
+                TextInput::make('recipient_name')
+                    ->label(trans('handover.recipient.name'))
+                    ->maxLength(255)
+                    ->required(),
+
+                TextInput::make('recipient_email')
+                    ->label(trans('handover.recipient.email'))
+                    ->email()
+                    ->maxLength(255),
+            ]);
     }
 
     protected static function stepDetails(): Step
     {
         return Step::make(trans('handover.wizard.step.details'))
-            ->schema([]);
+            ->schema([
+                Textarea::make('accessories')
+                    ->label(trans('handover.form.accessories'))
+                    ->placeholder(trans('handover.form.accessories_placeholder'))
+                    ->maxLength(2000)
+                    ->rows(3),
+
+                Textarea::make('condition_notes')
+                    ->label(trans('handover.form.condition_notes'))
+                    ->placeholder(trans('handover.form.condition_notes_placeholder'))
+                    ->maxLength(2000)
+                    ->rows(3),
+
+                Placeholder::make('terms_preview')
+                    ->label(trans('handover.form.terms_header'))
+                    ->content(fn (callable $get): string => (string) $get('terms_text')),
+
+                Hidden::make('terms_text'),
+            ]);
     }
 
     protected static function stepSign(): Step
