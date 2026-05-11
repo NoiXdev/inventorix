@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Tags\HasTags;
 
 #[Fillable(['state', 'asset_type_id', 'owner_id', 'place_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
 class Asset extends Model
 {
-    use HasUuids, HasTags, HasFactory;
+    use HasUuids, HasTags, HasFactory, LogsActivity;
 
     public function assetType(): BelongsTo
     {
@@ -51,5 +53,26 @@ class Asset extends Model
             'buy_type' => BuyType::class,
             'state' => AssetState::class,
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'asset_type_id',
+                'model_id',
+                'owner_id',
+                'place_id',
+                'serial_number',
+                'buy_date',
+                'buy_type',
+                'buy_price',
+                'guarantee_end',
+                'invoice',
+                'state',
+            ])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('asset');
     }
 }
