@@ -2,29 +2,57 @@
 
 namespace App\Mail;
 
+use App\Models\Handover;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
-class HandoverSigned extends Mailable
+class HandoverSigned extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public string $handoverId) {}
+    public Handover $handover;
+
+    public function __construct(public string $handoverId)
+    {
+        $this->handover = Handover::with(['assets.model', 'createdBy'])->findOrFail($handoverId);
+    }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('handover.mail.subject'),
+            subject: trans('handover.mail.subject', ['type' => $this->handover->type->getLabel()]),
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            htmlString: '<p>Handover ' . $this->handoverId . '</p>',
+            view: 'emails.handover-signed',
+            with: [
+                'handover' => $this->handover,
+            ],
         );
+    }
+
+    /** @return array<int, Attachment> */
+    public function attachments(): array
+    {
+        if (! $this->handover->pdf_path) {
+            return [];
+        }
+
+        $disk = config('handover.disk');
+        $bytes = Storage::disk($disk)->get($this->handover->pdf_path);
+
+        return [
+            Attachment::fromData(fn () => $bytes, 'handover.pdf')
+                ->withMime('application/pdf'),
+        ];
     }
 }

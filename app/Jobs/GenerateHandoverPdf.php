@@ -48,6 +48,8 @@ class GenerateHandoverPdf implements ShouldQueue
             Mail::to($handover->recipient_email)
                 ->bcc(optional($handover->createdBy)->email)
                 ->send(new HandoverSigned($handover->id));
+
+            $handover->update(['email_sent_at' => now()]);
         }
     }
 }
