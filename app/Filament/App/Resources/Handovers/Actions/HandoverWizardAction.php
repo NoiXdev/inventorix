@@ -165,13 +165,14 @@ class HandoverWizardAction
                     ->label(trans('handover.recipient.name'))
                     ->content(fn (callable $get): string => (string) $get('recipient_name')),
 
-                ViewField::make('signature_png')
+                Hidden::make('signature_png'),
+
+                ViewField::make('signature_pad_ui')
                     ->view('components.handover.signature-pad', [
-                        'width'  => config('handover.signature.width'),
-                        'height' => config('handover.signature.height'),
-                    ])
-                    ->required()
-                    ->rules(['required', 'string', 'min:1']),
+                        'statePath' => 'signature_png',
+                        'width'     => config('handover.signature.width'),
+                        'height'    => config('handover.signature.height'),
+                    ]),
             ]);
     }
 
