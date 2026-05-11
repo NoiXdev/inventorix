@@ -223,6 +223,122 @@ class HandoverServiceTest extends TestCase
         }
     }
 
+    public function test_external_recipient_leaves_owner_null_but_changes_state(): void
+    {
+        $manager = User::factory()->create();
+        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::EXTERNAL,
+            recipientUserId: null,
+            recipientName: 'Jane External',
+            recipientEmail: 'jane@example.com',
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: '127.0.0.1',
+            signatureUserAgent: 'phpunit',
+            createdById: $manager->id,
+        );
+
+        $handover = app(HandoverService::class)->commit($data);
+        $asset->refresh();
+
+        $this->assertNull($handover->recipient_user_id);
+        $this->assertSame('Jane External', $handover->recipient_name);
+        $this->assertSame(AssetState::IN_USE, $asset->state);
+        $this->assertNull($asset->owner_id);
+        $this->assertDatabaseHas('handover_asset', [
+            'handover_id' => $handover->id,
+            'asset_id' => $asset->id,
+            'owner_to_id' => null,
+        ]);
+    }
+
+    public function test_bulk_handover_attaches_each_asset_with_its_own_snapshots(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $previousOwner = User::factory()->create();
+
+        $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $b = Asset::factory()->create(['state' => AssetState::NEW->value, 'owner_id' => $previousOwner->id]);
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: $recipient->email,
+            assetIds: [$a->id, $b->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        $handover = app(HandoverService::class)->commit($data);
+
+        $this->assertDatabaseHas('handover_asset', [
+            'handover_id' => $handover->id,
+            'asset_id' => $a->id,
+            'state_from' => AssetState::STORAGE->value,
+            'owner_from_id' => null,
+        ]);
+        $this->assertDatabaseHas('handover_asset', [
+            'handover_id' => $handover->id,
+            'asset_id' => $b->id,
+            'state_from' => AssetState::NEW->value,
+            'owner_from_id' => $previousOwner->id,
+        ]);
+
+        $a->refresh();
+        $b->refresh();
+        $this->assertSame(AssetState::IN_USE, $a->state);
+        $this->assertSame(AssetState::IN_USE, $b->state);
+    }
+
+    public function test_bulk_with_one_invalid_state_rolls_everything_back(): void
+    {
+        $recipient = User::factory()->create();
+        $manager = User::factory()->create();
+        $valid = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $invalid = Asset::factory()->create(['state' => AssetState::IN_USE->value]);  // not allowed for ISSUE
+
+        $data = new HandoverData(
+            type: HandoverType::ISSUE,
+            recipientKind: RecipientKind::INTERNAL,
+            recipientUserId: $recipient->id,
+            recipientName: $recipient->name,
+            recipientEmail: null,
+            assetIds: [$valid->id, $invalid->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: $manager->id,
+        );
+
+        try {
+            app(HandoverService::class)->commit($data);
+            $this->fail('Expected conflict');
+        } catch (\App\Exceptions\HandoverStateConflictException $e) {
+            $this->assertSame([$invalid->id], $e->assetIds);
+        }
+
+        $valid->refresh();
+        $this->assertSame(AssetState::STORAGE, $valid->state, 'Valid asset must not be partially handed over.');
+        $this->assertDatabaseCount('handovers', 0);
+    }
+
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): \App\Models\Handover
     {
         $manager = User::factory()->create();
