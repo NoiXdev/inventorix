@@ -5,11 +5,14 @@ namespace App\Filament\App\Resources\Assets\RelationManagers;
 use App\Models\Asset;
 use App\Support\History\SummaryBuilder;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Activitylog\Models\Activity;
@@ -126,9 +129,17 @@ class HistoryRelationManager extends RelationManager
                     ->dateTime()
                     ->sortable(),
 
-                TextColumn::make('causer.name')
+                TextColumn::make('causer_label')
                     ->label('User')
-                    ->default(trans('history.causer.system')),
+                    ->state(function (Activity $record): string {
+                        if ($record->causer_id === null) {
+                            return trans('history.causer.system');
+                        }
+                        if ($record->causer === null) {
+                            return trans('history.causer.former_user');
+                        }
+                        return (string) $record->causer->name;
+                    }),
 
                 TextColumn::make('description')
                     ->label('Event')
@@ -140,7 +151,34 @@ class HistoryRelationManager extends RelationManager
                     ->state(fn (Activity $record) => $summary->forActivity($record))
                     ->wrap(),
             ])
-            ->filters([])
+            ->filters([
+                SelectFilter::make('event_kind')
+                    ->label('Event')
+                    ->multiple()
+                    ->options([
+                        'created'        => trans('history.event.created'),
+                        'updated'        => trans('history.event.updated'),
+                        'deleted'        => trans('history.event.deleted'),
+                        'note'           => trans('history.event.note'),
+                        'owner_changed'  => trans('history.event.owner_changed'),
+                        'place_changed'  => trans('history.event.place_changed'),
+                        'state_changed'  => trans('history.event.state_changed'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        $values = $data['values'] ?? [];
+                        return empty($values) ? $query : $query->whereIn('description', $values);
+                    }),
+                Filter::make('date_range')
+                    ->schema([
+                        DatePicker::make('from')->label('From'),
+                        DatePicker::make('until')->label('Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['from']  ?? null, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+                            ->when($data['until'] ?? null, fn ($q, $d) => $q->whereDate('created_at', '<=', $d));
+                    }),
+            ])
             ->headerActions([
                 $this->add_noteAction(),
             ])

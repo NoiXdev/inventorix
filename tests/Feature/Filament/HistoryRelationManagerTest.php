@@ -148,4 +148,40 @@ class HistoryRelationManagerTest extends TestCase
             ->callAction('add_note', data: ['body' => ''])
             ->assertHasActionErrors(['body']);
     }
+
+    public function test_event_filter_narrows_results(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+        $newOwner = User::factory()->create();
+        $asset->update(['owner_id' => $newOwner->id, 'serial_number' => 'X']);
+
+        $ownerChanged = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_id', $asset->id)->where('description', 'owner_changed')->first();
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->filterTable('event_kind', ['owner_changed'])
+            ->assertCanSeeTableRecords(collect([$ownerChanged]));
+    }
+
+    public function test_former_user_causer_renders_as_system_former_user(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+
+        $user->delete();
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->assertSeeText(trans('history.causer.former_user'));
+    }
 }
