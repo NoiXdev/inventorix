@@ -548,7 +548,7 @@ class Incident extends Model
         return LogOptions::defaults()
             ->logOnly(['title', 'notes', 'open_date', 'closed_date'])
             ->logOnlyDirty()
-            ->dontSubmitEmptyLogs()
+            ->dontLogEmptyChanges()
             ->useLogName('incident');
     }
 }
@@ -625,10 +625,10 @@ class AssetActivityLogTest extends TestCase
             ->where('description', 'updated')
             ->latest('id')->first();
 
-        $this->assertSame('SN-NEW', $activity->properties['attributes']['serial_number']);
-        $this->assertSame('SN-OLD', $activity->properties['old']['serial_number']);
-        $this->assertArrayHasKey('invoice', $activity->properties['attributes']);
-        $this->assertArrayNotHasKey('id', $activity->properties['attributes']);
+        $this->assertSame('SN-NEW', $activity->attribute_changes['attributes']['serial_number']);
+        $this->assertSame('SN-OLD', $activity->attribute_changes['old']['serial_number']);
+        $this->assertArrayHasKey('invoice', $activity->attribute_changes['attributes']);
+        $this->assertArrayNotHasKey('id', $activity->attribute_changes['attributes']);
     }
 
     public function test_deleting_writes_a_deleted_activity(): void
@@ -708,7 +708,7 @@ public function getActivitylogOptions(): LogOptions
             'state',
         ])
         ->logOnlyDirty()
-        ->dontSubmitEmptyLogs()
+        ->dontLogEmptyChanges()
         ->useLogName('asset');
 }
 ```
@@ -1031,7 +1031,7 @@ class SummaryBuilderTest extends TestCase
     {
         $activity = $this->buildActivity([
             'description' => 'updated',
-            'properties'  => ['attributes' => ['a' => 1, 'b' => 2, 'c' => 3], 'old' => ['a' => 0, 'b' => 0, 'c' => 0]],
+            'attribute_changes' => ['attributes' => ['a' => 1, 'b' => 2, 'c' => 3], 'old' => ['a' => 0, 'b' => 0, 'c' => 0]],
         ]);
         $this->assertSame(
             trans('history.summary.fields_changed', ['count' => 3]),
@@ -1171,7 +1171,7 @@ class SummaryBuilder
             'created'        => trans('history.summary.created'),
             'deleted'        => trans('history.summary.deleted'),
             'updated'        => trans('history.summary.fields_changed', [
-                'count' => count($activity->properties['attributes'] ?? []),
+                'count' => count($activity->attribute_changes['attributes'] ?? []),
             ]),
             'owner_changed'  => $this->userArrow($activity),
             'place_changed'  => $this->placeArrow($activity),

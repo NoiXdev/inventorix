@@ -65,22 +65,27 @@ while Asset and User use `HasUuids` — `string(36)` accommodates both
 | `subject_id` | **string(36), nullable, indexed** | overridden from the package's `unsignedBigInteger` default |
 | `causer_type` | string, nullable | `App\Models\User` |
 | `causer_id` | **string(36), nullable, indexed** | User uses UUID PKs |
-| `properties` | json, nullable | see "Event payloads" below |
+| `properties` | json, nullable | author-provided payload for semantic events and notes (see below) |
+| `attribute_changes` | json, nullable | auto-captured field diffs for `created`/`updated`/`deleted` (v5 column, cast to Collection) |
+| `event` | string, nullable | reserved by the package for the Eloquent event name; we don't use it directly |
+| `batch_uuid` | uuid, nullable | reserved by the package; unused in v1 |
 | `created_at`, `updated_at` | timestamps | |
 
 Indexes:
 - `(subject_type, subject_id)` — from the package
 - `(subject_type, subject_id, created_at)` — added by us, for fast per-record timelines sorted newest first
 
-### Event payloads (`properties`)
+### Event payloads
 
-| `description` | `properties` shape |
-|---|---|
-| `created` | `{ "attributes": { ...allowlisted fields with initial values... } }` |
-| `updated` | `{ "old": { ...changed fields, prior values... }, "attributes": { ...changed fields, new values... } }` |
-| `deleted` | `{ "old": { ...allowlisted fields at time of delete... } }` |
-| `owner_changed` / `place_changed` / `state_changed` | `{ "from": <id-or-enum>, "to": <id-or-enum> }` |
-| `note` | `{ "body": "<user text, max 2000 chars>" }` |
+In v5 the package splits auto-captured diffs (`attribute_changes`) from author-provided payloads (`properties`):
+
+| `description` | column | shape |
+|---|---|---|
+| `created` | `attribute_changes` | `{ "attributes": { ...allowlisted fields with initial values... } }` |
+| `updated` | `attribute_changes` | `{ "old": { ...changed fields, prior values... }, "attributes": { ...changed fields, new values... } }` |
+| `deleted` | `attribute_changes` | `{ "old": { ...allowlisted fields at time of delete... } }` |
+| `owner_changed` / `place_changed` / `state_changed` | `properties` | `{ "from": <id-or-enum>, "to": <id-or-enum> }` |
+| `note` | `properties` | `{ "body": "<user text, max 2000 chars>" }` |
 
 ## Capturing changes
 
@@ -96,7 +101,7 @@ public function getActivitylogOptions(): LogOptions
     return LogOptions::defaults()
         ->logOnly([...allowlist...])
         ->logOnlyDirty()
-        ->dontSubmitEmptyLogs()
+        ->dontLogEmptyChanges()
         ->useLogName('asset'); // or 'incident'
 }
 ```
@@ -269,7 +274,7 @@ PHPUnit 12 (the project's existing stack), DDEV-run.
 
 1. **`AssetActivityLogTest`** (feature)
    - Create → one `created` row with correct `log_name`, `subject`, `causer`.
-   - Update non-semantic fields → one `updated` row with the dirty fields only in `properties.old` and `properties.attributes`.
+   - Update non-semantic fields → one `updated` row with the dirty fields only in `attribute_changes.old` and `attribute_changes.attributes`.
    - Update `owner_id`, `place_id`, `state` → both an `updated` row and the semantic row with `from`/`to`.
    - Delete → one `deleted` row.
    - CLI update (no auth) → `causer_id` is null.
