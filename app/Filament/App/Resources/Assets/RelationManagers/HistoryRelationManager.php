@@ -55,6 +55,32 @@ class HistoryRelationManager extends RelationManager
                               ->whereIn('subject_id', $incidentIds);
                     });
                 }
+            })
+            ->where(function (Builder $q): void {
+                $q->where('description', '!=', 'updated')
+                  ->orWhereNotExists(function ($sub): void {
+                      $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                          ->from('activity_log as semantic')
+                          ->whereColumn('semantic.subject_id', 'activity_log.subject_id')
+                          ->whereColumn('semantic.subject_type', 'activity_log.subject_type')
+                          ->whereIn('semantic.description', ['owner_changed', 'place_changed', 'state_changed'])
+                          ->where(function ($causerMatch): void {
+                              $causerMatch->whereColumn('semantic.causer_id', 'activity_log.causer_id')
+                                          ->orWhere(function ($bothNull): void {
+                                              $bothNull->whereNull('semantic.causer_id')
+                                                       ->whereNull('activity_log.causer_id');
+                                          });
+                          })
+                          ->where(function ($timeBound): void {
+                              $driver = \Illuminate\Support\Facades\DB::getDriverName();
+                              $timeBound->whereRaw(match ($driver) {
+                                  'sqlite' => 'ABS(strftime("%s", semantic.created_at) - strftime("%s", activity_log.created_at)) <= 1',
+                                  'mysql', 'mariadb' => 'ABS(TIMESTAMPDIFF(SECOND, semantic.created_at, activity_log.created_at)) <= 1',
+                                  'pgsql' => 'ABS(EXTRACT(EPOCH FROM semantic.created_at - activity_log.created_at)) <= 1',
+                                  default => '1=1',
+                              });
+                          });
+                  });
             });
     }
 

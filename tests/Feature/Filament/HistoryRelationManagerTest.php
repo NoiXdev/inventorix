@@ -61,4 +61,51 @@ class HistoryRelationManagerTest extends TestCase
                     ->get()
             );
     }
+
+    public function test_generic_updated_row_is_hidden_when_a_semantic_row_exists(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+        $newOwner = User::factory()->create();
+        $asset->update(['owner_id' => $newOwner->id]);
+
+        $rows = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_id', $asset->id)
+            ->get();
+
+        $genericUpdated = $rows->firstWhere('description', 'updated');
+        $semantic = $rows->firstWhere('description', 'owner_changed');
+
+        $this->assertNotNull($genericUpdated, 'generic updated row should exist in DB');
+        $this->assertNotNull($semantic, 'semantic row should exist in DB');
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->assertCanSeeTableRecords(collect([$semantic]))
+            ->assertCanNotSeeTableRecords(collect([$genericUpdated]));
+    }
+
+    public function test_generic_updated_row_is_shown_when_no_semantic_row_exists(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $asset = Asset::factory()->create();
+        $asset->update(['serial_number' => 'SN-NEW']);
+
+        $genericUpdated = \Spatie\Activitylog\Models\Activity::query()
+            ->where('subject_id', $asset->id)
+            ->where('description', 'updated')
+            ->first();
+
+        Livewire::test(HistoryRelationManager::class, [
+            'ownerRecord' => $asset,
+            'pageClass'   => \App\Filament\App\Resources\Assets\Pages\EditAsset::class,
+        ])
+            ->assertCanSeeTableRecords(collect([$genericUpdated]));
+    }
 }
