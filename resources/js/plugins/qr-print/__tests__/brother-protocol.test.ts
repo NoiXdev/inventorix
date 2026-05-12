@@ -47,8 +47,9 @@ describe('brother-protocol', () => {
     it('embeds the media type byte from the roll spec', () => {
         const oneRaster = [new Uint8Array(90)];
         const bytes = buildJob([oneRaster], roll);
-        // Locate the ESC i z command (1B 69 7A) and inspect the next byte after the flags
-        // Sequence: 1B 69 7A <flags=0x86> <media-type> ...
+        // Locate the ESC i z command (1B 69 7A) and inspect the next byte after the flags.
+        // Sequence: 1B 69 7A <flags=0x80> <media-type> ...
+        // Flags = 0x80 (PI_RECOVER only — no kind/width validation, see brother-protocol.ts).
         for (let i = 0; i < bytes.length - 4; i++) {
             if (bytes[i] === 0x1b && bytes[i + 1] === 0x69 && bytes[i + 2] === 0x7a) {
                 expect(bytes[i + 4]).toBe(roll.mediaTypeByte);

@@ -50,7 +50,12 @@ function buildPrintInformation(rasterCount: number, roll: RollSpec, pageIndex: n
     buf[0] = 0x1b;
     buf[1] = 0x69;
     buf[2] = 0x7a;
-    buf[3] = 0x86; // PI_KIND | PI_WIDTH | PI_LENGTH | PI_RECOVER bits
+    // Flags: only PI_RECOVER (0x80). We deliberately do NOT set PI_KIND (0x02) or
+    // PI_WIDTH (0x04) so the printer doesn't reject jobs when the loaded roll's
+    // magnetic-stripe identity differs from what the user picked in the modal —
+    // notably with generic (non-Brother) DK-22205 equivalents like RL-B-D22205.
+    // Brother's own P-touch Editor takes the same approach.
+    buf[3] = 0x80;
     buf[4] = roll.mediaTypeByte;
     buf[5] = roll.widthMm;
     buf[6] = roll.lengthMm ?? 0;
