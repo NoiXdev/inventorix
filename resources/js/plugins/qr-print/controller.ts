@@ -60,7 +60,7 @@ export class PrintController {
     private computeLabelOffsets(labels: Uint8Array[][], _roll: RollSpec): number[] {
         // Rebuild segment lengths to compute cumulative byte offsets at each label boundary.
         // Each label contributes: 13 (print-info) + 4 (various) + 4 (advanced) + 5 (margin) + 2 (compression off)
-        // + rasterLines * (3 + 90) + 1 (terminator) = 28 + rasterLines * 93.
+        // + 1 (terminator) + rasterLines * (3 + 90) = 29 + rasterLines * 93.
         // Plus the per-job header: 200 + 2 + 4 + 4 = 210 bytes before the first label.
         const HEADER = 200 + 2 + 4 + 4;
         const PER_LABEL_OVERHEAD = 13 + 4 + 4 + 5 + 2 + 1;
