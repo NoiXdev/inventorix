@@ -81,4 +81,20 @@ describe('rasterizer', () => {
         const lines = rasterize(img, roll);
         expect(lines[0][roll.printableStartByte]).toBe(0xff);
     });
+
+    it('pixels beyond the printable byte budget are dropped, not overflowed', () => {
+        // DK-11209: printableStartByte=52, 90 bytes total. Bytes 52..89 = 38 bytes = 304 px.
+        // printWidthPx=306 means the last 2 px (x=304, x=305) land in byte 90 which is OOB.
+        // Without the bounds check, Uint8Array silently swallows OOB writes — assert the
+        // out-of-bounds columns leave the line unmodified (no writes past byte 89).
+        const img = makeImageData(roll.printWidthPx, 1, [
+            [roll.printWidthPx - 1, 0], // last column
+            [roll.printWidthPx - 2, 0], // second-to-last
+        ]);
+        const lines = rasterize(img, roll);
+        // No byte should be set
+        for (let i = 0; i < 90; i++) {
+            expect(lines[0][i]).toBe(0);
+        }
+    });
 });

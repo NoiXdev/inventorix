@@ -21,6 +21,9 @@ export function rasterize(image: ImageData, roll: RollSpec): Uint8Array[] {
             const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
             if (luminance < LUMINANCE_THRESHOLD) {
                 const byteIndex = roll.printableStartByte + Math.floor(x / 8);
+                if (byteIndex >= BYTES_PER_LINE || byteIndex >= roll.printableEndByte) {
+                    continue;
+                }
                 const bitIndex = 7 - (x % 8);
                 line[byteIndex] |= 1 << bitIndex;
             }

@@ -50,7 +50,11 @@ export class PrintController {
 
     async cancel(): Promise<void> {
         this.cancelled = true;
-        await this.transport.send(buildCancelReset());
+        try {
+            await this.transport.send(buildCancelReset());
+        } catch {
+            // Cancel is best-effort: if the device is gone, the print already stopped.
+        }
     }
 
     async close(): Promise<void> {
