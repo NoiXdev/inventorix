@@ -10,7 +10,10 @@ export default defineConfig({
                 //'resources/js/app.ts',
 
                 //Scanner Plugin
-                'resources/js/plugins/scanner.ts'
+                'resources/js/plugins/scanner.ts',
+
+                //QR Print Plugin
+                'resources/js/plugins/qr-print/index.ts',
             ],
             refresh: true,
         }),

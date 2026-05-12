@@ -30,6 +30,7 @@ class AppPanelProvider extends PanelProvider
     {
         FilamentAsset::register([
             Js::make('scanner', \Vite::asset('resources/js/plugins/scanner.ts'))->module(),
+            Js::make('qr-print', \Vite::asset('resources/js/plugins/qr-print/index.ts'))->module(),
             Css::make('overrides', Vite::asset('resources/css/app.css')),
         ]);
 
