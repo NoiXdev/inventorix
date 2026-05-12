@@ -1,3 +1,11 @@
-window.addEventListener('qr-print:open', (event) => {
-    console.log('[qr-print] open event received', (event as CustomEvent).detail);
+import { qrPrintModal } from './modal';
+
+declare global {
+    interface Window {
+        Alpine?: { data: (name: string, factory: () => unknown) => void };
+    }
+}
+
+document.addEventListener('alpine:init', () => {
+    window.Alpine?.data('qrPrintModal', qrPrintModal);
 });
