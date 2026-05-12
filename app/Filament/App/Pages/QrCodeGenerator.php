@@ -3,6 +3,7 @@
 namespace App\Filament\App\Pages;
 
 use App\Enums\QrCodeGeneratorType;
+use App\Models\Asset;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Contracts\HasForms;
@@ -10,6 +11,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Schema;
 use Livewire\Features\SupportRedirects\Redirector;
+use Ramsey\Uuid\Uuid;
 
 class QrCodeGenerator extends Page implements HasForms
 {
@@ -51,5 +53,23 @@ class QrCodeGenerator extends Page implements HasForms
             'amount' => $amount,
             'type' => $type,
         ]);
+    }
+
+    public function print(): void
+    {
+        $amount = (int) $this->form->getState()['amount'];
+        $generatedCodes = [];
+
+        while (count($generatedCodes) < $amount) {
+            $uuid = Uuid::uuid4()->toString();
+            if (! Asset::find($uuid)) {
+                $generatedCodes[] = $uuid;
+            }
+        }
+
+        $this->dispatch(
+            'qr-print:open',
+            items: array_map(fn (string $u): array => ['uuid' => $u], $generatedCodes),
+        );
     }
 }
