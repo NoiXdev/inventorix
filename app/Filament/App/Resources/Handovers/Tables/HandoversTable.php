@@ -73,6 +73,7 @@ class HandoversTable
                     ->icon(Heroicon::OutlinedArrowDownTray)
                     ->label(trans('handover.list.pdf_download'))
                     ->visible(fn ($record): bool => $record->pdf_path !== null)
+                    ->openUrlInNewTab()
                     ->url(fn ($record): string => URL::temporarySignedRoute(
                         'handover.pdf',
                         now()->addMinutes(5),

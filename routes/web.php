@@ -21,6 +21,6 @@ Route::middleware(['signed'])
 
         $disk = config('handover.disk');
 
-        return Storage::disk($disk)->download($handover->pdf_path, "handover-{$handover->id}.pdf");
+        return Storage::disk($disk)->download($handover->pdf_path, "handover-{$handover->id}.pdf", ['content-type' => 'application/pdf']);
     })
     ->name('handover.pdf');
