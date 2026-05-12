@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Assets\Pages;
 
+use App\Filament\App\Resources\Assets\Actions\PrintQrAction;
 use App\Filament\App\Resources\Assets\AssetResource;
 use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use Filament\Actions\DeleteAction;
@@ -18,6 +19,7 @@ class EditAsset extends EditRecord
                 'handover_header',
                 fn () => [$this->record->id],
             ),
+            PrintQrAction::single(),
             DeleteAction::make(),
         ];
     }

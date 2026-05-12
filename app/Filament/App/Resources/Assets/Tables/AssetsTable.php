@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\Assets\Tables;
 
 use App\Enums\AssetState;
+use App\Filament\App\Resources\Assets\Actions\PrintQrAction;
 use App\Filament\App\Resources\Assets\AssetResource;
 use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use App\Models\Asset;
@@ -114,6 +115,7 @@ class AssetsTable
                         'handover',
                         fn (Asset $record): array => [$record->id],
                     ),
+                    PrintQrAction::single(),
                     ReplicateAction::make()
                         ->requiresConfirmation()
                         ->form([
@@ -149,6 +151,7 @@ class AssetsTable
                         'handover_bulk',
                         fn ($livewire) => $livewire->getSelectedTableRecords()->pluck('id')->all(),
                     )->label(trans('handover.action.bulk')),
+                    PrintQrAction::bulk(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
