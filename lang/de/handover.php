@@ -51,12 +51,16 @@ return [
         'return' => 'Rückgabe',
         'bulk' => 'Übergabe (mehrere)',
         'new' => 'Neue Übergabe',
+        'retry_pdf' => 'PDF erneut erstellen',
     ],
     'notification' => [
         'success' => 'Übergabe unterzeichnet. PDF wird erstellt.',
         'pdf_failed' => 'PDF-Erstellung fehlgeschlagen — bitte erneut versuchen.',
         'email_sent' => 'E-Mail an :email gesendet.',
         'state_conflict' => 'Der Status eines oder mehrerer Gegenstände hat sich geändert. Bitte Übergabe neu starten.',
+        'invalid_signature' => 'Ungültige Unterschrift — bitte erneut versuchen.',
+        'view_handover' => 'Übergabe öffnen',
+        'pdf_retry_dispatched' => 'PDF-Erstellung gestartet — bitte Seite neu laden.',
     ],
     'pdf' => [
         'title' => 'Übergabeprotokoll',

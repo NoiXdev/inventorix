@@ -215,11 +215,18 @@ class HandoverWizardAction
         );
 
         try {
-            app(HandoverService::class)->commit($dataObj);
+            $handover = app(HandoverService::class)->commit($dataObj);
         } catch (HandoverStateConflictException $e) {
             Notification::make()
                 ->danger()
                 ->title(trans('handover.notification.state_conflict'))
+                ->send();
+
+            return;
+        } catch (\InvalidArgumentException $e) {
+            Notification::make()
+                ->danger()
+                ->title(trans('handover.notification.invalid_signature'))
                 ->send();
 
             return;
@@ -228,6 +235,12 @@ class HandoverWizardAction
         Notification::make()
             ->success()
             ->title(trans('handover.notification.success'))
+            ->actions([
+                Action::make('view')
+                    ->button()
+                    ->label(trans('handover.notification.view_handover'))
+                    ->url(\App\Filament\App\Resources\Handovers\HandoverResource::getUrl('view', ['record' => $handover->id])),
+            ])
             ->send();
     }
 }

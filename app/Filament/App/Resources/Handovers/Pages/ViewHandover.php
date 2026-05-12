@@ -17,7 +17,7 @@ class ViewHandover extends ViewRecord
     {
         return [
             Action::make('retry_pdf')
-                ->label(trans('handover.notification.pdf_failed'))
+                ->label(trans('handover.action.retry_pdf'))
                 ->icon(Heroicon::OutlinedArrowPath)
                 ->color('warning')
                 ->visible(fn (): bool => $this->record->pdf_path === null)
@@ -25,7 +25,7 @@ class ViewHandover extends ViewRecord
                     GenerateHandoverPdf::dispatch($this->record->id);
                     Notification::make()
                         ->success()
-                        ->title(trans('handover.notification.success'))
+                        ->title(trans('handover.notification.pdf_retry_dispatched'))
                         ->send();
                 }),
         ];

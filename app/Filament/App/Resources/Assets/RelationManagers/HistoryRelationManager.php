@@ -154,6 +154,17 @@ class HistoryRelationManager extends RelationManager
                 TextColumn::make('summary')
                     ->label('')
                     ->state(fn (Activity $record) => $summary->forActivity($record))
+                    ->url(function (Activity $record): ?string {
+                        if ($record->description !== 'handover_completed') {
+                            return null;
+                        }
+                        $handoverId = $record->properties['handover_id'] ?? null;
+                        if ($handoverId === null) {
+                            return null;
+                        }
+
+                        return \App\Filament\App\Resources\Handovers\HandoverResource::getUrl('view', ['record' => $handoverId]);
+                    })
                     ->wrap(),
             ])
             ->filters([
