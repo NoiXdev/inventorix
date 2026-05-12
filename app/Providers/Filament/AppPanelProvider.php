@@ -54,6 +54,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => \Blade::render('@livewire("scanner")'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('qr-print.modal'))
             ->renderHook(PanelsRenderHook::AUTH_LOGIN_FORM_AFTER, fn () => view('filament.app.auth.entra-button'),
             )
             ->widgets([
