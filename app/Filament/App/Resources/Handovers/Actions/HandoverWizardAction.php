@@ -17,7 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\View as ViewField;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Icons\Heroicon;
 
@@ -181,11 +181,8 @@ class HandoverWizardAction
                     ->label(trans('handover.recipient.name'))
                     ->content(fn (callable $get): string => (string) $get('recipient_name')),
 
-                Hidden::make('signature_png'),
-
-                ViewField::make('signature_pad_ui')
+                ViewField::make('signature_png')
                     ->view('components.handover.signature-pad', [
-                        'statePath' => 'signature_png',
                         'width' => config('handover.signature.width'),
                         'height' => config('handover.signature.height'),
                     ]),

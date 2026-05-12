@@ -1,5 +1,6 @@
 @props([
-    'statePath',
+    'statePath' => null,
+    'getStatePath' => null,
     'width' => 600,
     'height' => 200,
     'clearLabel' => __('handover.sign.clear'),
@@ -57,7 +58,7 @@
         persist() {
             const dataUrl = this.canvas.toDataURL('image/png');
             const base64 = dataUrl.replace(/^data:image\/png;base64,/, '');
-            $wire.set(@js($statePath), this.stroked ? base64 : '');
+            $wire.set(@js($getStatePath ? $getStatePath() : $statePath), this.stroked ? base64 : '');
         },
     }"
     class="space-y-2"
