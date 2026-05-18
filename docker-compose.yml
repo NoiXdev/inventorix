@@ -1,0 +1,99 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        env_file:
+            - .env
+        environment:
+            RUN_MIGRATIONS: "true"
+        volumes:
+            - storage_data:/app/storage
+        networks:
+            - proxy
+            - inventorix_internal
+        restart: unless-stopped
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        labels:
+            - traefik.enable=true
+            - traefik.docker.network=proxy
+            # HTTP Router
+            - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+            - traefik.http.routers.inventorix-http.rule=Host(`p.dginx.de`)
+            - traefik.http.routers.inventorix-http.entrypoints=web
+            - traefik.http.routers.inventorix-http.middlewares=redirect-to-https
+            # HTTPS Router
+            - traefik.http.routers.inventorix.rule=Host(`p.dginx.de`)
+            - traefik.http.routers.inventorix.entrypoints=websecure
+            - traefik.http.routers.inventorix.tls.certresolver=le
+            - traefik.http.services.inventorix.loadbalancer.server.port=8000
+
+    worker:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        command: ["php", "artisan", "horizon"]
+        env_file:
+            - .env
+        environment:
+            RUN_MIGRATIONS: "false"
+        volumes:
+            - storage_data:/app/storage
+        networks:
+            - inventorix_internal
+            - inventorix_egress
+        restart: unless-stopped
+        depends_on:
+            mariadb:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+
+    mariadb:
+        image: mariadb:11.8
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        volumes:
+            - db_data:/var/lib/mysql
+        networks:
+            - inventorix_internal
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            start_period: 10s
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+    redis:
+        image: redis:7-alpine
+        command: "redis-server --requirepass ${REDIS_PASSWORD}"
+        volumes:
+            - redis_data:/data
+        networks:
+            - inventorix_internal
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+volumes:
+    db_data:
+    redis_data:
+    storage_data:
+
+networks:
+    proxy:
+        external: true
+    inventorix_internal:
+        internal: true
+    inventorix_egress: {}
