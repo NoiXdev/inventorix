@@ -25,3 +25,6 @@ yarn-error.log
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+*.sql
+*.sql.gz
