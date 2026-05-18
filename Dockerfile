@@ -15,6 +15,7 @@ RUN install-php-extensions \
     pdo_mysql \
     redis \
     intl \
+    gd \
     opcache \
     pcntl \
     zip
