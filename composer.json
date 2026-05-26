@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "noixdev/inventorix",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Self-hostable inventory management built on Laravel 13 and Filament 5.",
+    "keywords": ["laravel", "filament", "inventory", "self-hosted", "asset-management"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
