@@ -2,6 +2,8 @@
 
 <p align="center">
   <a href="https://github.com/NoiXdev/inventorix/actions/workflows/ci.yml"><img src="https://github.com/NoiXdev/inventorix/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://hub.docker.com/r/noixdev/inventorix"><img src="https://img.shields.io/docker/pulls/noixdev/inventorix.svg?logo=docker&logoColor=white" alt="Docker Pulls"></a>
+  <a href="https://hub.docker.com/r/noixdev/inventorix"><img src="https://img.shields.io/docker/v/noixdev/inventorix?sort=semver&logo=docker&logoColor=white&label=docker" alt="Docker Image Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg" alt="PHP 8.4">
   <img src="https://img.shields.io/badge/Laravel-13-FF2D20.svg" alt="Laravel 13">
@@ -38,7 +40,7 @@ docker run -d \
   -e DB_USERNAME=... \
   -e DB_PASSWORD=... \
   -e RUN_MIGRATIONS=true \
-  noix/inventorix:latest
+  noixdev/inventorix:latest
 ```
 
 The image runs the entrypoint, waits for the database, runs migrations
