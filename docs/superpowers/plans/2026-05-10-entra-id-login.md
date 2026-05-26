@@ -375,15 +375,15 @@ class EntraIdAuthServiceTest extends TestCase
     {
         $u = new SocialiteUser();
         $u->id    = $overrides['id']    ?? 'oid-abc-123';
-        $u->email = $overrides['email'] ?? 'alice@3b.de';
+        $u->email = $overrides['email'] ?? 'alice@example.com';
         $u->name  = $overrides['name']  ?? 'Alice Example';
         $u->user  = array_merge([
             'tid'               => 'test-tenant-id',
             'givenName'         => 'Alice',
             'surname'           => 'Example',
             'displayName'       => 'Alice Example',
-            'mail'              => 'alice@3b.de',
-            'userPrincipalName' => 'alice@3b.de',
+            'mail'              => 'alice@example.com',
+            'userPrincipalName' => 'alice@example.com',
         ], $overrides['user'] ?? []);
         return $u;
     }
@@ -584,7 +584,7 @@ Append to `EntraIdAuthServiceTest`:
         config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
         $existing = User::factory()->create([
             'entra_id'      => null,
-            'email'         => 'alice@3b.de',
+            'email'         => 'alice@example.com',
             'login_enabled' => true,
         ]);
 
@@ -600,13 +600,13 @@ Append to `EntraIdAuthServiceTest`:
         config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
         User::factory()->create([
             'entra_id'      => null,
-            'email'         => 'Alice@3B.de',
+            'email'         => 'Alice@EXAMPLE.com',
             'login_enabled' => true,
         ]);
 
         $svc = new EntraIdAuthService();
         $resolved = $svc->resolveUser($this->makeSocialiteUser([
-            'email' => 'alice@3b.de',
+            'email' => 'alice@example.com',
         ]));
 
         $this->assertSame('oid-abc-123', $resolved->fresh()->entra_id);
@@ -617,14 +617,14 @@ Append to `EntraIdAuthServiceTest`:
         config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
         User::factory()->create([
             'entra_id'      => null,
-            'email'         => 'alice@3b.de',
+            'email'         => 'alice@example.com',
             'login_enabled' => true,
         ]);
 
         $svc = new EntraIdAuthService();
         $msUser = $this->makeSocialiteUser([
             'email' => null,
-            'user'  => ['mail' => null, 'userPrincipalName' => 'alice@3b.de'],
+            'user'  => ['mail' => null, 'userPrincipalName' => 'alice@example.com'],
         ]);
         $resolved = $svc->resolveUser($msUser);
 
@@ -728,7 +728,7 @@ Append to `EntraIdAuthServiceTest`:
         config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
         User::factory()->create([
             'entra_id'      => null,
-            'email'         => 'alice@3b.de',
+            'email'         => 'alice@example.com',
             'login_enabled' => true,
         ]);
 
@@ -803,8 +803,8 @@ Append to `EntraIdAuthServiceTest`:
                 'givenName'         => 'Alice',
                 'surname'           => 'Example',
                 'displayName'       => 'Alice Example',
-                'mail'              => 'alice@3b.de',
-                'userPrincipalName' => 'alice@3b.de',
+                'mail'              => 'alice@example.com',
+                'userPrincipalName' => 'alice@example.com',
             ],
         ]));
 
@@ -812,7 +812,7 @@ Append to `EntraIdAuthServiceTest`:
         $this->assertSame('Alice', $fresh->firstname);
         $this->assertSame('Example', $fresh->lastname);
         $this->assertSame('Alice Example', $fresh->name);
-        $this->assertSame('alice@3b.de', $fresh->email);
+        $this->assertSame('alice@example.com', $fresh->email);
     }
 
     public function test_sync_attributes_uses_user_principal_name_when_mail_missing(): void
@@ -827,11 +827,11 @@ Append to `EntraIdAuthServiceTest`:
                 'surname'           => 'Example',
                 'displayName'       => 'Alice Example',
                 'mail'              => null,
-                'userPrincipalName' => 'alice@3b.de',
+                'userPrincipalName' => 'alice@example.com',
             ],
         ]));
 
-        $this->assertSame('alice@3b.de', $user->fresh()->email);
+        $this->assertSame('alice@example.com', $user->fresh()->email);
     }
 ```
 
@@ -961,15 +961,15 @@ class MicrosoftLoginTest extends TestCase
     {
         $u = new SocialiteUser();
         $u->id    = $overrides['id']    ?? 'oid-abc-123';
-        $u->email = $overrides['email'] ?? 'alice@3b.de';
+        $u->email = $overrides['email'] ?? 'alice@example.com';
         $u->name  = $overrides['name']  ?? 'Alice Example';
         $u->user  = array_merge([
             'tid'               => 'test-tenant-id',
             'givenName'         => 'Alice',
             'surname'           => 'Example',
             'displayName'       => 'Alice Example',
-            'mail'              => 'alice@3b.de',
-            'userPrincipalName' => 'alice@3b.de',
+            'mail'              => 'alice@example.com',
+            'userPrincipalName' => 'alice@example.com',
         ], $overrides['user'] ?? []);
         return $u;
     }
@@ -1003,7 +1003,7 @@ class MicrosoftLoginTest extends TestCase
         $fresh = $user->fresh();
         $this->assertSame('Alice', $fresh->firstname);
         $this->assertSame('Example', $fresh->lastname);
-        $this->assertSame('alice@3b.de', $fresh->email);
+        $this->assertSame('alice@example.com', $fresh->email);
     }
 }
 ```
@@ -1120,7 +1120,7 @@ Append to `MicrosoftLoginTest`:
     {
         $user = User::factory()->create([
             'entra_id'      => null,
-            'email'         => 'alice@3b.de',
+            'email'         => 'alice@example.com',
             'login_enabled' => true,
         ]);
 

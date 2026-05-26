@@ -24,15 +24,15 @@ class MicrosoftLoginTest extends TestCase
     {
         $u = new SocialiteUser;
         $u->id = $overrides['id'] ?? 'oid-abc-123';
-        $u->email = $overrides['email'] ?? 'alice@3b.de';
+        $u->email = $overrides['email'] ?? 'alice@example.com';
         $u->name = $overrides['name'] ?? 'Alice Example';
         $u->user = array_merge([
             'tid' => 'test-tenant-id',
             'givenName' => 'Alice',
             'surname' => 'Example',
             'displayName' => 'Alice Example',
-            'mail' => 'alice@3b.de',
-            'userPrincipalName' => 'alice@3b.de',
+            'mail' => 'alice@example.com',
+            'userPrincipalName' => 'alice@example.com',
         ], $overrides['user'] ?? []);
 
         return $u;
@@ -67,14 +67,14 @@ class MicrosoftLoginTest extends TestCase
         $fresh = $user->fresh();
         $this->assertSame('Alice', $fresh->firstname);
         $this->assertSame('Example', $fresh->lastname);
-        $this->assertSame('alice@3b.de', $fresh->email);
+        $this->assertSame('alice@example.com', $fresh->email);
     }
 
     public function test_callback_links_existing_user_by_email_when_entra_id_is_null(): void
     {
         $user = User::factory()->create([
             'entra_id' => null,
-            'email' => 'alice@3b.de',
+            'email' => 'alice@example.com',
             'login_enabled' => true,
         ]);
 
