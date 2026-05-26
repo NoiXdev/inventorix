@@ -35,6 +35,21 @@ jobs:
           key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
 
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build frontend assets
+        # composer install runs `artisan package:discover` in post-autoload-dump,
+        # which boots Filament's panel provider and resolves Vite::asset() — that
+        # requires public/build/manifest.json to exist before composer install.
+        run: npm run build
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
@@ -64,9 +79,6 @@ jobs:
           key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
 
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress
-
       - name: Setup Node
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -77,9 +89,13 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Build frontend assets
-        # Filament views render `@vite(...)` which reads public/build/manifest.json.
-        # Without this the test suite hits Vite::manifestNotFound on every HTTP test.
+        # composer install runs `artisan package:discover` in post-autoload-dump,
+        # which boots Filament's panel provider and resolves Vite::asset() — that
+        # requires public/build/manifest.json to exist before composer install.
         run: npm run build
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Copy .env.example
         run: cp .env.example .env
