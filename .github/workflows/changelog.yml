@@ -1,0 +1,82 @@
+name: Changelog
+
+# Conventional-Commits → CHANGELOG.md + version bump in package.json + git tag
+# + GitHub Release. Runs only after CI on `main` is green.
+#
+# Uses GITHUB_TOKEN exclusively — no PAT required. The tag push itself can't
+# trigger a follow-up workflow (GitHub anti-recursion rule), but
+# `workflow_dispatch` is a documented exception, so we kick off release.yml
+# explicitly via `gh workflow run release.yml --ref <tag>` at the end.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write # required for `gh workflow run` from inside a workflow
+
+jobs:
+  release:
+    name: Bump version + tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main') }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Conventional Changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          git-user-name: "noix-dev-bot"
+          git-user-email: "noix-dev-bot@noix.dev"
+          git-message: "chore(release): {version}"
+          preset: "conventionalcommits"
+          tag-prefix: "v"
+          output-file: "CHANGELOG.md"
+          release-count: 0
+          skip-on-empty: "true"
+          skip-version-file: "false"
+          skip-commit: "false"
+
+      - name: Create GitHub Release
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        uses: softprops/action-gh-release@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+
+      - name: Trigger Release workflow for new tag
+        # `workflow_dispatch` is the explicit exception to GitHub's anti-
+        # recursion rule, so this works even when the current workflow runs
+        # under GITHUB_TOKEN.
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release.yml \
+            --ref "${{ steps.changelog.outputs.tag }}" \
+            --repo "${{ github.repository }}"
+
+      - name: Summary
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: |
+          echo "### Released ${{ steps.changelog.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Tag, GitHub Release and release-workflow trigger have been set." >> $GITHUB_STEP_SUMMARY
+          echo "Image will appear in Harbor in a few minutes:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ vars.HARBOR_HOST }}/${{ vars.HARBOR_PROJECT }}/${{ vars.HARBOR_IMAGE }}:${{ steps.changelog.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "+ \`:latest\`, \`:major.minor\`, \`:major\`" >> $GITHUB_STEP_SUMMARY
