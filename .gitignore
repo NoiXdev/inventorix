@@ -28,3 +28,6 @@ frankenphp-worker.php
 
 *.sql
 *.sql.gz
+
+/docs/superpowers/
+
