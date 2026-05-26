@@ -77,6 +77,6 @@ jobs:
           echo "### Released ${{ steps.changelog.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Tag, GitHub Release and release-workflow trigger have been set." >> $GITHUB_STEP_SUMMARY
-          echo "Image will appear in Harbor in a few minutes:" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ vars.HARBOR_HOST }}/${{ vars.HARBOR_PROJECT }}/${{ vars.HARBOR_IMAGE }}:${{ steps.changelog.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Image will appear on Docker Hub in a few minutes:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`docker.io/${{ vars.DOCKERHUB_NAMESPACE }}/${{ vars.DOCKERHUB_IMAGE }}:${{ steps.changelog.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "+ \`:latest\`, \`:major.minor\`, \`:major\`" >> $GITHUB_STEP_SUMMARY

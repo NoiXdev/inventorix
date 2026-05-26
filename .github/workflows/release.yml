@@ -1,6 +1,6 @@
 name: Release
 
-# Builds the production image and pushes it to Harbor.
+# Builds the production image and pushes it to Docker Hub.
 #
 # Triggers:
 #   - push to `main`        → tags `main` + `main-<short-sha>`
@@ -8,14 +8,14 @@ name: Release
 #   - manual (workflow_dispatch)
 #
 # Required GitHub config (repo Settings → Secrets and variables → Actions):
-#   - Variable HARBOR_HOST     (e.g. harbor.cloud.noidee.dev)
-#   - Variable HARBOR_PROJECT  (e.g. club-desk)
-#   - Variable HARBOR_IMAGE    (e.g. app)        — produces $HARBOR_HOST/$HARBOR_PROJECT/$HARBOR_IMAGE
-#   - Secret   HARBOR_USERNAME (robot account, e.g. "robot$club-desk+github")
-#   - Secret   HARBOR_PASSWORD (robot account secret)
+#   - Variable DOCKERHUB_NAMESPACE (Docker Hub user or org, e.g. "noix")
+#   - Variable DOCKERHUB_IMAGE     (repo name, e.g. "club-desk")
+#                                  — produces docker.io/$DOCKERHUB_NAMESPACE/$DOCKERHUB_IMAGE
+#   - Secret   DOCKERHUB_USERNAME  (Docker Hub username)
+#   - Secret   DOCKERHUB_TOKEN     (Docker Hub access token with read/write/delete)
 #
-# Harbor-side: create a private project, then a robot account scoped to that
-# project with `repository: pull, push` permissions.
+# Docker Hub side: create the repository (private if desired), then generate an
+# access token under Account Settings → Security with push permissions.
 
 on:
   push:
@@ -38,34 +38,32 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Validate Harbor configuration
+      - name: Validate Docker Hub configuration
         run: |
-          : "${HARBOR_HOST:?Variable HARBOR_HOST is not set}"
-          : "${HARBOR_PROJECT:?Variable HARBOR_PROJECT is not set}"
-          : "${HARBOR_IMAGE:?Variable HARBOR_IMAGE is not set}"
-          : "${HARBOR_USERNAME:?Secret HARBOR_USERNAME is not set}"
-          : "${HARBOR_PASSWORD:?Secret HARBOR_PASSWORD is not set}"
+          : "${DOCKERHUB_NAMESPACE:?Variable DOCKERHUB_NAMESPACE is not set}"
+          : "${DOCKERHUB_IMAGE:?Variable DOCKERHUB_IMAGE is not set}"
+          : "${DOCKERHUB_USERNAME:?Secret DOCKERHUB_USERNAME is not set}"
+          : "${DOCKERHUB_TOKEN:?Secret DOCKERHUB_TOKEN is not set}"
         env:
-          HARBOR_HOST: ${{ vars.HARBOR_HOST }}
-          HARBOR_PROJECT: ${{ vars.HARBOR_PROJECT }}
-          HARBOR_IMAGE: ${{ vars.HARBOR_IMAGE }}
-          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
-          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+          DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
+          DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/setup-buildx-action@v4
 
-      - name: Log in to Harbor
+      - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
-          registry: ${{ vars.HARBOR_HOST }}
-          username: ${{ secrets.HARBOR_USERNAME }}
-          password: ${{ secrets.HARBOR_PASSWORD }}
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Compute image tags
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ vars.HARBOR_HOST }}/${{ vars.HARBOR_PROJECT }}/${{ vars.HARBOR_IMAGE }}
+          images: docker.io/${{ vars.DOCKERHUB_NAMESPACE }}/${{ vars.DOCKERHUB_IMAGE }}
           tags: |
             type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
             type=semver,pattern={{version}}
