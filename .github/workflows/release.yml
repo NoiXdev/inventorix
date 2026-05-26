@@ -1,0 +1,264 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      prerelease:
+        description: "Mark as a pre-release (skips :latest and major/minor Docker tags)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Run all steps but skip pushes (no Docker push, no commit, no tag, no release)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release ${{ inputs.bump }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate Docker Hub configuration
+        run: |
+          : "${DOCKERHUB_NAMESPACE:?Variable DOCKERHUB_NAMESPACE is not set}"
+          : "${DOCKERHUB_IMAGE:?Variable DOCKERHUB_IMAGE is not set}"
+          : "${DOCKERHUB_USERNAME:?Secret DOCKERHUB_USERNAME is not set}"
+          : "${DOCKERHUB_TOKEN:?Secret DOCKERHUB_TOKEN is not set}"
+        env:
+          DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE }}
+          DOCKERHUB_IMAGE: ${{ vars.DOCKERHUB_IMAGE }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Compute next version
+        id: bump
+        run: |
+          current=$(node -p "require('./package.json').version")
+          IFS='.' read -r major minor patch <<< "$current"
+          case "${{ inputs.bump }}" in
+            major) next="$((major+1)).0.0" ;;
+            minor) next="${major}.$((minor+1)).0" ;;
+            patch) next="${major}.${minor}.$((patch+1))" ;;
+            *) echo "::error::Unknown bump type '${{ inputs.bump }}'"; exit 1 ;;
+          esac
+          tag="v${next}"
+          {
+            echo "current=${current}"
+            echo "next=${next}"
+            echo "tag=${tag}"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::Bumping ${current} -> ${next} (${tag})"
+
+      - name: Ensure tag does not already exist
+        run: |
+          if git rev-parse "refs/tags/${{ steps.bump.outputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Tag ${{ steps.bump.outputs.tag }} already exists. Pick a different bump."
+            exit 1
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc # v2
+        with:
+          php-version: "8.4"
+          extensions: bcmath, exif, gd, intl, opcache, pcntl, pdo_sqlite, redis, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build frontend assets
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Install Composer production deps
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Generate CHANGELOG.md
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@952b14bbc4be87e8458a6ac5926fc655608b1b19 # v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          release-as: ${{ steps.bump.outputs.next }}
+          preset: conventionalcommits
+          tag-prefix: "v"
+          output-file: CHANGELOG.md
+          release-count: 0
+          skip-commit: "true"
+          skip-tag: "true"
+          skip-version-file: "false"
+          skip-on-empty: "false"
+
+      - name: Build deployment bundle
+        id: bundle
+        run: |
+          tag="${{ steps.bump.outputs.tag }}"
+          name="inventorix-${tag}"
+          stage="/tmp/${name}"
+          mkdir -p "$stage"
+
+          # Copy the working tree (which now has the bumped package.json and
+          # regenerated CHANGELOG.md), minus dev-only and gitignored cruft.
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.idea' \
+            --exclude='.vscode' \
+            --exclude='.fleet' \
+            --exclude='.nova' \
+            --exclude='.zed' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            --exclude='docs' \
+            --exclude='CLAUDE.md' \
+            --exclude='.env' \
+            --exclude='.env.backup' \
+            --exclude='.env.production' \
+            --exclude='*.sql' \
+            --exclude='*.sql.gz' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/data/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='frankenphp' \
+            --exclude='frankenphp-worker.php' \
+            --exclude='.phpunit.result.cache' \
+            --exclude='.phpunit.cache' \
+            --exclude='.phpactor.json' \
+            ./ "$stage/"
+
+          ( cd /tmp && zip -rq "${name}.zip" "${name}" )
+          echo "path=/tmp/${name}.zip" >> "$GITHUB_OUTPUT"
+          echo "name=${name}.zip" >> "$GITHUB_OUTPUT"
+          ls -lh "/tmp/${name}.zip"
+
+      - name: Upload bundle as workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.bundle.outputs.name }}
+          path: ${{ steps.bundle.outputs.path }}
+          retention-days: 14
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4
+
+      - name: Log in to Docker Hub
+        if: ${{ inputs.dry_run == false }}
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
+        with:
+          images: docker.io/${{ vars.DOCKERHUB_NAMESPACE }}/${{ vars.DOCKERHUB_IMAGE }}
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.prerelease == false }}
+            type=semver,pattern={{version}},value=${{ steps.bump.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.bump.outputs.tag }},enable=${{ inputs.prerelease == false }}
+            type=semver,pattern={{major}},value=${{ steps.bump.outputs.tag }},enable=${{ inputs.prerelease == false }}
+          labels: |
+            org.opencontainers.image.title=inventorix
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.bump.outputs.next }}
+            org.opencontainers.image.licenses=MIT
+
+      - name: Build & push image
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ inputs.dry_run == false }}
+          provenance: mode=max
+          sbom: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Commit version bump + CHANGELOG to main
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GIT_AUTHOR_NAME: noix-dev-bot
+          GIT_AUTHOR_EMAIL: noix-dev-bot@noix.dev
+          GIT_COMMITTER_NAME: noix-dev-bot
+          GIT_COMMITTER_EMAIL: noix-dev-bot@noix.dev
+        run: |
+          git add CHANGELOG.md package.json
+          if git diff --staged --quiet; then
+            echo "Nothing to commit"
+          else
+            git commit -m "chore(release): ${{ steps.bump.outputs.tag }} [skip ci]"
+            git push origin HEAD:main
+          fi
+
+      - name: Tag release
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GIT_AUTHOR_NAME: noix-dev-bot
+          GIT_AUTHOR_EMAIL: noix-dev-bot@noix.dev
+          GIT_COMMITTER_NAME: noix-dev-bot
+          GIT_COMMITTER_EMAIL: noix-dev-bot@noix.dev
+        run: |
+          git tag -a "${{ steps.bump.outputs.tag }}" -m "${{ steps.bump.outputs.tag }}"
+          git push origin "${{ steps.bump.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: ${{ inputs.dry_run == false }}
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ steps.bump.outputs.tag }}
+          name: ${{ steps.bump.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          prerelease: ${{ inputs.prerelease }}
+          files: ${{ steps.bundle.outputs.path }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Release ${{ steps.bump.outputs.tag }}"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Previous version | \`${{ steps.bump.outputs.current }}\` |"
+            echo "| New version | \`${{ steps.bump.outputs.next }}\` |"
+            echo "| Bump type | \`${{ inputs.bump }}\` |"
+            echo "| Pre-release | \`${{ inputs.prerelease }}\` |"
+            echo "| Dry run | \`${{ inputs.dry_run }}\` |"
+            echo "| Bundle | \`${{ steps.bundle.outputs.name }}\` |"
+            echo ""
+            echo "**Docker tags:**"
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
