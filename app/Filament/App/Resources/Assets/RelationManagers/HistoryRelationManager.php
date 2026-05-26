@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\Assets\RelationManagers;
 
+use App\Filament\App\Resources\Handovers\HandoverResource;
 use App\Models\Asset;
 use App\Models\Incident;
 use App\Support\History\SummaryBuilder;
@@ -163,7 +164,7 @@ class HistoryRelationManager extends RelationManager
                             return null;
                         }
 
-                        return \App\Filament\App\Resources\Handovers\HandoverResource::getUrl('view', ['record' => $handoverId]);
+                        return HandoverResource::getUrl('view', ['record' => $handoverId]);
                     })
                     ->wrap(),
             ])

@@ -1,8 +1,13 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Providers\Filament\AdminTestPanelProvider;
+use App\Providers\Filament\AppPanelProvider;
+use App\Providers\HorizonServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Providers\Filament\AdminTestPanelProvider::class,
-    App\Providers\Filament\AppPanelProvider::class,
-    App\Providers\HorizonServiceProvider::class,
+    AppServiceProvider::class,
+    AdminTestPanelProvider::class,
+    AppPanelProvider::class,
+    HorizonServiceProvider::class,
 ];

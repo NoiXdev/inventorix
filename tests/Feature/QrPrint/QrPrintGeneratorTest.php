@@ -22,10 +22,15 @@ class QrPrintGeneratorTest extends TestCase
             ->call('print')
             ->assertDispatched('qr-print:open', function (string $name, array $params) {
                 $items = $params['items'] ?? null;
-                if (! is_array($items) || count($items) !== 5) return false;
-                foreach ($items as $item) {
-                    if (! isset($item['uuid']) || ! is_string($item['uuid'])) return false;
+                if (! is_array($items) || count($items) !== 5) {
+                    return false;
                 }
+                foreach ($items as $item) {
+                    if (! isset($item['uuid']) || ! is_string($item['uuid'])) {
+                        return false;
+                    }
+                }
+
                 return true;
             });
     }

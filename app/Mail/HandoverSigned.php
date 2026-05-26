@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Storage;
 
 class HandoverSigned extends Mailable
 {
-
     public Handover $handover;
 
     public function __construct(public string $handoverId)

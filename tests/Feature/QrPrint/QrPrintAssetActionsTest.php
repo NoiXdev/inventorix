@@ -29,8 +29,11 @@ class QrPrintAssetActionsTest extends TestCase
             ->callAction('print_qr_single')
             ->assertDispatched('qr-print:open', function (string $name, array $params) use ($asset) {
                 $items = $params['items'] ?? null;
-                if (! is_array($items) || count($items) !== 1) return false;
+                if (! is_array($items) || count($items) !== 1) {
+                    return false;
+                }
                 $item = $items[0];
+
                 return $item['uuid'] === $asset->id
                     && ($item['metadata']['modelName'] ?? null) === 'MacBook Pro 14"'
                     && ($item['metadata']['serial'] ?? null) === 'SN-123';
@@ -48,6 +51,7 @@ class QrPrintAssetActionsTest extends TestCase
             ->callTableBulkAction('print_qr_bulk', $assets->pluck('id')->all())
             ->assertDispatched('qr-print:open', function (string $name, array $params) {
                 $items = $params['items'] ?? null;
+
                 return is_array($items) && count($items) === 3;
             });
     }

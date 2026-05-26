@@ -52,6 +52,7 @@ class PrintQrAction
                 'serial' => $serial,
             ];
         }
+
         return $item;
     }
 }

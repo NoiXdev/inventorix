@@ -3,9 +3,11 @@
 namespace App\Filament\App\Resources\Handovers\Actions;
 
 use App\DataObjects\HandoverData;
+use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Exceptions\HandoverStateConflictException;
+use App\Filament\App\Resources\Handovers\HandoverResource;
 use App\Models\Asset;
 use App\Models\User;
 use App\Services\HandoverService;
@@ -16,8 +18,8 @@ use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
 use Filament\Forms\Components\ViewField;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Support\Icons\Heroicon;
 
@@ -38,10 +40,10 @@ class HandoverWizardAction
 
                 $defaultType = HandoverType::ISSUE->value;
                 if (! empty($ids)) {
-                    $firstAsset = \App\Models\Asset::query()->find($ids[0]);
+                    $firstAsset = Asset::query()->find($ids[0]);
                     if ($firstAsset !== null) {
                         $defaultType = match ($firstAsset->state) {
-                            \App\Enums\AssetState::IN_USE, \App\Enums\AssetState::LEND => HandoverType::RETURN_->value,
+                            AssetState::IN_USE, AssetState::LEND => HandoverType::RETURN_->value,
                             default => HandoverType::ISSUE->value,
                         };
                     }
@@ -236,7 +238,7 @@ class HandoverWizardAction
                 Action::make('view')
                     ->button()
                     ->label(trans('handover.notification.view_handover'))
-                    ->url(\App\Filament\App\Resources\Handovers\HandoverResource::getUrl('view', ['record' => $handover->id])),
+                    ->url(HandoverResource::getUrl('view', ['record' => $handover->id])),
             ])
             ->send();
     }
