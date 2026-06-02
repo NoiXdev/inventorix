@@ -6,6 +6,8 @@ use App\Models\Handover;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
+Route::get('/', fn() => to_route('filament.app.pages.dashboard'));
+
 Route::get('/gq', [QrCodeGeneratorController::class, 'generate'])->name('qg');
 
 if (config('services.microsoft-azure.enabled')) {
