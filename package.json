@@ -14,15 +14,15 @@
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^25.9.1",
     "@types/qrcode": "^1.5.6",
-    "axios": "^1.16.1",
+    "axios": "^1.17.0",
     "concurrently": "^9.0.1",
     "happy-dom": "^20.9.0",
     "laravel-vite-plugin": "^3.1",
     "qr-scanner": "^1.4.2",
     "tailwindcss": "^4.0.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14",
-    "vitest": "^4.1.7"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.8"
   },
   "dependencies": {
     "qrcode": "^1.5.4"
