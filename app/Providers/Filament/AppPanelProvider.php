@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\ApplyRuntimeSettings;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -16,7 +17,6 @@ use Filament\Support\Enums\Width;
 use Filament\Support\Facades\FilamentAsset;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
-use App\Http\Middleware\ApplyRuntimeSettings;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
