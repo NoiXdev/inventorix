@@ -141,5 +141,21 @@ return [
                 'state' => 'Status',
             ],
         ],
+        'handover_history' => [
+            'label' => 'Übergabe-Historie',
+            'description' => 'Übergaben/Rücknahmen mit Empfänger und Anzahl Assets.',
+            'filter' => [
+                'type' => 'Typ',
+                'from' => 'Von',
+                'to' => 'Bis',
+            ],
+            'columns' => [
+                'signed_at' => 'Datum',
+                'type' => 'Typ',
+                'recipient' => 'Empfänger',
+                'assets_count' => 'Assets',
+                'created_by' => 'Erstellt von',
+            ],
+        ],
     ],
 ];

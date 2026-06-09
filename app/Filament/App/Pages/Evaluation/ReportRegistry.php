@@ -19,6 +19,7 @@ class ReportRegistry
             StateOverviewReport::class,
             IncidentHistoryReport::class,
             AssetAgingReport::class,
+            HandoverHistoryReport::class,
         ];
     }
 }
