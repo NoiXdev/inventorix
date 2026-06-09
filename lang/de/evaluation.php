@@ -125,5 +125,21 @@ return [
                 'state' => 'Status',
             ],
         ],
+        'asset_aging' => [
+            'label' => 'Alter / Ersatzplanung',
+            'description' => 'Assets, die älter als eine gewählte Anzahl Jahre sind.',
+            'filter' => [
+                'min_age_years' => 'Mindestalter (Jahre)',
+            ],
+            'columns' => [
+                'model' => 'Modell',
+                'serial_number' => 'Seriennummer',
+                'owner' => 'Mitarbeiter',
+                'buy_date' => 'Kaufdatum',
+                'age_years' => 'Alter (Jahre)',
+                'buy_price' => 'Kaufpreis',
+                'state' => 'Status',
+            ],
+        ],
     ],
 ];
