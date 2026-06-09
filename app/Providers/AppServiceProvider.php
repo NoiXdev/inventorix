@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Listeners\ApplySettingsToJob;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -32,5 +34,7 @@ class AppServiceProvider extends ServiceProvider
                 );
             },
         );
+
+        Event::listen(JobProcessing::class, ApplySettingsToJob::class);
     }
 }
