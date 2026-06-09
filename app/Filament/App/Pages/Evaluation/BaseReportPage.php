@@ -132,16 +132,34 @@ abstract class BaseReportPage extends Page implements HasForms, HasTable
             ->all();
     }
 
-    public function downloadPdf(): StreamedResponse
+    /** The Blade view used to render the PDF. Reports may override for a custom layout. */
+    public function pdfView(): string
     {
-        $pdf = Pdf::loadView('pdf.reports.layout', [
+        return 'pdf.reports.layout';
+    }
+
+    /**
+     * The data passed to the PDF view. Reports may override to provide a different
+     * shape (e.g. rows grouped per employee). Keys must match what the view expects.
+     *
+     * @return array<string, mixed>
+     */
+    public function pdfData(): array
+    {
+        return [
             'title' => static::reportLabel(),
             'headings' => $this->reportHeadings(),
             'rows' => $this->reportRows(),
             'filterSummary' => $this->filterSummary(),
             'companyName' => config('handover.company.name'),
             'generatedAt' => now()->format('d.m.Y H:i'),
-        ])->setPaper('a4', 'landscape');
+        ];
+    }
+
+    public function downloadPdf(): StreamedResponse
+    {
+        $pdf = Pdf::loadView($this->pdfView(), $this->pdfData())
+            ->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
             fn () => print ($pdf->output()),

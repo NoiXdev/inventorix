@@ -20,6 +20,9 @@ return [
             'filter' => [
                 'employees' => 'Mitarbeiter',
             ],
+            'pdf' => [
+                'no_owner' => 'Ohne Mitarbeiter zugeordnet',
+            ],
             'columns' => [
                 'owner' => 'Mitarbeiter',
                 'asset_type' => 'Typ',

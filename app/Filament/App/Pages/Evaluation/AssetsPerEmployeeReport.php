@@ -78,4 +78,45 @@ class AssetsPerEmployeeReport extends BaseReportPage
 
         return __('evaluation.reports.assets_per_employee.filter.employees').': '.$names;
     }
+
+    public function pdfView(): string
+    {
+        return 'pdf.reports.assets-per-employee';
+    }
+
+    /**
+     * Group the assets per employee so each employee starts on its own PDF page.
+     * Assets without an owner are collected into a trailing "no owner" group.
+     *
+     * @return array<string, mixed>
+     */
+    public function pdfData(): array
+    {
+        $columns = $this->reportColumns();
+        $noOwnerLabel = __('evaluation.reports.assets_per_employee.pdf.no_owner');
+
+        $groups = $this->reportQuery()->get()
+            ->groupBy(fn (Asset $asset): string => $asset->owner_id ?? '')
+            ->map(fn ($assets): array => [
+                'employee' => $assets->first()->owner?->name ?? $noOwnerLabel,
+                'hasOwner' => $assets->first()->owner !== null,
+                'rows' => $assets->map(fn (Asset $asset): array => array_map(
+                    fn (ReportColumn $column) => $column->resolve($asset),
+                    $columns,
+                ))->all(),
+            ])
+            // Sort by employee name, but always push the "no owner" group to the end.
+            ->sortBy(fn (array $group): string => ($group['hasOwner'] ? '0' : '1').$group['employee'])
+            ->values()
+            ->all();
+
+        return [
+            'title' => static::reportLabel(),
+            'headings' => $this->reportHeadings(),
+            'groups' => $groups,
+            'filterSummary' => $this->filterSummary(),
+            'companyName' => config('handover.company.name'),
+            'generatedAt' => now()->format('d.m.Y H:i'),
+        ];
+    }
 }
