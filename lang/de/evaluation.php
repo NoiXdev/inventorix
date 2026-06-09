@@ -55,5 +55,20 @@ return [
                 'days_left' => 'Tage verbleibend',
             ],
         ],
+        'inventory_by_location' => [
+            'label' => 'Bestand nach Standort',
+            'description' => 'Alle Assets an einem oder mehreren Standorten.',
+            'filter' => [
+                'places' => 'Standorte',
+            ],
+            'columns' => [
+                'place' => 'Standort',
+                'asset_type' => 'Typ',
+                'model' => 'Modell',
+                'serial_number' => 'Seriennummer',
+                'state' => 'Status',
+                'owner' => 'Mitarbeiter',
+            ],
+        ],
     ],
 ];
