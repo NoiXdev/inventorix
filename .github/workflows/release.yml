@@ -93,6 +93,11 @@ jobs:
       - name: Build frontend assets
         run: |
           npm ci --no-audit --no-fund
+          # Authoritative version bump: the "Compute next version" step is the
+          # single source of truth. Write it into package.json/package-lock.json
+          # BEFORE building so any build-time embedded version matches the tag.
+          # The changelog step below is changelog-text-only and must NOT bump.
+          npm version "${{ steps.bump.outputs.next }}" --no-git-tag-version --allow-same-version
           npm run build
 
       - name: Install Composer production deps
@@ -104,15 +109,29 @@ jobs:
         uses: TriPSs/conventional-changelog-action@952b14bbc4be87e8458a6ac5926fc655608b1b19 # v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          release-as: ${{ steps.bump.outputs.next }}
+          # NOTE: this action has no `release-as` input (it was silently ignored
+          # and the action fell back to its own git-derived version, causing the
+          # package.json <-> tag drift). The version is now owned by the npm
+          # version step above; here we only generate changelog text.
           preset: conventionalcommits
           tag-prefix: "v"
           output-file: CHANGELOG.md
           release-count: 0
           skip-commit: "true"
           skip-tag: "true"
-          skip-version-file: "false"
+          skip-bump: "true"
+          skip-version-file: "true"
           skip-on-empty: "false"
+
+      - name: Verify version is in sync
+        run: |
+          pkg=$(node -p "require('./package.json').version")
+          want="${{ steps.bump.outputs.next }}"
+          if [ "$pkg" != "$want" ]; then
+            echo "::error::package.json version ($pkg) does not match the release version ($want). Aborting to prevent version drift."
+            exit 1
+          fi
+          echo "package.json version is $pkg — in sync with tag ${{ steps.bump.outputs.tag }}"
 
       - name: Build deployment bundle
         id: bundle
@@ -213,7 +232,7 @@ jobs:
           GIT_COMMITTER_NAME: noix-dev-bot
           GIT_COMMITTER_EMAIL: noix-dev-bot@noix.dev
         run: |
-          git add CHANGELOG.md package.json
+          git add CHANGELOG.md package.json package-lock.json
           if git diff --staged --quiet; then
             echo "Nothing to commit"
           else
