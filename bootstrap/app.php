@@ -11,7 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Trust the reverse proxy / load balancer so X-Forwarded-Proto is honored.
+        // Required for signed URLs (e.g. email verification) to validate as https in prod.
+        $middleware->trustProxies(at: '*');
+
+        $middleware->web(append: [
+            //\App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\SecureHeaders::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
