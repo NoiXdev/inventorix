@@ -21,13 +21,10 @@ class Scanner extends Component
         $this->validate();
 
         $existingAsset = Asset::find($this->serialNumber);
-
         if ($existingAsset) {
-            return to_route('filament.app.resources.assets.edit', $existingAsset);
+            $this->redirectRoute('filament.app.resources.assets.edit', ['record' => $existingAsset], navigate: false);
         } else {
-            return to_route('filament.app.resources.assets.create', [
-                'forceId' => $this->serialNumber,
-            ]);
+            $this->redirectRoute('filament.app.resources.assets.create', ['forceId' => $this->serialNumber], navigate: false);
         }
     }
 }

@@ -12,13 +12,21 @@ let scanner = new QrScanner(scannerVideoElement, result => {
     if(scannerOutputInput){
         scannerOutputInput.value = result;
     }
-    console.log(result);
 });
 
-scannerStartButton?.addEventListener('click', () => {
-    scanner.start();
+scannerStartButton?.addEventListener('click', async () => {
+    await askForPermission();
+    await scanner.start();
+
 })
 
-document.addEventListener("scanner-modal-close", () => {
+document.addEventListener("scanner-modal-close", async () => {
     scanner.stop();
 })
+
+const askForPermission = async () => {
+    await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: {}
+    })
+}
