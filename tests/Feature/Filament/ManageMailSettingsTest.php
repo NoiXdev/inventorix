@@ -26,7 +26,7 @@ class ManageMailSettingsTest extends TestCase
                 'from_name' => 'Inventorix',
                 'smtp_host' => 'mail.example.test',
                 'smtp_port' => 587,
-                'smtp_scheme' => 'tls',
+                'smtp_scheme' => 'smtps',
                 'smtp_username' => 'user',
                 'smtp_password' => 'secret',
             ])

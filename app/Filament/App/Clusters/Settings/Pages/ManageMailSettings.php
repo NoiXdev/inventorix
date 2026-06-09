@@ -84,7 +84,14 @@ class ManageMailSettings extends SettingsPage
                     ->schema([
                         TextInput::make('smtp_host')->label('Host')->required(),
                         TextInput::make('smtp_port')->label('Port')->numeric()->required(),
-                        Select::make('smtp_scheme')->label('Encryption')->options(['tls' => 'TLS', 'ssl' => 'SSL'])->placeholder('None'),
+                        Select::make('smtp_scheme')
+                            ->label('Encryption')
+                            ->options([
+                                'smtp' => 'STARTTLS',
+                                'smtps' => 'SSL/TLS',
+                            ])
+                            ->placeholder('Automatic (based on port)')
+                            ->helperText('Leave automatic unless your server requires a specific scheme. Port 465 uses SSL/TLS; other ports use STARTTLS.'),
                         TextInput::make('smtp_username')->label('Username'),
                         TextInput::make('smtp_password')->label('Password')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
                     ])

@@ -20,7 +20,7 @@ class ApplySettingsTest extends TestCase
         $mail->from_name = 'Inventorix Test';
         $mail->smtp_host = 'mail.example.test';
         $mail->smtp_port = 587;
-        $mail->smtp_scheme = 'tls';
+        $mail->smtp_scheme = 'smtps';
         $mail->smtp_username = 'user';
         $mail->smtp_password = 'secret';
         $mail->save();
@@ -32,7 +32,7 @@ class ApplySettingsTest extends TestCase
         $this->assertSame('Inventorix Test', config('mail.from.name'));
         $this->assertSame('mail.example.test', config('mail.mailers.smtp.host'));
         $this->assertSame(587, config('mail.mailers.smtp.port'));
-        $this->assertSame('tls', config('mail.mailers.smtp.scheme'));
+        $this->assertSame('smtps', config('mail.mailers.smtp.scheme'));
         $this->assertSame('user', config('mail.mailers.smtp.username'));
         $this->assertSame('secret', config('mail.mailers.smtp.password'));
     }
