@@ -17,6 +17,7 @@ class ReportRegistry
             InventoryByLocationReport::class,
             AssetValueReport::class,
             StateOverviewReport::class,
+            IncidentHistoryReport::class,
         ];
     }
 }

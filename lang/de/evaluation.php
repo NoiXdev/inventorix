@@ -104,5 +104,26 @@ return [
                 'total_price' => 'Gesamtwert',
             ],
         ],
+        'incident_history' => [
+            'label' => 'Reparatur-Historie',
+            'description' => 'Vorfälle/Reparaturen je Asset im Zeitraum.',
+            'filter' => [
+                'from' => 'Von',
+                'to' => 'Bis',
+                'status' => 'Status',
+            ],
+            'status' => [
+                'open' => 'Offen',
+                'closed' => 'Geschlossen',
+            ],
+            'columns' => [
+                'asset' => 'Asset',
+                'owner' => 'Mitarbeiter',
+                'title' => 'Titel',
+                'open_date' => 'Geöffnet',
+                'closed_date' => 'Geschlossen',
+                'state' => 'Status',
+            ],
+        ],
     ],
 ];
