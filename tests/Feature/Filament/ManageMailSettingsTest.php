@@ -98,6 +98,6 @@ class ManageMailSettingsTest extends TestCase
                 'from_name' => 'Inventorix',
             ])
             ->callAction('sendTest', data: ['email' => 'admin@example.test'])
-            ->assertNotified('Test email failed');
+            ->assertNotified(trans('settings.mail.test.failure_title'));
     }
 }

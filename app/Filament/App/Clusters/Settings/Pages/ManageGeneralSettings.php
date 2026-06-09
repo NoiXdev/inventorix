@@ -14,20 +14,26 @@ class ManageGeneralSettings extends SettingsPage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
-    protected static ?string $navigationLabel = 'General';
-
-    protected static ?string $title = 'General settings';
-
     protected static ?string $cluster = Settings::class;
 
     protected static string $settings = GeneralSettings::class;
+
+    public static function getNavigationLabel(): string
+    {
+        return trans('settings.general.nav');
+    }
+
+    public function getTitle(): string
+    {
+        return trans('settings.general.title');
+    }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 TextInput::make('app_name')
-                    ->label('Application name')
+                    ->label(trans('settings.general.field.app_name'))
                     ->required()
                     ->maxLength(255),
             ]);

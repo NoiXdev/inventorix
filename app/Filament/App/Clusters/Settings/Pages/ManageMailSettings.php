@@ -24,15 +24,21 @@ class ManageMailSettings extends SettingsPage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
 
-    protected static ?string $navigationLabel = 'Mail';
-
-    protected static ?string $title = 'Mail settings';
-
     protected static ?string $cluster = Settings::class;
 
     protected static string $settings = MailSettings::class;
 
     protected bool $suppressSavedNotification = false;
+
+    public static function getNavigationLabel(): string
+    {
+        return trans('settings.mail.nav');
+    }
+
+    public function getTitle(): string
+    {
+        return trans('settings.mail.title');
+    }
 
     public function getSavedNotification(): ?Notification
     {
@@ -58,73 +64,73 @@ class ManageMailSettings extends SettingsPage
     {
         return $schema
             ->components([
-                Section::make('From')
+                Section::make(trans('settings.mail.section.from'))
                     ->schema([
-                        TextInput::make('from_address')->label('From address')->email()->required(),
-                        TextInput::make('from_name')->label('From name')->required(),
+                        TextInput::make('from_address')->label(trans('settings.mail.field.from_address'))->email()->required(),
+                        TextInput::make('from_name')->label(trans('settings.mail.field.from_name'))->required(),
                     ])
                     ->columns(2),
 
                 Select::make('default_mailer')
-                    ->label('Mail driver')
+                    ->label(trans('settings.mail.field.driver'))
                     ->options([
-                        'smtp' => 'SMTP',
-                        'postal' => 'Postal',
-                        'ses' => 'Amazon SES',
-                        'postmark' => 'Postmark',
-                        'resend' => 'Resend',
-                        'sendmail' => 'Sendmail',
-                        'log' => 'Log (no delivery)',
+                        'smtp' => trans('settings.mail.driver.smtp'),
+                        'postal' => trans('settings.mail.driver.postal'),
+                        'ses' => trans('settings.mail.driver.ses'),
+                        'postmark' => trans('settings.mail.driver.postmark'),
+                        'resend' => trans('settings.mail.driver.resend'),
+                        'sendmail' => trans('settings.mail.driver.sendmail'),
+                        'log' => trans('settings.mail.driver.log'),
                     ])
                     ->required()
                     ->live(),
 
-                Section::make('SMTP')
+                Section::make(trans('settings.mail.section.smtp'))
                     ->visible(fn (Get $get): bool => $get('default_mailer') === 'smtp')
                     ->schema([
-                        TextInput::make('smtp_host')->label('Host')->required(),
-                        TextInput::make('smtp_port')->label('Port')->numeric()->required(),
+                        TextInput::make('smtp_host')->label(trans('settings.mail.field.smtp_host'))->required(),
+                        TextInput::make('smtp_port')->label(trans('settings.mail.field.smtp_port'))->numeric()->required(),
                         Select::make('smtp_scheme')
-                            ->label('Encryption')
+                            ->label(trans('settings.mail.field.smtp_scheme'))
                             ->options([
-                                'smtp' => 'STARTTLS',
-                                'smtps' => 'SSL/TLS',
+                                'smtp' => trans('settings.mail.scheme.starttls'),
+                                'smtps' => trans('settings.mail.scheme.ssl'),
                             ])
-                            ->placeholder('Automatic (based on port)')
-                            ->helperText('Leave automatic unless your server requires a specific scheme. Port 465 uses SSL/TLS; other ports use STARTTLS.'),
-                        TextInput::make('smtp_username')->label('Username'),
-                        TextInput::make('smtp_password')->label('Password')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
+                            ->placeholder(trans('settings.mail.field.smtp_scheme_placeholder'))
+                            ->helperText(trans('settings.mail.field.smtp_scheme_help')),
+                        TextInput::make('smtp_username')->label(trans('settings.mail.field.smtp_username')),
+                        TextInput::make('smtp_password')->label(trans('settings.mail.field.smtp_password'))->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
                     ])
                     ->columns(2),
 
-                Section::make('Amazon SES')
+                Section::make(trans('settings.mail.section.ses'))
                     ->visible(fn (Get $get): bool => $get('default_mailer') === 'ses')
                     ->schema([
-                        TextInput::make('ses_key')->label('Access key ID'),
-                        TextInput::make('ses_secret')->label('Secret access key')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
-                        TextInput::make('ses_region')->label('Region')->default('us-east-1'),
+                        TextInput::make('ses_key')->label(trans('settings.mail.field.ses_key')),
+                        TextInput::make('ses_secret')->label(trans('settings.mail.field.ses_secret'))->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
+                        TextInput::make('ses_region')->label(trans('settings.mail.field.ses_region'))->default('us-east-1'),
                     ])
                     ->columns(2),
 
-                Section::make('Postmark')
+                Section::make(trans('settings.mail.section.postmark'))
                     ->visible(fn (Get $get): bool => $get('default_mailer') === 'postmark')
                     ->schema([
-                        TextInput::make('postmark_token')->label('Server token')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
-                        TextInput::make('postmark_message_stream_id')->label('Message stream ID'),
+                        TextInput::make('postmark_token')->label(trans('settings.mail.field.postmark_token'))->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
+                        TextInput::make('postmark_message_stream_id')->label(trans('settings.mail.field.postmark_message_stream_id')),
                     ])
                     ->columns(2),
 
-                Section::make('Resend')
+                Section::make(trans('settings.mail.section.resend'))
                     ->visible(fn (Get $get): bool => $get('default_mailer') === 'resend')
                     ->schema([
-                        TextInput::make('resend_key')->label('API key')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
+                        TextInput::make('resend_key')->label(trans('settings.mail.field.resend_key'))->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
                     ]),
 
-                Section::make('Postal')
+                Section::make(trans('settings.mail.section.postal'))
                     ->visible(fn (Get $get): bool => $get('default_mailer') === 'postal')
                     ->schema([
-                        TextInput::make('postal_domain')->label('Server URL')->helperText('The HTTPS URL of your Postal server.')->url(),
-                        TextInput::make('postal_key')->label('API key')->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
+                        TextInput::make('postal_domain')->label(trans('settings.mail.field.postal_domain'))->helperText(trans('settings.mail.field.postal_domain_help'))->url(),
+                        TextInput::make('postal_key')->label(trans('settings.mail.field.postal_key'))->password()->revealable()->dehydrated(fn (?string $state): bool => filled($state)),
                     ])
                     ->columns(2),
             ]);
@@ -134,11 +140,11 @@ class ManageMailSettings extends SettingsPage
     {
         return [
             Action::make('sendTest')
-                ->label('Send test email')
+                ->label(trans('settings.mail.test.action'))
                 ->icon(Heroicon::OutlinedPaperAirplane)
                 ->schema([
                     TextInput::make('email')
-                        ->label('Send to')
+                        ->label(trans('settings.mail.test.recipient'))
                         ->email()
                         ->required()
                         ->default(fn (): ?string => Auth::user()?->email),
@@ -158,13 +164,13 @@ class ManageMailSettings extends SettingsPage
                         Mail::to($data['email'])->send(new TestMail);
 
                         Notification::make()
-                            ->title('Test email sent')
-                            ->body('Sent to '.$data['email'].'.')
+                            ->title(trans('settings.mail.test.success_title'))
+                            ->body(trans('settings.mail.test.success_body', ['email' => $data['email']]))
                             ->success()
                             ->send();
                     } catch (Throwable $e) {
                         Notification::make()
-                            ->title('Test email failed')
+                            ->title(trans('settings.mail.test.failure_title'))
                             ->body($e->getMessage())
                             ->danger()
                             ->persistent()
