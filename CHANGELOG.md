@@ -1,4 +1,11 @@
-## [1.0.1](https://github.com/NoiXdev/inventorix/compare/v1.0.0...v) (2026-06-09)
+## [1.0.2](https://github.com/NoiXdev/inventorix/compare/v1.0.1...v) (2026-06-09)
+
+
+### Bug Fixes
+
+* force ssl and fix proxies ([120ce7f](https://github.com/NoiXdev/inventorix/commit/120ce7fc95fad67acb8a0f150c2876020a8dc2e1))
+
+## [1.0.1](https://github.com/NoiXdev/inventorix/compare/v1.0.0...v1.0.1) (2026-06-09)
 
 
 ### Features
