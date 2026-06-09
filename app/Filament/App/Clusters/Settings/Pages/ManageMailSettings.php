@@ -32,6 +32,17 @@ class ManageMailSettings extends SettingsPage
 
     protected static string $settings = MailSettings::class;
 
+    protected bool $suppressSavedNotification = false;
+
+    public function getSavedNotification(): ?Notification
+    {
+        if ($this->suppressSavedNotification) {
+            return null;
+        }
+
+        return parent::getSavedNotification();
+    }
+
     /**
      * Secret fields are never sent to the browser; a blank submit keeps the stored value.
      */
@@ -126,8 +137,14 @@ class ManageMailSettings extends SettingsPage
                         ->default(fn (): ?string => Auth::user()?->email),
                 ])
                 ->action(function (array $data): void {
-                    // Persist current form state, then apply it so the test uses what is on screen.
-                    $this->save();
+                    // Persist current form state (suppress the "Saved" toast — we show our own result below),
+                    // then apply it so the test uses what is on screen.
+                    $this->suppressSavedNotification = true;
+                    try {
+                        $this->save();
+                    } finally {
+                        $this->suppressSavedNotification = false;
+                    }
                     app(ApplySettings::class)();
 
                     try {

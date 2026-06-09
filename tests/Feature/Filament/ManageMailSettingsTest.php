@@ -83,4 +83,21 @@ class ManageMailSettingsTest extends TestCase
 
         MailFacade::assertSent(TestMail::class, fn (TestMail $mail) => $mail->hasTo('admin@example.test'));
     }
+
+    public function test_send_test_email_action_notifies_on_failure(): void
+    {
+        MailFacade::shouldReceive('purge')->andReturnNull();
+        MailFacade::shouldReceive('to')->andThrow(new \RuntimeException('SMTP connect failed'));
+
+        $this->actingAs(User::factory()->create(['email' => 'admin@example.test']));
+
+        Livewire::test(ManageMailSettings::class)
+            ->fillForm([
+                'default_mailer' => 'log',
+                'from_address' => 'noreply@example.test',
+                'from_name' => 'Inventorix',
+            ])
+            ->callAction('sendTest', data: ['email' => 'admin@example.test'])
+            ->assertNotified('Test email failed');
+    }
 }
