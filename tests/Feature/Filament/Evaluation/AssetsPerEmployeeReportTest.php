@@ -59,6 +59,15 @@ class AssetsPerEmployeeReportTest extends TestCase
             ->assertFileDownloaded();
     }
 
+    public function test_xlsx_export_downloads_a_file(): void
+    {
+        Asset::factory()->create();
+
+        Livewire::test(AssetsPerEmployeeReport::class)
+            ->call('export', 'xlsx')
+            ->assertFileDownloaded();
+    }
+
     public function test_report_metadata_is_defined(): void
     {
         $this->assertSame('assets_per_employee', AssetsPerEmployeeReport::reportKey());
