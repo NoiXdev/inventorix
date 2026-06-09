@@ -41,6 +41,33 @@ class GuaranteeStatusReportTest extends TestCase
             ->assertCanNotSeeTableRecords([$later]);
     }
 
+    public function test_90_day_boundary_separates_expiring_soon_from_valid(): void
+    {
+        $onBoundary = Asset::factory()->create(['guarantee_end' => now()->addDays(90)->format('Y-m-d')]);
+        $justOutside = Asset::factory()->create(['guarantee_end' => now()->addDays(91)->format('Y-m-d')]);
+
+        Livewire::test(GuaranteeStatusReport::class)
+            ->set('filters.status', ['expiring_soon'])
+            ->assertCanSeeTableRecords([$onBoundary])
+            ->assertCanNotSeeTableRecords([$justOutside]);
+
+        Livewire::test(GuaranteeStatusReport::class)
+            ->set('filters.status', ['valid'])
+            ->assertCanSeeTableRecords([$justOutside])
+            ->assertCanNotSeeTableRecords([$onBoundary]);
+    }
+
+    public function test_none_status_shows_only_assets_without_a_guarantee(): void
+    {
+        $withGuarantee = Asset::factory()->create(['guarantee_end' => now()->addYears(1)->format('Y-m-d')]);
+        $withoutGuarantee = Asset::factory()->create(['guarantee_end' => null]);
+
+        Livewire::test(GuaranteeStatusReport::class)
+            ->set('filters.status', ['none'])
+            ->assertCanSeeTableRecords([$withoutGuarantee])
+            ->assertCanNotSeeTableRecords([$withGuarantee]);
+    }
+
     public function test_pdf_and_csv_download(): void
     {
         Asset::factory()->create();

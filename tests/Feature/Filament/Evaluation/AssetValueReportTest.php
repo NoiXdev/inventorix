@@ -37,6 +37,41 @@ class AssetValueReportTest extends TestCase
         $this->assertSame(350.0, (float) $rows->first()->total_price);
     }
 
+    public function test_aggregated_mode_groups_by_state(): void
+    {
+        Asset::factory()->create(['state' => \App\Enums\AssetState::IN_USE->value, 'buy_price' => 100]);
+        Asset::factory()->create(['state' => \App\Enums\AssetState::IN_USE->value, 'buy_price' => 200]);
+        Asset::factory()->create(['state' => \App\Enums\AssetState::DEFECT->value, 'buy_price' => 50]);
+
+        $rows = Livewire::test(AssetValueReport::class)
+            ->set('filters.group_by', 'state')
+            ->set('filters.detailed', false)
+            ->instance()
+            ->reportQuery()
+            ->get()
+            ->keyBy('state');
+
+        $this->assertSame(300.0, (float) $rows[\App\Enums\AssetState::IN_USE->value]->total_price);
+        $this->assertSame(1, (int) $rows[\App\Enums\AssetState::DEFECT->value]->assets_count);
+    }
+
+    public function test_aggregated_mode_groups_by_asset_type(): void
+    {
+        $type = \App\Models\AssetType::factory()->create();
+        Asset::factory()->count(2)->create(['asset_type_id' => $type->id, 'buy_price' => 100]);
+
+        $rows = Livewire::test(AssetValueReport::class)
+            ->set('filters.group_by', 'asset_type')
+            ->set('filters.detailed', false)
+            ->instance()
+            ->reportQuery()
+            ->get()
+            ->keyBy('asset_type_id');
+
+        $this->assertSame(2, (int) $rows[$type->id]->assets_count);
+        $this->assertSame(200.0, (float) $rows[$type->id]->total_price);
+    }
+
     public function test_detailed_mode_lists_each_asset(): void
     {
         $assets = Asset::factory()->count(3)->create();
