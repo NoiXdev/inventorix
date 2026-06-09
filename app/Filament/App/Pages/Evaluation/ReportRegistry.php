@@ -15,6 +15,7 @@ class ReportRegistry
             AssetsPerEmployeeReport::class,
             GuaranteeStatusReport::class,
             InventoryByLocationReport::class,
+            AssetValueReport::class,
         ];
     }
 }

@@ -70,5 +70,30 @@ return [
                 'owner' => 'Mitarbeiter',
             ],
         ],
+        'asset_value' => [
+            'label' => 'Asset-Wert / Finanzen',
+            'description' => 'Kaufwert gruppiert nach Mitarbeiter, Typ oder Status – aggregiert oder im Detail.',
+            'filter' => [
+                'group_by' => 'Gruppieren nach',
+                'detailed' => 'Detailansicht (pro Asset)',
+            ],
+            'group_by' => [
+                'employee' => 'Mitarbeiter',
+                'asset_type' => 'Typ',
+                'state' => 'Status',
+            ],
+            'columns' => [
+                'group' => 'Gruppe',
+                'assets_count' => 'Anzahl',
+                'total_price' => 'Gesamtwert',
+                'owner' => 'Mitarbeiter',
+                'asset_type' => 'Typ',
+                'model' => 'Modell',
+                'serial_number' => 'Seriennummer',
+                'state' => 'Status',
+                'buy_price' => 'Kaufpreis',
+            ],
+            'total' => 'Gesamt',
+        ],
     ],
 ];
