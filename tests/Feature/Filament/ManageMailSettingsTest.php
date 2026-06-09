@@ -3,9 +3,11 @@
 namespace Tests\Feature\Filament;
 
 use App\Filament\App\Clusters\Settings\Pages\ManageMailSettings;
+use App\Mail\TestMail;
 use App\Models\User;
 use App\Settings\MailSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail as MailFacade;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -61,5 +63,24 @@ class ManageMailSettingsTest extends TestCase
         $settings = app(MailSettings::class)->refresh();
         $this->assertSame('Changed Name', $settings->from_name);
         $this->assertSame('original-secret', $settings->smtp_password);
+    }
+
+    public function test_send_test_email_action_dispatches_a_test_mail(): void
+    {
+        MailFacade::fake();
+
+        $user = User::factory()->create(['email' => 'admin@example.test']);
+        $this->actingAs($user);
+
+        Livewire::test(ManageMailSettings::class)
+            ->fillForm([
+                'default_mailer' => 'log',
+                'from_address' => 'noreply@example.test',
+                'from_name' => 'Inventorix',
+            ])
+            ->call('save')
+            ->callAction('sendTest', data: ['email' => 'admin@example.test']);
+
+        MailFacade::assertSent(TestMail::class, fn (TestMail $mail) => $mail->hasTo('admin@example.test'));
     }
 }

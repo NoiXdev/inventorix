@@ -3,15 +3,22 @@
 namespace App\Filament\App\Clusters\Settings\Pages;
 
 use App\Filament\App\Clusters\Settings;
+use App\Mail\TestMail;
 use App\Settings\MailSettings;
+use App\Support\ApplySettings;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class ManageMailSettings extends SettingsPage
 {
@@ -103,6 +110,44 @@ class ManageMailSettings extends SettingsPage
                     ])
                     ->columns(2),
             ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('sendTest')
+                ->label('Send test email')
+                ->icon(Heroicon::OutlinedPaperAirplane)
+                ->schema([
+                    TextInput::make('email')
+                        ->label('Send to')
+                        ->email()
+                        ->required()
+                        ->default(fn (): ?string => Auth::user()?->email),
+                ])
+                ->action(function (array $data): void {
+                    // Persist current form state, then apply it so the test uses what is on screen.
+                    $this->save();
+                    app(ApplySettings::class)();
+
+                    try {
+                        Mail::to($data['email'])->send(new TestMail);
+
+                        Notification::make()
+                            ->title('Test email sent')
+                            ->body('Sent to '.$data['email'].'.')
+                            ->success()
+                            ->send();
+                    } catch (Throwable $e) {
+                        Notification::make()
+                            ->title('Test email failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                    }
+                }),
+        ];
     }
 
     protected function mutateFormDataBeforeFill(array $data): array
