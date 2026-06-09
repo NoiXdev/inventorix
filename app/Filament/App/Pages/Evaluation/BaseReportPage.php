@@ -11,6 +11,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -79,15 +80,41 @@ abstract class BaseReportPage extends Page implements HasForms, HasTable
 
     public function table(Table $table): Table
     {
+        $summaries = $this->tableSummaries();
+
         return $table
             ->query(fn (): Builder => $this->reportQuery())
             ->columns(array_map(
-                fn (ReportColumn $column): TextColumn => TextColumn::make($column->key)
-                    ->label($column->label)
-                    ->state(fn (Model $record) => $column->resolve($record)),
+                function (ReportColumn $column) use ($summaries): TextColumn {
+                    $textColumn = TextColumn::make($column->key)
+                        ->label($column->label)
+                        ->state(fn (Model $record) => $column->resolve($record));
+
+                    if (in_array($column->key, $summaries, true)) {
+                        $textColumn->summarize(Sum::make());
+                    }
+
+                    return $textColumn;
+                },
                 $this->reportColumns(),
             ))
-            ->paginated([25, 50, 100]);
+            ->paginated($this->isTablePaginated() ? [25, 50, 100] : false);
+    }
+
+    /**
+     * Column keys (real DB columns) that should show a Sum summary row in the table.
+     *
+     * @return array<int, string>
+     */
+    protected function tableSummaries(): array
+    {
+        return [];
+    }
+
+    /** Aggregation reports return false to render all grouped rows without a count() query. */
+    protected function isTablePaginated(): bool
+    {
+        return true;
     }
 
     protected function getHeaderActions(): array
