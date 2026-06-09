@@ -13,6 +13,7 @@ class ReportRegistry
     {
         return [
             AssetsPerEmployeeReport::class,
+            GuaranteeStatusReport::class,
         ];
     }
 }

@@ -33,5 +33,27 @@ return [
                 'buy_price' => 'Kaufpreis',
             ],
         ],
+        'guarantee_status' => [
+            'label' => 'Garantie-Status',
+            'description' => 'Geräte mit Garantieablauf; abgelaufen und bald ablaufend hervorgehoben.',
+            'filter' => [
+                'status' => 'Status',
+                'employees' => 'Mitarbeiter',
+            ],
+            'status' => [
+                'expired' => 'Abgelaufen',
+                'expiring_soon' => 'Läuft bald ab',
+                'valid' => 'Gültig',
+                'none' => 'Keine Garantie',
+            ],
+            'columns' => [
+                'owner' => 'Mitarbeiter',
+                'model' => 'Modell',
+                'serial_number' => 'Seriennummer',
+                'guarantee_end' => 'Garantie bis',
+                'state' => 'Garantie-Status',
+                'days_left' => 'Tage verbleibend',
+            ],
+        ],
     ],
 ];
