@@ -53,6 +53,7 @@ class AppPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
             ])
+            ->discoverClusters(in: app_path('Filament/App/Clusters'), for: 'App\Filament\App\Clusters')
             ->discoverWidgets(in: app_path('Filament/App/Widgets'), for: 'App\Filament\App\Widgets')
             ->renderHook(PanelsRenderHook::GLOBAL_SEARCH_BEFORE, fn () => \Blade::render('@livewire("scanner")'))
             ->renderHook(PanelsRenderHook::BODY_END, fn () => view('qr-print.modal'))
