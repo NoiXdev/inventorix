@@ -95,5 +95,14 @@ return [
             ],
             'total' => 'Gesamt',
         ],
+        'state_overview' => [
+            'label' => 'Status-Übersicht',
+            'description' => 'Anzahl und Gesamtwert der Assets je Status.',
+            'columns' => [
+                'state' => 'Status',
+                'assets_count' => 'Anzahl',
+                'total_price' => 'Gesamtwert',
+            ],
+        ],
     ],
 ];

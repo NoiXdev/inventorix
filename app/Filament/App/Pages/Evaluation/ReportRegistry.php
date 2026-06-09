@@ -16,6 +16,7 @@ class ReportRegistry
             GuaranteeStatusReport::class,
             InventoryByLocationReport::class,
             AssetValueReport::class,
+            StateOverviewReport::class,
         ];
     }
 }
