@@ -102,6 +102,20 @@ abstract class BaseReportPage extends Page implements HasForms, HasTable
     }
 
     /**
+     * Aggregation reports group by a column aliased as `id`, which can be null
+     * (e.g. assets with no owner). Filament requires a non-null string key, so
+     * coerce null to an empty string — the grouped null row is unique per query.
+     */
+    public function getTableRecordKey(Model|array $record): string
+    {
+        if (is_array($record)) {
+            return (string) ($record['id'] ?? '');
+        }
+
+        return (string) ($record->getKey() ?? '');
+    }
+
+    /**
      * Column keys (real DB columns) that should show a Sum summary row in the table.
      *
      * @return array<int, string>

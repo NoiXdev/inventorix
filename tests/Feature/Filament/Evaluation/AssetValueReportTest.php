@@ -72,6 +72,17 @@ class AssetValueReportTest extends TestCase
         $this->assertSame(200.0, (float) $rows[$type->id]->total_price);
     }
 
+    public function test_aggregated_employee_mode_renders_with_unowned_assets(): void
+    {
+        Asset::factory()->create(['owner_id' => null, 'buy_price' => 100]);
+        Asset::factory()->create(['owner_id' => User::factory(), 'buy_price' => 50]);
+
+        Livewire::test(AssetValueReport::class)
+            ->set('filters.group_by', 'employee')
+            ->set('filters.detailed', false)
+            ->assertOk();
+    }
+
     public function test_detailed_mode_lists_each_asset(): void
     {
         $assets = Asset::factory()->count(3)->create();
