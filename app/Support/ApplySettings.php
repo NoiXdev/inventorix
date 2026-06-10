@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
 use Illuminate\Support\Facades\Mail;
@@ -12,6 +13,21 @@ class ApplySettings
     {
         $this->applyGeneral(app(GeneralSettings::class));
         $this->applyMail(app(MailSettings::class));
+        $this->applyAuth(app(AuthSettings::class));
+    }
+
+    protected function applyAuth(AuthSettings $auth): void
+    {
+        // Reload from repository so long-lived Octane/Horizon workers never serve stale values.
+        $auth->refresh();
+
+        config([
+            'services.microsoft-azure.enabled' => $auth->microsoft_enabled,
+            'services.microsoft-azure.client_id' => $auth->microsoft_client_id,
+            'services.microsoft-azure.client_secret' => $auth->microsoft_client_secret,
+            'services.microsoft-azure.redirect' => $auth->microsoft_redirect,
+            'services.microsoft-azure.tenant' => $auth->microsoft_tenant,
+        ]);
     }
 
     protected function applyGeneral(GeneralSettings $general): void

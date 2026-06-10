@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Settings;
 
+use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
 use App\Support\ApplySettings;
@@ -62,5 +63,24 @@ class ApplySettingsTest extends TestCase
         app(ApplySettings::class)();
 
         $this->assertSame('My Inventory', config('app.name'));
+    }
+
+    public function test_it_applies_microsoft_azure_settings_to_runtime_config(): void
+    {
+        $auth = app(AuthSettings::class);
+        $auth->microsoft_enabled = true;
+        $auth->microsoft_client_id = 'client-123';
+        $auth->microsoft_client_secret = 'super-secret';
+        $auth->microsoft_redirect = 'https://app.test/auth/microsoft/callback';
+        $auth->microsoft_tenant = 'tenant-abc';
+        $auth->save();
+
+        app(ApplySettings::class)();
+
+        $this->assertTrue(config('services.microsoft-azure.enabled'));
+        $this->assertSame('client-123', config('services.microsoft-azure.client_id'));
+        $this->assertSame('super-secret', config('services.microsoft-azure.client_secret'));
+        $this->assertSame('https://app.test/auth/microsoft/callback', config('services.microsoft-azure.redirect'));
+        $this->assertSame('tenant-abc', config('services.microsoft-azure.tenant'));
     }
 }
