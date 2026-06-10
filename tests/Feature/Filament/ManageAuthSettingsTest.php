@@ -33,6 +33,7 @@ class ManageAuthSettingsTest extends TestCase
         $this->assertSame('client-123', $settings->microsoft_client_id);
         $this->assertSame('super-secret', $settings->microsoft_client_secret);
         $this->assertSame('tenant-abc', $settings->microsoft_tenant);
+        $this->assertSame('https://app.test/auth/microsoft/callback', $settings->microsoft_redirect);
     }
 
     public function test_blank_client_secret_keeps_the_existing_value(): void
@@ -58,6 +59,7 @@ class ManageAuthSettingsTest extends TestCase
         $settings = app(AuthSettings::class)->refresh();
         $this->assertSame('client-changed', $settings->microsoft_client_id);
         $this->assertSame('original-secret', $settings->microsoft_client_secret);
+        $this->assertSame('tenant-abc', $settings->microsoft_tenant);
     }
 
     public function test_client_secret_is_never_sent_to_the_browser(): void
@@ -74,6 +76,7 @@ class ManageAuthSettingsTest extends TestCase
 
         Livewire::test(ManageAuthSettings::class)
             ->assertFormSet([
+                'microsoft_client_id' => 'client-123',
                 'microsoft_client_secret' => null,
             ]);
     }
