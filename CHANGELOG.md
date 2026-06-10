@@ -1,4 +1,21 @@
-## [1.1.0](https://github.com/NoiXdev/inventorix/compare/v1.0.2...v) (2026-06-10)
+## [1.1.1](https://github.com/NoiXdev/inventorix/compare/v1.1.0...v) (2026-06-10)
+
+
+### Features
+
+* **auth:** add Authentication settings page ([8ce7ad5](https://github.com/NoiXdev/inventorix/commit/8ce7ad52e1936988348754f6ccebadeafaf7969b))
+* **auth:** add Authentication settings translations ([4cb9ecd](https://github.com/NoiXdev/inventorix/commit/4cb9ecdbb7dc2e0d9c127ca9affe76e2f19fd1ed))
+* **auth:** add AuthSettings with Microsoft Azure fields ([3f2dc38](https://github.com/NoiXdev/inventorix/commit/3f2dc386e45caed9676d221c52a67b5624aa9f9c))
+* **auth:** apply Microsoft Azure settings to runtime config ([bbefc2d](https://github.com/NoiXdev/inventorix/commit/bbefc2d279e30e740b33649c98e841461c2cfff5))
+* **auth:** drive Microsoft Azure routes from DB settings ([3b2a0cb](https://github.com/NoiXdev/inventorix/commit/3b2a0cbd8acc1d9239bc230a4df48fe2afa177ab))
+* **auth:** require Microsoft credentials when SSO is enabled ([faaf6f2](https://github.com/NoiXdev/inventorix/commit/faaf6f244fc84df35b49cf6b40e9c6ac5d2b5d4c))
+
+
+### Bug Fixes
+
+* navigation sort for settings cluster ([b3b9836](https://github.com/NoiXdev/inventorix/commit/b3b983687f84ef7cbd3636e16a3f823df3fa84f6))
+
+## [1.1.0](https://github.com/NoiXdev/inventorix/compare/v1.0.2...v1.1.0) (2026-06-10)
 
 
 ### Features
