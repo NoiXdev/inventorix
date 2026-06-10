@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Http\Middleware\ApplyRuntimeSettings;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -35,9 +36,18 @@ class AppPanelProvider extends PanelProvider
             Css::make('overrides', Vite::asset('resources/css/app.css')),
         ]);
 
+
+        if(config('auth.multi_factor_auth.enabled') === true){
+            $panel->multiFactorAuthentication([
+                AppAuthentication::make()
+                    ->recoverable(config('auth.multi_factor_auth.recoverable'))
+            ], isRequired: config('auth.multi_factor_auth.force'));
+        }
+
         return $panel
             ->id('app')
             ->path('app')
+            ->profile()
             ->default()
             ->maxContentWidth(Width::Full)
             ->login()
