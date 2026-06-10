@@ -10,7 +10,7 @@ class ReportExportServiceTest extends TestCase
 {
     private function service(): ReportExportService
     {
-        return new ReportExportService();
+        return new ReportExportService;
     }
 
     public function test_csv_content_has_heading_row_and_data_rows(): void

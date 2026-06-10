@@ -7,6 +7,7 @@ use App\Services\ReportExportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Pages\Page;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -40,7 +41,7 @@ abstract class BaseReportPage extends Page implements HasForms, HasTable
 
     abstract public static function reportIcon(): string;
 
-    /** @return array<int, \Filament\Forms\Components\Component> */
+    /** @return array<int, Component> */
     abstract protected function filterSchema(): array;
 
     abstract protected function reportQuery(): Builder;

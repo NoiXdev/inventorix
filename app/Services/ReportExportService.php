@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use InvalidArgumentException;
 use League\Csv\Writer as CsvWriter;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer as XlsxWriter;
@@ -18,7 +19,7 @@ class ReportExportService
         return match ($format) {
             'csv' => $this->streamCsv($filename, $headings, $rows),
             'xlsx' => $this->streamXlsx($filename, $headings, $rows),
-            default => throw new \InvalidArgumentException("Unsupported export format: {$format}"),
+            default => throw new InvalidArgumentException("Unsupported export format: {$format}"),
         };
     }
 
@@ -53,7 +54,7 @@ class ReportExportService
     {
         return response()->streamDownload(
             function () use ($headings, $rows): void {
-                $writer = new XlsxWriter();
+                $writer = new XlsxWriter;
                 $writer->openToFile('php://output');
                 $writer->addRow(Row::fromValues($headings));
                 foreach ($rows as $row) {
