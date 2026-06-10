@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Controllers\QrCodeGeneratorController;
+use App\Http\Middleware\ApplyRuntimeSettings;
 use App\Models\Handover;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -10,12 +11,12 @@ Route::get('/', fn () => to_route('filament.app.pages.dashboard'));
 
 Route::get('/gq', [QrCodeGeneratorController::class, 'generate'])->name('qg');
 
-if (config('services.microsoft-azure.enabled')) {
+Route::middleware(ApplyRuntimeSettings::class)->group(function () {
     Route::get('/auth/microsoft/redirect', [MicrosoftAuthController::class, 'redirect'])
         ->name('auth.microsoft.redirect');
     Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback'])
         ->name('auth.microsoft.callback');
-}
+});
 
 Route::middleware(['signed'])
     ->get('/handover-pdf/{handover}', function (Handover $handover) {
