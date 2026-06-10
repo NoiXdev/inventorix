@@ -20,6 +20,8 @@ class ManageAuthSettings extends SettingsPage
 
     protected static string $settings = AuthSettings::class;
 
+    protected static ?int $navigationSort = 20;
+
     /**
      * Secret fields are never sent to the browser; a blank submit keeps the stored value.
      */

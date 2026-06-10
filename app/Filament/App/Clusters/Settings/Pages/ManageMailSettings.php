@@ -30,6 +30,8 @@ class ManageMailSettings extends SettingsPage
 
     protected bool $suppressSavedNotification = false;
 
+    protected static ?int $navigationSort = 30;
+
     public static function getNavigationLabel(): string
     {
         return trans('settings.mail.nav');

@@ -18,6 +18,8 @@ class ManageGeneralSettings extends SettingsPage
 
     protected static string $settings = GeneralSettings::class;
 
+    protected static ?int $navigationSort = 0;
+
     public static function getNavigationLabel(): string
     {
         return trans('settings.general.nav');
