@@ -83,4 +83,15 @@ class ApplySettingsTest extends TestCase
         $this->assertSame('https://app.test/auth/microsoft/callback', config('services.microsoft-azure.redirect'));
         $this->assertSame('tenant-abc', config('services.microsoft-azure.tenant'));
     }
+
+    public function test_it_applies_disabled_microsoft_flag_to_runtime_config(): void
+    {
+        $auth = app(AuthSettings::class);
+        $auth->microsoft_enabled = false;
+        $auth->save();
+
+        app(ApplySettings::class)();
+
+        $this->assertFalse(config('services.microsoft-azure.enabled'));
+    }
 }

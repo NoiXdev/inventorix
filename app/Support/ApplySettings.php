@@ -28,6 +28,7 @@ class ApplySettings
             'services.microsoft-azure.redirect' => $auth->microsoft_redirect,
             'services.microsoft-azure.tenant' => $auth->microsoft_tenant,
         ]);
+        // Socialite builds a fresh provider per request from config, so no driver-cache purge is required (unlike Mail::purge above).
     }
 
     protected function applyGeneral(GeneralSettings $general): void
