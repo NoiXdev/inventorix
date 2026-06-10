@@ -1,4 +1,17 @@
-## [1.1.1](https://github.com/NoiXdev/inventorix/compare/v1.1.0...v) (2026-06-10)
+## [1.2.0](https://github.com/NoiXdev/inventorix/compare/v1.1.1...v) (2026-06-10)
+
+
+### Features
+
+* adding multi factor and profile page in filament ([f04227e](https://github.com/NoiXdev/inventorix/commit/f04227ebc7f0880ea244aa70c5c4786b020c6f06))
+* **auth:** add multi-factor settings to auth settings page ([849f1e3](https://github.com/NoiXdev/inventorix/commit/849f1e39288f96b1e82bbb7c789815193485c26b))
+* **scanner:** add camera-error classifier with tests ([684fad9](https://github.com/NoiXdev/inventorix/commit/684fad99f109334f25d54071a38c1cfbdbb46065))
+* **scanner:** add German camera-error messages ([2c91dd5](https://github.com/NoiXdev/inventorix/commit/2c91dd5b38bd395c636f8e005c30b66bfa502bc4))
+* **scanner:** add inline error element and message data attributes ([ba6adf3](https://github.com/NoiXdev/inventorix/commit/ba6adf3134938837694f0e9215e36e5408973075))
+* **scanner:** show inline message on camera permission/availability errors ([756e3ad](https://github.com/NoiXdev/inventorix/commit/756e3ad4e688c0e836a3aea54549ed5f5333d350))
+* setting correct auth config for multi factor auth ([1e9a0bf](https://github.com/NoiXdev/inventorix/commit/1e9a0bf4dc42c28450268529dae3b348b863c17e))
+
+## [1.1.1](https://github.com/NoiXdev/inventorix/compare/v1.1.0...v1.1.1) (2026-06-10)
 
 
 ### Features
