@@ -116,8 +116,8 @@ return [
 
     'multi_factor_auth' => [
         'enabled' => env('AUTH_MULTIFACTOR_AUTH_ENABLED', true),
-        'force' => env('AUTH_MULTIFACTOR_AUTH_FORCE', true),
-        'recoverable' => env('AUTH_MULTIFACTOR_AUTH_RECOVERABLE', true),
+        'force' => env('AUTH_MULTIFACTOR_AUTH_FORCE', false),
+        'recoverable' => env('AUTH_MULTIFACTOR_AUTH_RECOVERABLE', false),
     ]
 
 ];
