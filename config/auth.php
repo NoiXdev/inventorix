@@ -118,6 +118,6 @@ return [
         'enabled' => env('AUTH_MULTIFACTOR_AUTH_ENABLED', true),
         'force' => env('AUTH_MULTIFACTOR_AUTH_FORCE', false),
         'recoverable' => env('AUTH_MULTIFACTOR_AUTH_RECOVERABLE', false),
-    ]
+    ],
 
 ];

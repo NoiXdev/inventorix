@@ -20,7 +20,7 @@ use Spatie\Activitylog\Models\Concerns\CausesActivity;
 #[Fillable(['name', 'firstname', 'lastname', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
 {
-    use CausesActivity, HasFactory, HasUuids, Notifiable, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery;
+    use CausesActivity, HasFactory, HasUuids, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
 
     protected $hidden = [
         'password',
