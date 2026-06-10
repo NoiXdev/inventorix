@@ -22,6 +22,10 @@ class ApplySettings
         $auth->refresh();
 
         config([
+            'auth.multi_factor_auth.enabled' => $auth->multi_factor_enabled,
+            'auth.multi_factor_auth.force' => $auth->multi_factor_force,
+            'auth.multi_factor_auth.recoverable' => $auth->multi_factor_recoverable,
+
             'services.microsoft-azure.enabled' => $auth->microsoft_enabled,
             'services.microsoft-azure.client_id' => $auth->microsoft_client_id,
             'services.microsoft-azure.client_secret' => $auth->microsoft_client_secret,

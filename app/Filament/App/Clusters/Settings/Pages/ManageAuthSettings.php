@@ -43,6 +43,16 @@ class ManageAuthSettings extends SettingsPage
     {
         return $schema
             ->components([
+                Section::make(trans('settings.auth.multi_factor.section'))
+                    ->schema([
+                        Toggle::make('multi_factor_enabled')
+                            ->label(trans('settings.auth.multi_factor.field.enabled')),
+                        Toggle::make('multi_factor_force')
+                            ->label(trans('settings.auth.multi_factor.field.force')),
+                        Toggle::make('multi_factor_recoverable')
+                            ->label(trans('settings.auth.multi_factor.field.recoverable')),
+                    ])
+                    ->columns(2),
                 Section::make(trans('settings.auth.microsoft.section'))
                     ->schema([
                         Toggle::make('microsoft_enabled')

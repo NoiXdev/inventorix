@@ -67,6 +67,14 @@ return [
     'auth' => [
         'nav' => 'Authentifizierung',
         'title' => 'Authentifizierung',
+        'multi_factor' => [
+            'section' => 'Zwei-Faktor-Authentifizierung',
+            'field' => [
+                'enabled' => 'Aktiviert',
+                'force' => 'Für alle Benutzer erzwingen',
+                'recoverable' => 'Wiederherstellungscodes erlauben',
+            ],
+        ],
         'microsoft' => [
             'section' => 'Microsoft Azure / Entra ID',
             'field' => [

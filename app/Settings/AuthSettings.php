@@ -6,6 +6,12 @@ use Spatie\LaravelSettings\Settings;
 
 class AuthSettings extends Settings
 {
+    public bool $multi_factor_enabled;
+
+    public bool $multi_factor_force;
+
+    public bool $multi_factor_recoverable;
+
     public bool $microsoft_enabled;
 
     public ?string $microsoft_client_id;
