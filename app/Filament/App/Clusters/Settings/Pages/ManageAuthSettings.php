@@ -46,7 +46,8 @@ class ManageAuthSettings extends SettingsPage
                         Toggle::make('microsoft_enabled')
                             ->label(trans('settings.auth.microsoft.field.enabled')),
                         TextInput::make('microsoft_client_id')
-                            ->label(trans('settings.auth.microsoft.field.client_id')),
+                            ->label(trans('settings.auth.microsoft.field.client_id'))
+                            ->requiredIf('microsoft_enabled', true),
                         TextInput::make('microsoft_client_secret')
                             ->label(trans('settings.auth.microsoft.field.client_secret'))
                             ->password()
@@ -54,9 +55,11 @@ class ManageAuthSettings extends SettingsPage
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         TextInput::make('microsoft_redirect')
                             ->label(trans('settings.auth.microsoft.field.redirect'))
-                            ->url(),
+                            ->url()
+                            ->requiredIf('microsoft_enabled', true),
                         TextInput::make('microsoft_tenant')
-                            ->label(trans('settings.auth.microsoft.field.tenant')),
+                            ->label(trans('settings.auth.microsoft.field.tenant'))
+                            ->requiredIf('microsoft_enabled', true),
                     ])
                     ->columns(2),
             ]);

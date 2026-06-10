@@ -62,6 +62,40 @@ class ManageAuthSettingsTest extends TestCase
         $this->assertSame('tenant-abc', $settings->microsoft_tenant);
     }
 
+    public function test_enabling_microsoft_requires_credentials(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ManageAuthSettings::class)
+            ->fillForm([
+                'microsoft_enabled' => true,
+                'microsoft_client_id' => '',
+                'microsoft_redirect' => '',
+                'microsoft_tenant' => '',
+            ])
+            ->call('save')
+            ->assertHasFormErrors([
+                'microsoft_client_id',
+                'microsoft_redirect',
+                'microsoft_tenant',
+            ]);
+    }
+
+    public function test_disabling_microsoft_does_not_require_credentials(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Livewire::test(ManageAuthSettings::class)
+            ->fillForm([
+                'microsoft_enabled' => false,
+                'microsoft_client_id' => '',
+                'microsoft_redirect' => '',
+                'microsoft_tenant' => '',
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+    }
+
     public function test_client_secret_is_never_sent_to_the_browser(): void
     {
         $existing = app(AuthSettings::class);
