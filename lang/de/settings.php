@@ -64,4 +64,18 @@ return [
             'app_name' => 'Anwendungsname',
         ],
     ],
+    'auth' => [
+        'nav' => 'Authentifizierung',
+        'title' => 'Authentifizierung',
+        'microsoft' => [
+            'section' => 'Microsoft Azure / Entra ID',
+            'field' => [
+                'enabled' => 'Anmeldung aktiviert',
+                'client_id' => 'Client-ID',
+                'client_secret' => 'Client-Secret',
+                'redirect' => 'Redirect-URI',
+                'tenant' => 'Tenant-ID',
+            ],
+        ],
+    ],
 ];
