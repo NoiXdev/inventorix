@@ -1,4 +1,10 @@
-@if (config('services.microsoft-azure.enabled'))
+@php
+    // The login page and the multi-factor challenge step share the same render
+    // hook. Only show the Entra login button on the initial login form.
+    $isMultiFactorChallenge = filled(\Livewire\Livewire::current()?->userUndertakingMultiFactorAuthentication ?? null);
+@endphp
+
+@if (! $isMultiFactorChallenge && config('services.microsoft-azure.enabled'))
     @if (session('entra_error'))
         <div class="mb-4 rounded-lg bg-danger-50 p-3 text-sm text-danger-700 dark:bg-danger-400/10 dark:text-danger-400">
             {{ session('entra_error') }}
