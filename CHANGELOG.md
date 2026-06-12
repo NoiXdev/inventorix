@@ -1,4 +1,11 @@
-## [1.2.0](https://github.com/NoiXdev/inventorix/compare/v1.1.1...v) (2026-06-10)
+## [1.2.1](https://github.com/NoiXdev/inventorix/compare/v1.2.0...v) (2026-06-12)
+
+
+### Bug Fixes
+
+* **auth:** hide Entra login button on MFA challenge step ([df36bd5](https://github.com/NoiXdev/inventorix/commit/df36bd559280ef5fa27e41d38e9eb7b6303007e2))
+
+## [1.2.0](https://github.com/NoiXdev/inventorix/compare/v1.1.1...v1.2.0) (2026-06-10)
 
 
 ### Features
