@@ -108,6 +108,9 @@ class AssetImporter extends Importer
 
             ImportColumn::make('buy_type')
                 ->castStateUsing(fn (?string $state): ?string => self::resolveEnumValue(BuyType::class, $state)),
+
+            ImportColumn::make('tags')
+                ->fillRecordUsing(fn () => null), // synced in afterSave()
         ];
     }
 
@@ -126,6 +129,23 @@ class AssetImporter extends Importer
         }
 
         return $asset;
+    }
+
+    protected function afterSave(): void
+    {
+        $tags = trim((string) ($this->data['tags'] ?? ''));
+
+        if ($tags === '') {
+            return;
+        }
+
+        $this->record->syncTags(
+            collect(explode(',', $tags))
+                ->map(fn (string $tag): string => trim($tag))
+                ->filter()
+                ->values()
+                ->all(),
+        );
     }
 
     public static function getCompletedNotificationBody(Import $import): string

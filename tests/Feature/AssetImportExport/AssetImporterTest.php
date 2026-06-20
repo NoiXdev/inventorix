@@ -227,4 +227,31 @@ class AssetImporterTest extends TestCase
         $this->assertSame($owner->getKey(), \App\Models\Asset::query()->firstOrFail()->owner_id);
         $this->assertSame(1, \App\Models\User::query()->whereRaw('LOWER(name) = ?', ['max mustermann'])->count());
     }
+
+    public function test_it_syncs_comma_separated_tags(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => 'mobil, leasing , vip']);
+
+        $asset = \App\Models\Asset::query()->firstOrFail();
+        $this->assertEqualsCanonicalizing(
+            ['mobil', 'leasing', 'vip'],
+            $asset->tags->pluck('name')->all(),
+        );
+    }
+
+    public function test_blank_tags_create_no_tags(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => '']);
+
+        $this->assertCount(0, \App\Models\Asset::query()->firstOrFail()->tags);
+    }
+
+    public function test_list_page_renders_with_import_action(): void
+    {
+        $this->actingAs(\App\Models\User::factory()->create(['login_enabled' => true]));
+
+        \Livewire\Livewire::test(\App\Filament\App\Resources\Assets\Pages\ListAssets::class)
+            ->assertActionExists('import')
+            ->assertSuccessful();
+    }
 }
