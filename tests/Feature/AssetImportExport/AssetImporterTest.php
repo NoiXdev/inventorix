@@ -246,6 +246,13 @@ class AssetImporterTest extends TestCase
         $this->assertCount(0, \App\Models\Asset::query()->firstOrFail()->tags);
     }
 
+    public function test_comma_only_tags_string_creates_no_tags(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => ',,  ,']);
+
+        $this->assertCount(0, \App\Models\Asset::query()->firstOrFail()->tags);
+    }
+
     public function test_list_page_renders_with_import_action(): void
     {
         $this->actingAs(\App\Models\User::factory()->create(['login_enabled' => true]));
