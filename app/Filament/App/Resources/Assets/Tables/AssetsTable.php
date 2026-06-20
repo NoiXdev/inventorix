@@ -5,6 +5,8 @@ namespace App\Filament\App\Resources\Assets\Tables;
 use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\Actions\PrintQrAction;
 use App\Filament\App\Resources\Assets\AssetResource;
+use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
+use Filament\Actions\ExportBulkAction;
 use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use App\Models\Asset;
 use Filament\Actions\ActionGroup;
@@ -152,6 +154,8 @@ class AssetsTable
                         fn ($livewire) => $livewire->getSelectedTableRecords()->pluck('id')->all(),
                     )->label(trans('handover.action.bulk')),
                     PrintQrAction::bulk(),
+                    ExportBulkAction::make()
+                        ->exporter(AssetExporter::class),
                     DeleteBulkAction::make(),
                 ]),
             ]);

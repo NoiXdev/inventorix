@@ -3,7 +3,9 @@
 namespace App\Filament\App\Resources\Assets\Pages;
 
 use App\Filament\App\Resources\Assets\AssetResource;
+use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ExportAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListAssets extends ListRecords
@@ -14,6 +16,8 @@ class ListAssets extends ListRecords
     {
         return [
             CreateAction::make(),
+            ExportAction::make()
+                ->exporter(AssetExporter::class),
         ];
     }
 }
