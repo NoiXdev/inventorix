@@ -210,6 +210,9 @@ class AssetImporter extends Importer
     {
         $name = trim($name);
 
+        // Match by display name (case-insensitive). Same check-then-create race
+        // as firstOrCreateByName, and name is not unique — two distinct people
+        // with the same name will share one auto-created owner. Acceptable per spec.
         $user = User::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
             ->first();
