@@ -5,7 +5,10 @@ namespace App\Filament\App\Resources\Assets\Importers;
 use App\Enums\AssetState;
 use App\Enums\BuyType;
 use App\Models\Asset;
+use App\Models\AssetModel;
 use App\Models\AssetType;
+use App\Models\Manufacturer;
+use App\Models\Place;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
@@ -39,6 +42,46 @@ class AssetImporter extends Importer
                         return;
                     }
                     $record->asset_type_id = self::firstOrCreateByName(AssetType::class, $state)->getKey();
+                }),
+
+            // Captured for export naming; resolved together with `model` below.
+            ImportColumn::make('manufacturer')
+                ->fillRecordUsing(fn () => null),
+
+            ImportColumn::make('model')
+                ->label('Modell')
+                ->fillRecordUsing(function (Asset $record, ?string $state, array $data): void {
+                    if (blank($state)) {
+                        return;
+                    }
+
+                    $manufacturerName = trim((string) ($data['manufacturer'] ?? ''));
+
+                    if ($manufacturerName === '') {
+                        throw new RowImportFailedException('Ein Modell benötigt einen Hersteller.');
+                    }
+
+                    $manufacturer = self::firstOrCreateByName(Manufacturer::class, $manufacturerName);
+
+                    $model = AssetModel::query()
+                        ->where('manufacturer_id', $manufacturer->getKey())
+                        ->whereRaw('LOWER(name) = ?', [mb_strtolower(trim($state))])
+                        ->first()
+                        ?? AssetModel::query()->create([
+                            'name' => trim($state),
+                            'manufacturer_id' => $manufacturer->getKey(),
+                        ]);
+
+                    $record->model_id = $model->getKey();
+                }),
+
+            ImportColumn::make('place')
+                ->label('Ort')
+                ->fillRecordUsing(function (Asset $record, ?string $state): void {
+                    if (blank($state)) {
+                        return;
+                    }
+                    $record->place_id = self::firstOrCreateByName(Place::class, $state)->getKey();
                 }),
 
             ImportColumn::make('serial_number'),
