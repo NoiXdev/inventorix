@@ -64,6 +64,25 @@ return [
             'app_name' => 'Anwendungsname',
         ],
     ],
+    'warranty' => [
+        'nav' => 'Garantie-Benachrichtigungen',
+        'title' => 'Garantie-Benachrichtigungen',
+        'section' => 'Benachrichtigungen',
+        'field' => [
+            'enabled' => 'Benachrichtigungen aktiviert',
+            'recipients' => 'Empfänger-E-Mail-Adressen',
+            'lead_days' => 'Vorlaufzeiten (Tage vor Ablauf)',
+            'lead_days_help' => 'Anzahl Tage vor dem Garantieende, an denen benachrichtigt wird.',
+        ],
+        'test' => [
+            'action' => 'Test-Digest jetzt senden',
+            'success_title' => 'Test-Digest gesendet',
+            'success_body' => 'Es wurde an :count Empfänger gesendet.',
+            'empty_title' => 'Nichts zu senden',
+            'empty_body' => 'Aktuell hat kein Asset eine fällige Garantie-Meldung.',
+            'failure_title' => 'Senden fehlgeschlagen',
+        ],
+    ],
     'auth' => [
         'nav' => 'Authentifizierung',
         'title' => 'Authentifizierung',
