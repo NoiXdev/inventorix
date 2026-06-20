@@ -9,6 +9,7 @@ use App\Models\AssetModel;
 use App\Models\AssetType;
 use App\Models\Manufacturer;
 use App\Models\Place;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
@@ -84,6 +85,15 @@ class AssetImporter extends Importer
                         return;
                     }
                     $record->place_id = self::firstOrCreateByName(Place::class, $state)->getKey();
+                }),
+
+            ImportColumn::make('owner')
+                ->label('Aktueller Besitzer')
+                ->fillRecordUsing(function (Asset $record, ?string $state): void {
+                    if (blank($state)) {
+                        return;
+                    }
+                    $record->owner_id = self::resolveOwner($state)->getKey();
                 }),
 
             ImportColumn::make('serial_number'),
@@ -194,5 +204,40 @@ class AssetImporter extends Importer
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
             ->first()
             ?? $modelClass::query()->create(['name' => $name]);
+    }
+
+    protected static function resolveOwner(string $name): User
+    {
+        $name = trim($name);
+
+        $user = User::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        [$firstname, $lastname] = self::splitName($name);
+
+        return User::query()->create([
+            'name' => $name,
+            'firstname' => $firstname,
+            'lastname' => $lastname,
+            'login_enabled' => false,
+        ]);
+    }
+
+    /**
+     * Split a full name into [firstname, lastname]. A single-word name gets
+     * "-" as a placeholder lastname (the users table requires a lastname).
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected static function splitName(string $name): array
+    {
+        $parts = preg_split('/\s+/', trim($name), 2);
+
+        return [$parts[0] ?? $name, ($parts[1] ?? '') !== '' ? $parts[1] : '-'];
     }
 }
