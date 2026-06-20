@@ -155,7 +155,8 @@ class AssetsTable
                     )->label(trans('handover.action.bulk')),
                     PrintQrAction::bulk(),
                     ExportBulkAction::make()
-                        ->exporter(AssetExporter::class),
+                        ->exporter(AssetExporter::class)
+                        ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
                     DeleteBulkAction::make(),
                 ]),
             ]);

@@ -17,7 +17,8 @@ class ListAssets extends ListRecords
         return [
             CreateAction::make(),
             ExportAction::make()
-                ->exporter(AssetExporter::class),
+                ->exporter(AssetExporter::class)
+                ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
         ];
     }
 }

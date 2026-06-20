@@ -21,7 +21,7 @@ class AssetExporter extends Exporter
                 ->formatStateUsing(fn ($state): ?string => $state?->getLabel()),
 
             ExportColumn::make('asset_type')
-                ->label('Asset Type')
+                ->label('Asset-Typ')
                 ->getStateUsing(fn (Asset $record): ?string => $record->assetType?->name),
 
             ExportColumn::make('manufacturer')
@@ -49,6 +49,7 @@ class AssetExporter extends Exporter
                 ->label('Kaufpreis'),
 
             ExportColumn::make('buy_type')
+                ->label('Kaufart')
                 ->formatStateUsing(fn ($state): ?string => $state?->getLabel()),
 
             ExportColumn::make('tags')
@@ -60,11 +61,11 @@ class AssetExporter extends Exporter
     {
         $body = 'Der Asset-Export wurde abgeschlossen: '
             . number_format($export->successful_rows) . ' '
-            . str('Zeile')->plural($export->successful_rows) . ' exportiert.';
+            . ($export->successful_rows === 1 ? 'Zeile' : 'Zeilen') . ' exportiert.';
 
         if (($failedRowsCount = $export->getFailedRowsCount()) !== 0) {
             $body .= ' ' . number_format($failedRowsCount) . ' '
-                . str('Zeile')->plural($failedRowsCount) . ' fehlgeschlagen.';
+                . ($failedRowsCount === 1 ? 'Zeile' : 'Zeilen') . ' fehlgeschlagen.';
         }
 
         return $body;
