@@ -109,4 +109,25 @@ class AssetImporterTest extends TestCase
         $this->assertSame(1, \App\Models\AssetType::query()->count());
         $this->assertSame('Laptop', \App\Models\Asset::query()->firstOrFail()->assetType->name);
     }
+
+    public function test_it_imports_buy_type_by_backed_value(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_type' => 'once']);
+
+        $this->assertSame(\App\Enums\BuyType::ONCE, \App\Models\Asset::query()->firstOrFail()->buy_type);
+    }
+
+    public function test_it_passes_through_buy_price(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_price' => '1299.99']);
+
+        $this->assertEquals(1299.99, \App\Models\Asset::query()->firstOrFail()->buy_price);
+    }
+
+    public function test_invalid_date_fails_the_row(): void
+    {
+        $this->expectException(\Filament\Actions\Imports\Exceptions\RowImportFailedException::class);
+
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_date' => 'not-a-date']);
+    }
 }

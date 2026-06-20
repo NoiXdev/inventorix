@@ -78,11 +78,11 @@ class AssetImporter extends Importer
         // Note: do NOT use str()->plural() — it pluralises in English ("Zeiles").
         $body = 'Der Asset-Import wurde abgeschlossen: '
             . number_format($import->successful_rows) . ' '
-            . ($import->successful_rows === 1 ? 'Zeile' : 'Zeilen') . ' importiert.';
+            . (((int) $import->successful_rows) === 1 ? 'Zeile' : 'Zeilen') . ' importiert.';
 
         if (($failedRowsCount = $import->getFailedRowsCount()) !== 0) {
             $body .= ' ' . number_format($failedRowsCount) . ' '
-                . ($failedRowsCount === 1 ? 'Zeile' : 'Zeilen') . ' fehlgeschlagen.';
+                . (((int) $failedRowsCount) === 1 ? 'Zeile' : 'Zeilen') . ' fehlgeschlagen.';
         }
 
         return $body;
@@ -121,6 +121,8 @@ class AssetImporter extends Importer
             return null;
         }
 
+        // Accepts ISO `Y-m-d` and German `d.m.Y` (Carbon auto-detects; dotted
+        // format is treated as day-first). Invalid input becomes a failed row.
         try {
             return Carbon::parse(trim($state))->toDateString();
         } catch (Throwable) {
@@ -137,6 +139,12 @@ class AssetImporter extends Importer
     {
         $name = trim($name);
 
+        // Case-insensitive match, else create. Note: this is a check-then-create
+        // with no unique index on `name`, so two concurrent imports of the same
+        // new name can create duplicate lookup rows — acceptable for this feature.
+        // Also note: MySQL/MariaDB LOWER() is UTF-8 aware; SQLite's LOWER() only
+        // lowercases ASCII, so case-insensitive matching of non-ASCII names is
+        // exact-case only under SQLite (tests use ASCII names).
         return $modelClass::query()
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
             ->first()
