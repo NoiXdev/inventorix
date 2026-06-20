@@ -4,7 +4,10 @@ namespace Tests\Feature\AssetImportExport;
 
 use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
+use App\Filament\App\Resources\Assets\Pages\ListAssets;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AssetExporterTest extends TestCase
@@ -47,9 +50,9 @@ class AssetExporterTest extends TestCase
 
     public function test_list_page_renders_with_export_action(): void
     {
-        $this->actingAs(\App\Models\User::factory()->create(['login_enabled' => true]));
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
 
-        \Livewire\Livewire::test(\App\Filament\App\Resources\Assets\Pages\ListAssets::class)
+        Livewire::test(ListAssets::class)
             ->assertActionExists('export')
             ->assertSuccessful();
     }

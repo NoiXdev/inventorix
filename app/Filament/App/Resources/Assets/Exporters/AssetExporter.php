@@ -60,12 +60,12 @@ class AssetExporter extends Exporter
     public static function getCompletedNotificationBody(Export $export): string
     {
         $body = 'Der Asset-Export wurde abgeschlossen: '
-            . number_format($export->successful_rows) . ' '
-            . ($export->successful_rows === 1 ? 'Zeile' : 'Zeilen') . ' exportiert.';
+            .number_format($export->successful_rows).' '
+            .($export->successful_rows === 1 ? 'Zeile' : 'Zeilen').' exportiert.';
 
         if (($failedRowsCount = $export->getFailedRowsCount()) !== 0) {
-            $body .= ' ' . number_format($failedRowsCount) . ' '
-                . ($failedRowsCount === 1 ? 'Zeile' : 'Zeilen') . ' fehlgeschlagen.';
+            $body .= ' '.number_format($failedRowsCount).' '
+                .($failedRowsCount === 1 ? 'Zeile' : 'Zeilen').' fehlgeschlagen.';
         }
 
         return $body;

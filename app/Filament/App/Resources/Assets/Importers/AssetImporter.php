@@ -11,11 +11,11 @@ use App\Models\Manufacturer;
 use App\Models\Place;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
+use Illuminate\Database\Eloquent\Model;
 use Throwable;
 
 class AssetImporter extends Importer
@@ -122,7 +122,7 @@ class AssetImporter extends Importer
             throw new RowImportFailedException("Ein Asset mit der ID [{$id}] existiert bereits.");
         }
 
-        $asset = new Asset();
+        $asset = new Asset;
 
         if ($id !== '') {
             $asset->{$asset->getKeyName()} = $id;
@@ -152,12 +152,12 @@ class AssetImporter extends Importer
     {
         // Note: do NOT use str()->plural() — it pluralises in English ("Zeiles").
         $body = 'Der Asset-Import wurde abgeschlossen: '
-            . number_format($import->successful_rows) . ' '
-            . (((int) $import->successful_rows) === 1 ? 'Zeile' : 'Zeilen') . ' importiert.';
+            .number_format($import->successful_rows).' '
+            .(((int) $import->successful_rows) === 1 ? 'Zeile' : 'Zeilen').' importiert.';
 
         if (($failedRowsCount = $import->getFailedRowsCount()) !== 0) {
-            $body .= ' ' . number_format($failedRowsCount) . ' '
-                . (((int) $failedRowsCount) === 1 ? 'Zeile' : 'Zeilen') . ' fehlgeschlagen.';
+            $body .= ' '.number_format($failedRowsCount).' '
+                .(((int) $failedRowsCount) === 1 ? 'Zeile' : 'Zeilen').' fehlgeschlagen.';
         }
 
         return $body;

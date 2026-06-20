@@ -9,6 +9,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\ExportAction;
 use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
 
 class ListAssets extends ListRecords
 {
@@ -21,7 +22,7 @@ class ListAssets extends ListRecords
             ImportAction::make()->importer(AssetImporter::class),
             ExportAction::make()
                 ->exporter(AssetExporter::class)
-                ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
+                ->modifyQueryUsing(fn (Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
         ];
     }
 }
