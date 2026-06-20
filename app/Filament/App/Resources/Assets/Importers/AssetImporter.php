@@ -5,7 +5,9 @@ namespace App\Filament\App\Resources\Assets\Importers;
 use App\Enums\AssetState;
 use App\Enums\BuyType;
 use App\Models\Asset;
+use App\Models\AssetType;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
@@ -27,6 +29,17 @@ class AssetImporter extends Importer
                 ->requiredMapping()
                 ->rules(['required'])
                 ->castStateUsing(fn (?string $state): ?string => self::resolveEnumValue(AssetState::class, $state)),
+
+            ImportColumn::make('asset_type')
+                ->label('Asset-Typ')
+                ->requiredMapping()
+                ->rules(['required'])
+                ->fillRecordUsing(function (Asset $record, ?string $state): void {
+                    if (blank($state)) {
+                        return;
+                    }
+                    $record->asset_type_id = self::firstOrCreateByName(AssetType::class, $state)->getKey();
+                }),
 
             ImportColumn::make('serial_number'),
 
@@ -113,5 +126,20 @@ class AssetImporter extends Importer
         } catch (Throwable) {
             throw new RowImportFailedException("Ungültiges Datum [{$state}].");
         }
+    }
+
+    /**
+     * Match a lookup record by name (case-insensitive, trimmed) or create it.
+     *
+     * @param  class-string<Model>  $modelClass
+     */
+    protected static function firstOrCreateByName(string $modelClass, string $name): Model
+    {
+        $name = trim($name);
+
+        return $modelClass::query()
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first()
+            ?? $modelClass::query()->create(['name' => $name]);
     }
 }

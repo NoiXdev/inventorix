@@ -48,6 +48,7 @@ class AssetImporterTest extends TestCase
     {
         $this->import([
             'state' => 'in-use',
+            'asset_type' => 'Laptop',
             'serial_number' => 'SN-123',
         ]);
 
@@ -58,7 +59,7 @@ class AssetImporterTest extends TestCase
 
     public function test_it_accepts_state_by_german_label(): void
     {
-        $this->import(['state' => 'In Benutzung']);
+        $this->import(['state' => 'In Benutzung', 'asset_type' => 'Laptop']);
 
         $this->assertSame(AssetState::IN_USE, Asset::query()->firstOrFail()->state);
     }
@@ -67,12 +68,12 @@ class AssetImporterTest extends TestCase
     {
         $this->expectException(RowImportFailedException::class);
 
-        $this->import(['state' => 'banana']);
+        $this->import(['state' => 'banana', 'asset_type' => 'Laptop']);
     }
 
     public function test_it_uses_a_supplied_id(): void
     {
-        $this->import(['id' => 'ASSET-0001', 'state' => 'new']);
+        $this->import(['id' => 'ASSET-0001', 'state' => 'new', 'asset_type' => 'Laptop']);
 
         $this->assertNotNull(Asset::query()->find('ASSET-0001'));
     }
@@ -83,13 +84,14 @@ class AssetImporterTest extends TestCase
 
         $this->expectException(RowImportFailedException::class);
 
-        $this->import(['id' => 'ASSET-0001', 'state' => 'new']);
+        $this->import(['id' => 'ASSET-0001', 'state' => 'new', 'asset_type' => 'Laptop']);
     }
 
     public function test_it_parses_dates(): void
     {
         $this->import([
             'state' => 'new',
+            'asset_type' => 'Laptop',
             'buy_date' => '2025-01-15',
             'guarantee_end' => '15.01.2027',
         ]);
@@ -97,5 +99,14 @@ class AssetImporterTest extends TestCase
         $asset = Asset::query()->firstOrFail();
         $this->assertSame('2025-01-15', $asset->buy_date->toDateString());
         $this->assertSame('2027-01-15', $asset->guarantee_end->toDateString());
+    }
+
+    public function test_it_creates_and_reuses_the_asset_type_case_insensitively(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop']);
+        $this->import(['state' => 'new', 'asset_type' => '  laptop ']);
+
+        $this->assertSame(1, \App\Models\AssetType::query()->count());
+        $this->assertSame('Laptop', \App\Models\Asset::query()->firstOrFail()->assetType->name);
     }
 }
