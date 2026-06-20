@@ -3,12 +3,18 @@
 namespace Tests\Feature\AssetImportExport;
 
 use App\Enums\AssetState;
+use App\Enums\BuyType;
 use App\Filament\App\Resources\Assets\Importers\AssetImporter;
+use App\Filament\App\Resources\Assets\Pages\ListAssets;
 use App\Models\Asset;
+use App\Models\AssetModel;
+use App\Models\AssetType;
+use App\Models\Manufacturer;
 use App\Models\User;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AssetImporterTest extends TestCase
@@ -22,7 +28,7 @@ class AssetImporterTest extends TestCase
      */
     private function import(array $row): void
     {
-        $import = new Import();
+        $import = new Import;
         $import->user_id = User::factory()->create()->getKey();
         $import->file_name = 'assets.csv';
         $import->file_path = 'assets.csv';
@@ -106,27 +112,27 @@ class AssetImporterTest extends TestCase
         $this->import(['state' => 'new', 'asset_type' => 'Laptop']);
         $this->import(['state' => 'new', 'asset_type' => '  laptop ']);
 
-        $this->assertSame(1, \App\Models\AssetType::query()->count());
-        $this->assertSame('Laptop', \App\Models\Asset::query()->firstOrFail()->assetType->name);
+        $this->assertSame(1, AssetType::query()->count());
+        $this->assertSame('Laptop', Asset::query()->firstOrFail()->assetType->name);
     }
 
     public function test_it_imports_buy_type_by_backed_value(): void
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_type' => 'once']);
 
-        $this->assertSame(\App\Enums\BuyType::ONCE, \App\Models\Asset::query()->firstOrFail()->buy_type);
+        $this->assertSame(BuyType::ONCE, Asset::query()->firstOrFail()->buy_type);
     }
 
     public function test_it_passes_through_buy_price(): void
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_price' => '1299.99']);
 
-        $this->assertEquals(1299.99, \App\Models\Asset::query()->firstOrFail()->buy_price);
+        $this->assertEquals(1299.99, Asset::query()->firstOrFail()->buy_price);
     }
 
     public function test_invalid_date_fails_the_row(): void
     {
-        $this->expectException(\Filament\Actions\Imports\Exceptions\RowImportFailedException::class);
+        $this->expectException(RowImportFailedException::class);
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_date' => 'not-a-date']);
     }
@@ -141,7 +147,7 @@ class AssetImporterTest extends TestCase
             'place' => 'Büro 1',
         ]);
 
-        $asset = \App\Models\Asset::query()->firstOrFail();
+        $asset = Asset::query()->firstOrFail();
         $this->assertSame('Latitude 7440', $asset->model->name);
         $this->assertSame('Dell', $asset->model->manufacturer->name);
         $this->assertSame('Büro 1', $asset->place->name);
@@ -149,7 +155,7 @@ class AssetImporterTest extends TestCase
 
     public function test_it_matches_an_existing_manufacturer_case_insensitively(): void
     {
-        $manufacturer = \App\Models\Manufacturer::factory()->create(['name' => 'Dell']);
+        $manufacturer = Manufacturer::factory()->create(['name' => 'Dell']);
 
         $this->import([
             'state' => 'new',
@@ -158,13 +164,13 @@ class AssetImporterTest extends TestCase
             'model' => 'Latitude 7440',
         ]);
 
-        $this->assertSame(1, \App\Models\Manufacturer::query()->count());
-        $this->assertSame($manufacturer->getKey(), \App\Models\Asset::query()->firstOrFail()->model->manufacturer_id);
+        $this->assertSame(1, Manufacturer::query()->count());
+        $this->assertSame($manufacturer->getKey(), Asset::query()->firstOrFail()->model->manufacturer_id);
     }
 
     public function test_model_without_manufacturer_fails_the_row(): void
     {
-        $this->expectException(\Filament\Actions\Imports\Exceptions\RowImportFailedException::class);
+        $this->expectException(RowImportFailedException::class);
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'model' => 'Latitude 7440']);
     }
@@ -174,8 +180,8 @@ class AssetImporterTest extends TestCase
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => 'Latitude 7440']);
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'HP', 'model' => 'Latitude 7440']);
 
-        $this->assertSame(2, \App\Models\AssetModel::query()->count());
-        $this->assertSame(2, \App\Models\Asset::query()->count());
+        $this->assertSame(2, AssetModel::query()->count());
+        $this->assertSame(2, Asset::query()->count());
     }
 
     public function test_it_reuses_an_existing_model_case_insensitively_within_a_manufacturer(): void
@@ -183,25 +189,25 @@ class AssetImporterTest extends TestCase
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => 'Latitude 7440']);
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => '  latitude 7440 ']);
 
-        $this->assertSame(1, \App\Models\AssetModel::query()->count());
-        $this->assertSame(2, \App\Models\Asset::query()->count());
+        $this->assertSame(1, AssetModel::query()->count());
+        $this->assertSame(2, Asset::query()->count());
     }
 
     public function test_it_matches_an_existing_owner_by_name(): void
     {
-        $owner = \App\Models\User::factory()->create(['name' => 'Max Mustermann']);
+        $owner = User::factory()->create(['name' => 'Max Mustermann']);
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Max Mustermann']);
 
-        $this->assertSame($owner->getKey(), \App\Models\Asset::query()->firstOrFail()->owner_id);
-        $this->assertSame(1, \App\Models\User::query()->where('name', 'Max Mustermann')->count());
+        $this->assertSame($owner->getKey(), Asset::query()->firstOrFail()->owner_id);
+        $this->assertSame(1, User::query()->where('name', 'Max Mustermann')->count());
     }
 
     public function test_it_creates_a_non_login_owner_when_missing(): void
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Erika Musterfrau']);
 
-        $owner = \App\Models\Asset::query()->firstOrFail()->owner;
+        $owner = Asset::query()->firstOrFail()->owner;
         $this->assertSame('Erika Musterfrau', $owner->name);
         $this->assertSame('Erika', $owner->firstname);
         $this->assertSame('Musterfrau', $owner->lastname);
@@ -213,26 +219,26 @@ class AssetImporterTest extends TestCase
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Cher']);
 
-        $owner = \App\Models\Asset::query()->firstOrFail()->owner;
+        $owner = Asset::query()->firstOrFail()->owner;
         $this->assertSame('Cher', $owner->firstname);
         $this->assertSame('-', $owner->lastname);
     }
 
     public function test_it_matches_an_existing_owner_case_insensitively(): void
     {
-        $owner = \App\Models\User::factory()->create(['name' => 'Max Mustermann']);
+        $owner = User::factory()->create(['name' => 'Max Mustermann']);
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'MAX MUSTERMANN']);
 
-        $this->assertSame($owner->getKey(), \App\Models\Asset::query()->firstOrFail()->owner_id);
-        $this->assertSame(1, \App\Models\User::query()->whereRaw('LOWER(name) = ?', ['max mustermann'])->count());
+        $this->assertSame($owner->getKey(), Asset::query()->firstOrFail()->owner_id);
+        $this->assertSame(1, User::query()->whereRaw('LOWER(name) = ?', ['max mustermann'])->count());
     }
 
     public function test_it_syncs_comma_separated_tags(): void
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => 'mobil, leasing , vip']);
 
-        $asset = \App\Models\Asset::query()->firstOrFail();
+        $asset = Asset::query()->firstOrFail();
         $this->assertEqualsCanonicalizing(
             ['mobil', 'leasing', 'vip'],
             $asset->tags->pluck('name')->all(),
@@ -243,21 +249,21 @@ class AssetImporterTest extends TestCase
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => '']);
 
-        $this->assertCount(0, \App\Models\Asset::query()->firstOrFail()->tags);
+        $this->assertCount(0, Asset::query()->firstOrFail()->tags);
     }
 
     public function test_comma_only_tags_string_creates_no_tags(): void
     {
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'tags' => ',,  ,']);
 
-        $this->assertCount(0, \App\Models\Asset::query()->firstOrFail()->tags);
+        $this->assertCount(0, Asset::query()->firstOrFail()->tags);
     }
 
     public function test_list_page_renders_with_import_action(): void
     {
-        $this->actingAs(\App\Models\User::factory()->create(['login_enabled' => true]));
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
 
-        \Livewire\Livewire::test(\App\Filament\App\Resources\Assets\Pages\ListAssets::class)
+        Livewire::test(ListAssets::class)
             ->assertActionExists('import')
             ->assertSuccessful();
     }

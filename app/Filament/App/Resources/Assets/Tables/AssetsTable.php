@@ -6,7 +6,6 @@ use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\Actions\PrintQrAction;
 use App\Filament\App\Resources\Assets\AssetResource;
 use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
-use Filament\Actions\ExportBulkAction;
 use App\Filament\App\Resources\Handovers\Actions\HandoverWizardAction;
 use App\Models\Asset;
 use Filament\Actions\ActionGroup;
@@ -14,6 +13,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ExportBulkAction;
 use Filament\Actions\ReplicateAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -156,7 +156,7 @@ class AssetsTable
                     PrintQrAction::bulk(),
                     ExportBulkAction::make()
                         ->exporter(AssetExporter::class)
-                        ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
+                        ->modifyQueryUsing(fn (Builder $query) => $query->with(['assetType', 'model.manufacturer', 'owner', 'place', 'tags'])),
                     DeleteBulkAction::make(),
                 ]),
             ]);
