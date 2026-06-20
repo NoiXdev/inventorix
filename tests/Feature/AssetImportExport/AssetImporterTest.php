@@ -130,4 +130,42 @@ class AssetImporterTest extends TestCase
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'buy_date' => 'not-a-date']);
     }
+
+    public function test_it_auto_creates_manufacturer_model_and_place(): void
+    {
+        $this->import([
+            'state' => 'new',
+            'asset_type' => 'Laptop',
+            'manufacturer' => 'Dell',
+            'model' => 'Latitude 7440',
+            'place' => 'Büro 1',
+        ]);
+
+        $asset = \App\Models\Asset::query()->firstOrFail();
+        $this->assertSame('Latitude 7440', $asset->model->name);
+        $this->assertSame('Dell', $asset->model->manufacturer->name);
+        $this->assertSame('Büro 1', $asset->place->name);
+    }
+
+    public function test_it_matches_an_existing_manufacturer_case_insensitively(): void
+    {
+        $manufacturer = \App\Models\Manufacturer::factory()->create(['name' => 'Dell']);
+
+        $this->import([
+            'state' => 'new',
+            'asset_type' => 'Laptop',
+            'manufacturer' => '  dell ',
+            'model' => 'Latitude 7440',
+        ]);
+
+        $this->assertSame(1, \App\Models\Manufacturer::query()->count());
+        $this->assertSame($manufacturer->getKey(), \App\Models\Asset::query()->firstOrFail()->model->manufacturer_id);
+    }
+
+    public function test_model_without_manufacturer_fails_the_row(): void
+    {
+        $this->expectException(\Filament\Actions\Imports\Exceptions\RowImportFailedException::class);
+
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'model' => 'Latitude 7440']);
+    }
 }
