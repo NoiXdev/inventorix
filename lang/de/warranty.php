@@ -31,10 +31,6 @@ return [
             'serial' => 'Seriennummer',
             'guarantee_end' => 'Garantieende',
             'days_left' => 'Tage',
-            'status' => [
-                'expired' => 'Abgelaufen',
-                'soon' => 'Läuft bald ab',
-            ],
         ],
     ],
 ];
