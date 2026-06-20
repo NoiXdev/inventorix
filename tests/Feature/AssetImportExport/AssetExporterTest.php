@@ -6,6 +6,7 @@ use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
 use App\Filament\App\Resources\Assets\Pages\ListAssets;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -46,6 +47,15 @@ class AssetExporterTest extends TestCase
             ->firstWhere(fn ($c) => $c->getName() === 'state');
 
         $this->assertSame('In Benutzung', $column->formatState(AssetState::IN_USE));
+    }
+
+    public function test_buy_date_column_exports_german_date_without_time(): void
+    {
+        $column = collect(AssetExporter::getColumns())
+            ->firstWhere(fn ($c) => $c->getName() === 'buy_date');
+
+        $this->assertSame('15.01.2025', $column->formatState(Carbon::parse('2025-01-15')));
+        $this->assertNull($column->formatState(null));
     }
 
     public function test_list_page_renders_with_export_action(): void

@@ -40,10 +40,12 @@ class AssetExporter extends Exporter
                 ->label('Seriennummer'),
 
             ExportColumn::make('buy_date')
-                ->label('Kaufdatum'),
+                ->label('Kaufdatum')
+                ->formatStateUsing(fn ($state): ?string => $state?->format('d.m.Y')),
 
             ExportColumn::make('guarantee_end')
-                ->label('Garantie Ende'),
+                ->label('Garantie Ende')
+                ->formatStateUsing(fn ($state): ?string => $state?->format('d.m.Y')),
 
             ExportColumn::make('buy_price')
                 ->label('Kaufpreis'),
