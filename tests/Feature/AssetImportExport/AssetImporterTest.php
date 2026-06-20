@@ -186,4 +186,35 @@ class AssetImporterTest extends TestCase
         $this->assertSame(1, \App\Models\AssetModel::query()->count());
         $this->assertSame(2, \App\Models\Asset::query()->count());
     }
+
+    public function test_it_matches_an_existing_owner_by_name(): void
+    {
+        $owner = \App\Models\User::factory()->create(['name' => 'Max Mustermann']);
+
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Max Mustermann']);
+
+        $this->assertSame($owner->getKey(), \App\Models\Asset::query()->firstOrFail()->owner_id);
+        $this->assertSame(1, \App\Models\User::query()->where('name', 'Max Mustermann')->count());
+    }
+
+    public function test_it_creates_a_non_login_owner_when_missing(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Erika Musterfrau']);
+
+        $owner = \App\Models\Asset::query()->firstOrFail()->owner;
+        $this->assertSame('Erika Musterfrau', $owner->name);
+        $this->assertSame('Erika', $owner->firstname);
+        $this->assertSame('Musterfrau', $owner->lastname);
+        $this->assertFalse($owner->login_enabled);
+        $this->assertNull($owner->email);
+    }
+
+    public function test_it_creates_a_single_name_owner_with_placeholder_lastname(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'Cher']);
+
+        $owner = \App\Models\Asset::query()->firstOrFail()->owner;
+        $this->assertSame('Cher', $owner->firstname);
+        $this->assertSame('-', $owner->lastname);
+    }
 }
