@@ -44,7 +44,9 @@ class AssetImporter extends Importer
                     $record->asset_type_id = self::firstOrCreateByName(AssetType::class, $state)->getKey();
                 }),
 
-            // Captured for export naming; resolved together with `model` below.
+            // The manufacturer is resolved together with `model` below (the model
+            // closure reads this value via $data). A row with a manufacturer but no
+            // model silently creates neither record — manufacturer alone is meaningless.
             ImportColumn::make('manufacturer')
                 ->fillRecordUsing(fn () => null),
 
