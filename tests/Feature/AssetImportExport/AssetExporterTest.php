@@ -4,7 +4,6 @@ namespace Tests\Feature\AssetImportExport;
 
 use App\Enums\AssetState;
 use App\Filament\App\Resources\Assets\Exporters\AssetExporter;
-use App\Models\Asset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
