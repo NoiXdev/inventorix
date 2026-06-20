@@ -168,4 +168,22 @@ class AssetImporterTest extends TestCase
 
         $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'model' => 'Latitude 7440']);
     }
+
+    public function test_same_model_name_under_different_manufacturers_creates_two_records(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => 'Latitude 7440']);
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'HP', 'model' => 'Latitude 7440']);
+
+        $this->assertSame(2, \App\Models\AssetModel::query()->count());
+        $this->assertSame(2, \App\Models\Asset::query()->count());
+    }
+
+    public function test_it_reuses_an_existing_model_case_insensitively_within_a_manufacturer(): void
+    {
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => 'Latitude 7440']);
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'manufacturer' => 'Dell', 'model' => '  latitude 7440 ']);
+
+        $this->assertSame(1, \App\Models\AssetModel::query()->count());
+        $this->assertSame(2, \App\Models\Asset::query()->count());
+    }
 }
