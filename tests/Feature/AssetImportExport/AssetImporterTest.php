@@ -217,4 +217,14 @@ class AssetImporterTest extends TestCase
         $this->assertSame('Cher', $owner->firstname);
         $this->assertSame('-', $owner->lastname);
     }
+
+    public function test_it_matches_an_existing_owner_case_insensitively(): void
+    {
+        $owner = \App\Models\User::factory()->create(['name' => 'Max Mustermann']);
+
+        $this->import(['state' => 'new', 'asset_type' => 'Laptop', 'owner' => 'MAX MUSTERMANN']);
+
+        $this->assertSame($owner->getKey(), \App\Models\Asset::query()->firstOrFail()->owner_id);
+        $this->assertSame(1, \App\Models\User::query()->whereRaw('LOWER(name) = ?', ['max mustermann'])->count());
+    }
 }
