@@ -51,6 +51,8 @@ class AppPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->login()
             ->spa()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->brandLogo('/asset/logo/header.png')
             ->brandLogoHeight('3rem')
             ->brandName('Inventorix')
