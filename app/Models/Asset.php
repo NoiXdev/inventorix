@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AssetState;
 use App\Enums\BuyType;
+use App\Models\Concerns\HasAttachments;
 use App\Observers\AssetObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
@@ -21,7 +22,7 @@ use Spatie\Tags\HasTags;
 #[ObservedBy(AssetObserver::class)]
 class Asset extends Model
 {
-    use HasFactory, HasTags, HasUuids, LogsActivity;
+    use HasAttachments, HasFactory, HasTags, HasUuids, LogsActivity;
 
     public function assetType(): BelongsTo
     {
