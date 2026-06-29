@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources\Assets;
 use App\Filament\App\Resources\Assets\Pages\CreateAsset;
 use App\Filament\App\Resources\Assets\Pages\EditAsset;
 use App\Filament\App\Resources\Assets\Pages\ListAssets;
+use App\Filament\App\Resources\Assets\RelationManagers\AttachmentsRelationManager;
 use App\Filament\App\Resources\Assets\RelationManagers\HistoryRelationManager;
 use App\Filament\App\Resources\Assets\RelationManagers\IncidentsRelationManager;
 use App\Filament\App\Resources\Assets\Schemas\AssetForm;
@@ -72,6 +73,7 @@ class AssetResource extends Resource
     {
         return [
             IncidentsRelationManager::class,
+            AttachmentsRelationManager::class,
             HistoryRelationManager::class,
         ];
     }
