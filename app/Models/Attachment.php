@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Enums\AttachmentCategory;
+use App\Observers\AttachmentObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+#[ObservedBy(AttachmentObserver::class)]
 #[Fillable(['path', 'original_name', 'mime_type', 'size', 'type', 'category', 'title', 'note', 'uploaded_by'])]
 class Attachment extends Model
 {
