@@ -18,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Number;
 
 class AttachmentsRelationManager extends RelationManager
 {
@@ -72,7 +73,13 @@ class AttachmentsRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('size')
                     ->label('Größe')
-                    ->formatStateUsing(fn (int $state): string => number_format($state / 1024 / 1024, 2).' MB'),
+                    ->formatStateUsing(function (?int $state): string {
+                        if ($state === null || $state === 0) {
+                            return $state === null ? '' : '0 B';
+                        }
+
+                        return Number::fileSize($state);
+                    }),
                 TextColumn::make('uploadedBy.name')
                     ->label('Hochgeladen von'),
                 TextColumn::make('created_at')
@@ -122,10 +129,15 @@ class AttachmentsRelationManager extends RelationManager
         $paths = (array) ($data['files'] ?? []);
         $names = (array) ($data['file_names'] ?? []);
         $disk = Storage::disk();
+        $explicitTitle = filled($data['title'] ?? null) ? $data['title'] : null;
+        $singleFile = count($paths) === 1;
 
         foreach ($paths as $path) {
             $mime = $disk->mimeType($path) ?: 'application/octet-stream';
             $originalName = $names[$path] ?? basename($path);
+
+            // Use explicit title only for single-file uploads; for multi-file, always use filename.
+            $title = ($singleFile && $explicitTitle !== null) ? $explicitTitle : $originalName;
 
             $this->getOwnerRecord()->attachments()->create([
                 'path' => $path,
@@ -134,7 +146,7 @@ class AttachmentsRelationManager extends RelationManager
                 'size' => $disk->size($path),
                 'type' => Attachment::detectType($mime),
                 'category' => $data['category'] ?? null,
-                'title' => filled($data['title'] ?? null) ? $data['title'] : $originalName,
+                'title' => $title,
                 'note' => $data['note'] ?? null,
                 'uploaded_by' => auth()->id(),
             ]);
