@@ -83,6 +83,31 @@ return [
             'failure_title' => 'Senden fehlgeschlagen',
         ],
     ],
+    'storage' => [
+        'nav' => 'Speicher',
+        'title' => 'Speicher-Einstellungen',
+        'section' => [
+            's3' => 'S3-Speicher',
+        ],
+        'field' => [
+            'key' => 'Access Key ID',
+            'secret' => 'Secret Access Key',
+            'region' => 'Region',
+            'bucket' => 'Bucket',
+            'endpoint' => 'Endpoint',
+            'endpoint_help' => 'Nur für S3-kompatible Anbieter (MinIO, Cloudflare R2, DigitalOcean Spaces, …). Für echtes AWS S3 leer lassen.',
+            'use_path_style_endpoint' => 'Path-Style-Endpoint verwenden',
+            'use_path_style_endpoint_help' => 'Bei den meisten S3-kompatiblen Anbietern (z. B. MinIO) erforderlich.',
+            'url' => 'Öffentliche/CDN-URL',
+            'url_help' => 'Optionale Basis-URL für öffentliche Datei-Links (z. B. CDN). Leer lassen, um die Standard-URL des Anbieters zu nutzen.',
+        ],
+        'test' => [
+            'action' => 'Verbindung testen',
+            'success_title' => 'Verbindung erfolgreich',
+            'success_body' => 'Eine Testdatei wurde im Bucket geschrieben, gelesen und wieder gelöscht.',
+            'failure_title' => 'Verbindung fehlgeschlagen',
+        ],
+    ],
     'auth' => [
         'nav' => 'Authentifizierung',
         'title' => 'Authentifizierung',
