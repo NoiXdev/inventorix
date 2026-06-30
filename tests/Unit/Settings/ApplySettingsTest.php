@@ -5,6 +5,7 @@ namespace Tests\Unit\Settings;
 use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
+use App\Settings\StorageSettings;
 use App\Support\ApplySettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -93,5 +94,44 @@ class ApplySettingsTest extends TestCase
         app(ApplySettings::class)();
 
         $this->assertFalse(config('services.microsoft-azure.enabled'));
+    }
+
+    public function test_it_applies_s3_disk_config_and_switches_default_when_configured(): void
+    {
+        $storage = app(StorageSettings::class);
+        $storage->key = 'AKIA-test';
+        $storage->secret = 'super-secret';
+        $storage->region = 'eu-central-1';
+        $storage->bucket = 'inventorix';
+        $storage->endpoint = 'https://minio.example.test';
+        $storage->use_path_style_endpoint = true;
+        $storage->url = 'https://cdn.example.test';
+        $storage->save();
+
+        app(ApplySettings::class)();
+
+        $this->assertSame('s3', config('filesystems.default'));
+        $this->assertSame('AKIA-test', config('filesystems.disks.s3.key'));
+        $this->assertSame('super-secret', config('filesystems.disks.s3.secret'));
+        $this->assertSame('eu-central-1', config('filesystems.disks.s3.region'));
+        $this->assertSame('inventorix', config('filesystems.disks.s3.bucket'));
+        $this->assertSame('https://minio.example.test', config('filesystems.disks.s3.endpoint'));
+        $this->assertTrue(config('filesystems.disks.s3.use_path_style_endpoint'));
+        $this->assertSame('https://cdn.example.test', config('filesystems.disks.s3.url'));
+    }
+
+    public function test_it_keeps_local_default_when_storage_is_not_configured(): void
+    {
+        config(['filesystems.default' => 'local']);
+
+        $storage = app(StorageSettings::class);
+        $storage->key = 'AKIA-test';
+        $storage->secret = 'super-secret';
+        $storage->bucket = null; // incomplete
+        $storage->save();
+
+        app(ApplySettings::class)();
+
+        $this->assertSame('local', config('filesystems.default'));
     }
 }
