@@ -1,4 +1,11 @@
-## [1.3.0](https://github.com/NoiXdev/inventorix/compare/v1.2.1...v) (2026-06-30)
+## [1.3.1](https://github.com/NoiXdev/inventorix/compare/v1.3.0...v) (2026-06-30)
+
+
+### Features
+
+* **storage:** add league/flysystem-aws-s3-v3 for the S3 disk driver ([bf276af](https://github.com/NoiXdev/inventorix/commit/bf276af737616f2b081602508a452b91d174b2e4))
+
+## [1.3.0](https://github.com/NoiXdev/inventorix/compare/v1.2.1...v1.3.0) (2026-06-30)
 
 
 ### Features
