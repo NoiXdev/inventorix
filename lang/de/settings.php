@@ -106,6 +106,7 @@ return [
             'success_title' => 'Verbindung erfolgreich',
             'success_body' => 'Eine Testdatei wurde im Bucket geschrieben, gelesen und wieder gelöscht.',
             'failure_title' => 'Verbindung fehlgeschlagen',
+            'probe_failed' => 'Die Testdatei konnte nicht korrekt geschrieben oder gelesen werden. Bitte prüfen Sie Zugangsdaten, Bucket und Endpoint.',
         ],
     ],
     'auth' => [

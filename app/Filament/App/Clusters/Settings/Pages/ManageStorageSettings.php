@@ -104,9 +104,14 @@ class ManageStorageSettings extends SettingsPage
                     try {
                         $disk = Storage::disk('s3');
                         $probe = 'inventorix-connection-test-'.Str::random(16).'.txt';
-                        $disk->put($probe, 'ok');
-                        $disk->get($probe);
-                        $disk->delete($probe);
+
+                        $written = $disk->put($probe, 'ok');
+                        $contents = $written ? $disk->get($probe) : null;
+                        $disk->delete($probe); // best-effort cleanup, runs regardless
+
+                        if ($written === false || $contents !== 'ok') {
+                            throw new \RuntimeException(trans('settings.storage.test.probe_failed'));
+                        }
 
                         Notification::make()
                             ->title(trans('settings.storage.test.success_title'))
