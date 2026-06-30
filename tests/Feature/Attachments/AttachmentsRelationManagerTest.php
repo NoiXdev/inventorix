@@ -3,8 +3,8 @@
 namespace Tests\Feature\Attachments;
 
 use App\Enums\AttachmentCategory;
-use App\Filament\App\Resources\Assets\RelationManagers\AttachmentsRelationManager;
 use App\Filament\App\Resources\Assets\Pages\EditAsset;
+use App\Filament\App\Resources\Assets\RelationManagers\AttachmentsRelationManager;
 use App\Models\Asset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
