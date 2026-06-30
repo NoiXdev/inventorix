@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
+use App\Settings\StorageSettings;
 use Illuminate\Support\Facades\Mail;
 
 class ApplySettings
@@ -14,6 +15,7 @@ class ApplySettings
         $this->applyGeneral(app(GeneralSettings::class));
         $this->applyMail(app(MailSettings::class));
         $this->applyAuth(app(AuthSettings::class));
+        $this->applyStorage(app(StorageSettings::class));
     }
 
     protected function applyAuth(AuthSettings $auth): void
@@ -33,6 +35,28 @@ class ApplySettings
             'services.microsoft-azure.tenant' => $auth->microsoft_tenant,
         ]);
         // Socialite builds a fresh provider per request from config, so no driver-cache purge is required (unlike Mail::purge above).
+    }
+
+    protected function applyStorage(StorageSettings $storage): void
+    {
+        // Reload from repository so long-lived Octane/Horizon workers never serve stale values.
+        $storage->refresh();
+
+        config([
+            'filesystems.disks.s3.key' => $storage->key,
+            'filesystems.disks.s3.secret' => $storage->secret,
+            'filesystems.disks.s3.region' => $storage->region,
+            'filesystems.disks.s3.bucket' => $storage->bucket,
+            'filesystems.disks.s3.url' => $storage->url,
+            'filesystems.disks.s3.endpoint' => $storage->endpoint,
+            'filesystems.disks.s3.use_path_style_endpoint' => $storage->use_path_style_endpoint,
+        ]);
+
+        // S3-only intent, but fall back to local until the config is complete so
+        // fresh installs don't hard-fail on uploads.
+        if ($storage->isConfigured()) {
+            config(['filesystems.default' => 's3']);
+        }
     }
 
     protected function applyGeneral(GeneralSettings $general): void
