@@ -59,6 +59,7 @@ class ManageStorageSettings extends SettingsPage
         return $schema
             ->components([
                 Section::make(trans('settings.storage.section.s3'))
+                    ->columnSpanFull()
                     ->schema([
                         TextInput::make('key')->label(trans('settings.storage.field.key')),
                         TextInput::make('secret')
