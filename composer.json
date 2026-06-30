@@ -16,6 +16,7 @@
         "laravel/horizon": "^5.46",
         "laravel/octane": "^2.17",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "novadaemon/filament-combobox": "^3.0",
         "resend/resend-php": "^1.3",
         "simplesoftwareio/simple-qrcode": "^4.2",
