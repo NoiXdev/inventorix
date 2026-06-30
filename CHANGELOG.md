@@ -1,4 +1,43 @@
-## [1.2.1](https://github.com/NoiXdev/inventorix/compare/v1.2.0...v) (2026-06-12)
+## [1.3.0](https://github.com/NoiXdev/inventorix/compare/v1.2.1...v) (2026-06-30)
+
+
+### Features
+
+* adjust section size ([bd1009b](https://github.com/NoiXdev/inventorix/commit/bd1009bbcc017eef84071f86446632e952486d5f))
+* **assets:** add asset importer with id/enum/date handling ([1552eb7](https://github.com/NoiXdev/inventorix/commit/1552eb782855fe0dfb1fe80fc73dd43cb102682d))
+* **assets:** add CSV/XLSX export action ([9d90b59](https://github.com/NoiXdev/inventorix/commit/9d90b5965a2a260e360fe6f00329108bc5b818e3))
+* **assets:** export dates as German d.m.Y without time component ([a6fcbfd](https://github.com/NoiXdev/inventorix/commit/a6fcbfdeedb5cbf9be471b22b3e732558d464c70))
+* **assets:** resolve and auto-create asset owners on import ([3cfba23](https://github.com/NoiXdev/inventorix/commit/3cfba23f7bd82ee6f6ece86d02af3d0ca761c768))
+* **assets:** resolve manufacturer, model and place on import ([f2c34c7](https://github.com/NoiXdev/inventorix/commit/f2c34c713cbd394693bd407ce2d8a2a1d7f7ddff))
+* **assets:** sync tags on import and register import action ([2ee5d35](https://github.com/NoiXdev/inventorix/commit/2ee5d35365f1c8fd5edab981bd156adac96c0004))
+* **attachments:** add attachments table, model, enum and factory ([0d565d1](https://github.com/NoiXdev/inventorix/commit/0d565d15b3826a157ea3e251832102a9fec5788e))
+* **attachments:** add HasAttachments trait and wire to Asset ([70d7722](https://github.com/NoiXdev/inventorix/commit/70d7722f3c5e8ac66bebd85e883d6eb4e1eec1e0))
+* **attachments:** Anhänge relation manager with upload, download, delete ([b4df577](https://github.com/NoiXdev/inventorix/commit/b4df577c4508952ffc0e53fc1f4b3f01c676f94c))
+* **attachments:** observer for file cleanup and activity log ([117c16c](https://github.com/NoiXdev/inventorix/commit/117c16ceadc5eb6a0a95856ebdaac482ccec0634))
+* **panel:** enable database notifications for import/export completion ([851040f](https://github.com/NoiXdev/inventorix/commit/851040f1e9a750db74cf8bd7e80b4849035e3eeb))
+* **storage:** apply S3 settings to runtime config with local fallback ([f73c428](https://github.com/NoiXdev/inventorix/commit/f73c428e138105f4929d826788213fca158f5724))
+* **storage:** Storage settings page with S3 config and connection test ([c6dea03](https://github.com/NoiXdev/inventorix/commit/c6dea03f4989f2ac4f4c95a5166c645b743b40c2))
+* **storage:** StorageSettings class and migration ([f841843](https://github.com/NoiXdev/inventorix/commit/f84184342dfe8dccf2d238aed04909ed677f1554))
+* **warranty:** add daily scan-expiries command + schedule ([e11d8e5](https://github.com/NoiXdev/inventorix/commit/e11d8e5524918208930d54a7c052b93bab0855bc))
+* **warranty:** add grouped warranty expiry digest mailable + view ([3c32740](https://github.com/NoiXdev/inventorix/commit/3c3274033532d5977e69ec173827b435f8ff20e4))
+* **warranty:** add soonest-expiring assets table widget ([1af5547](https://github.com/NoiXdev/inventorix/commit/1af5547668bffc0ac2ccbad7d6c21b252359e30d))
+* **warranty:** add warranty notification settings page ([54a5be4](https://github.com/NoiXdev/inventorix/commit/54a5be4809258f14aa7b712fd3fa83b7098694b8))
+* **warranty:** add warranty stats dashboard widget ([44134f6](https://github.com/NoiXdev/inventorix/commit/44134f6e4e0704a6130ba8eb378eca353cfb73f8))
+* **warranty:** add warranty_notifications ledger model + table ([b6c3d48](https://github.com/NoiXdev/inventorix/commit/b6c3d486e041fa08449fc9248557753c2a175ff1))
+* **warranty:** add WarrantyScanner milestone detection with ledger dedupe ([ea0ecac](https://github.com/NoiXdev/inventorix/commit/ea0ecacb3917d3d9c37c9c465ca79ed843528630))
+* **warranty:** add WarrantySettings with seeded defaults ([fc5f8ab](https://github.com/NoiXdev/inventorix/commit/fc5f8ab88705d3ca138145633bfb93b1697f3564))
+
+
+### Bug Fixes
+
+* **assets:** german plurals, eager-load export relations, labels ([a3cc5fd](https://github.com/NoiXdev/inventorix/commit/a3cc5fd8a8a1e5bc6226e4977f92a2cfe8ee0222))
+* **assets:** require asset_type on import, revert nullable hack ([66515a3](https://github.com/NoiXdev/inventorix/commit/66515a37e85b15b8bffa4f2dc6a823b7c049aff3))
+* **attachments:** cascade-delete files on asset delete; per-file titles; safe size format ([c2d94ea](https://github.com/NoiXdev/inventorix/commit/c2d94ea8099e9b3b347b707ace4d297ccc75d9bf))
+* **panel:** use uuidMorphs for notifications notifiable_id ([1460ade](https://github.com/NoiXdev/inventorix/commit/1460ade81b4994fd143e71029480bca4f92310d8))
+* pint clenup ([0e52fa9](https://github.com/NoiXdev/inventorix/commit/0e52fa917c3288008295a5335d0569a0d2e27ce7))
+* **storage:** connection test detects real failures (s3 disk throw=false) ([bcd8c51](https://github.com/NoiXdev/inventorix/commit/bcd8c514c325b1e2b99dbf22a2702934fa835f5b))
+
+## [1.2.1](https://github.com/NoiXdev/inventorix/compare/v1.2.0...v1.2.1) (2026-06-12)
 
 
 ### Bug Fixes
