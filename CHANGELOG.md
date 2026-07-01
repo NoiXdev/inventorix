@@ -1,4 +1,11 @@
-## [1.3.1](https://github.com/NoiXdev/inventorix/compare/v1.3.0...v) (2026-06-30)
+## [1.3.2](https://github.com/NoiXdev/inventorix/compare/v1.3.1...v) (2026-07-01)
+
+
+### Features
+
+* **assets:** add serial number filter and global search ([6cf654f](https://github.com/NoiXdev/inventorix/commit/6cf654f6be157f0615390f6be96cad8b3466e9c7))
+
+## [1.3.1](https://github.com/NoiXdev/inventorix/compare/v1.3.0...v1.3.1) (2026-06-30)
 
 
 ### Features
