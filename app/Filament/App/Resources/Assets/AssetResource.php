@@ -97,7 +97,7 @@ class AssetResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['assetType.name', 'model.name', 'owner.name', 'place.name'];
+        return ['serial_number', 'assetType.name', 'model.name', 'owner.name', 'place.name'];
     }
 
     /**
@@ -106,6 +106,10 @@ class AssetResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         $details = [];
+
+        if ($record->serial_number) {
+            $details['Seriennummer'] = $record->serial_number;
+        }
 
         if ($record->assetType) {
             $details['AssetType'] = $record->assetType->name;

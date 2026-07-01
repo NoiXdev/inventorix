@@ -92,6 +92,25 @@ class AssetsTable
                     ->searchable()
                     ->relationship('owner', 'name'),
 
+                Filter::make('serial_number')
+                    ->schema([
+                        TextInput::make('serial_number')
+                            ->label('Seriennummer'),
+                    ])
+                    ->indicateUsing(static function (array $data): ?string {
+                        if (filled($data['serial_number'] ?? null)) {
+                            return 'Seriennummer: '.$data['serial_number'];
+                        }
+
+                        return null;
+                    })
+                    ->query(static function (Builder $query, array $data): Builder {
+                        return $query->when(
+                            filled($data['serial_number'] ?? null),
+                            static fn (Builder $query): Builder => $query->where('serial_number', 'like', '%'.$data['serial_number'].'%'),
+                        );
+                    }),
+
                 Filter::make('buy_price_null')
                     ->schema([
                         Toggle::make('show_empty_price')
