@@ -85,6 +85,12 @@ class AppPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
                 ApplyRuntimeSettings::class,
             ])
+            // Runtime settings (e.g. S3 StorageSettings) must also be applied on
+            // Livewire AJAX requests — that's where Filament processes file uploads.
+            // Non-persistent middleware only run on the initial page load.
+            ->persistentMiddleware([
+                ApplyRuntimeSettings::class,
+            ])
             ->authMiddleware([
                 Authenticate::class,
             ]);
