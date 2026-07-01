@@ -1,4 +1,11 @@
-## [1.3.2](https://github.com/NoiXdev/inventorix/compare/v1.3.1...v) (2026-07-01)
+## [1.3.3](https://github.com/NoiXdev/inventorix/compare/v1.3.2...v) (2026-07-01)
+
+
+### Bug Fixes
+
+* **settings:** apply runtime settings on Livewire requests ([cd43611](https://github.com/NoiXdev/inventorix/commit/cd436117cd7f6374a7414c750ed4c478a29b40f6))
+
+## [1.3.2](https://github.com/NoiXdev/inventorix/compare/v1.3.1...v1.3.2) (2026-07-01)
 
 
 ### Features
