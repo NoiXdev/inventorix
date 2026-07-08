@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Controllers\QrCodeGeneratorController;
 use App\Http\Middleware\ApplyRuntimeSettings;
@@ -17,6 +18,10 @@ Route::middleware(ApplyRuntimeSettings::class)->group(function () {
     Route::get('/auth/microsoft/callback', [MicrosoftAuthController::class, 'callback'])
         ->name('auth.microsoft.callback');
 });
+
+Route::middleware(['auth', ApplyRuntimeSettings::class])
+    ->get('/attachments/{attachment}/open', [AttachmentController::class, 'show'])
+    ->name('attachments.open');
 
 Route::middleware(['signed'])
     ->get('/handover-pdf/{handover}', function (Handover $handover) {

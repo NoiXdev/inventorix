@@ -27,6 +27,17 @@ class LatestDocumentsTableWidgetTest extends TestCase
             ->assertCanRenderTableColumn('title')
             ->assertCanRenderTableColumn('category')
             ->assertCanRenderTableColumn('attachable_type')
-            ->assertCanRenderTableColumn('created_at');
+            ->assertCanRenderTableColumn('created_at')
+            ->assertTableActionExists('open');
+    }
+
+    public function test_the_open_action_links_to_the_inline_attachment_route(): void
+    {
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+
+        $document = Attachment::factory()->create(['type' => 'document']);
+
+        Livewire::test(LatestDocumentsTableWidget::class)
+            ->assertTableActionHasUrl('open', route('attachments.open', $document), record: $document);
     }
 }
