@@ -3,6 +3,7 @@
 namespace App\Filament\App\Widgets;
 
 use App\Models\Attachment;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -39,6 +40,13 @@ class LatestDocumentsTableWidget extends BaseWidget
                 TextColumn::make('created_at')
                     ->label(trans('document.widget.table.uploaded_at'))
                     ->dateTime('d.m.Y H:i'),
+            ])
+            ->recordActions([
+                Action::make('open')
+                    ->label(trans('document.widget.table.open'))
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn (Attachment $record): string => route('attachments.open', $record))
+                    ->openUrlInNewTab(),
             ]);
     }
 }

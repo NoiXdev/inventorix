@@ -9,6 +9,7 @@ return [
             'attached_to' => 'Zugeordnet zu',
             'uploaded_by' => 'Hochgeladen von',
             'uploaded_at' => 'Hochgeladen am',
+            'open' => 'Öffnen',
         ],
     ],
 ];

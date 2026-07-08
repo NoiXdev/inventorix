@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
             // \App\Http\Middleware\SetLocale::class,
             SecureHeaders::class,
         ]);
+
+        // The app has no standalone "login" route — authentication lives in the
+        // Filament panel. Send unauthenticated web requests there.
+        $middleware->redirectGuestsTo(fn () => route('filament.app.auth.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
