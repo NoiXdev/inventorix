@@ -2,7 +2,9 @@
 
 namespace App\Filament\App\Widgets;
 
+use App\Filament\App\Resources\Assets\AssetResource;
 use App\Models\Incident;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -39,6 +41,13 @@ class OpenIncidentsTableWidget extends BaseWidget
                     ->badge()
                     ->color('warning')
                     ->state(fn (Incident $record): int => (int) round($record->open_date->copy()->startOfDay()->diffInDays(now()->startOfDay(), false))),
+            ])
+            ->recordActions([
+                Action::make('open')
+                    ->label(trans('incident.widget.table.open'))
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn (Incident $record): string => AssetResource::getUrl('edit', ['record' => $record->asset_id]))
+                    ->visible(fn (Incident $record): bool => $record->asset_id !== null),
             ]);
     }
 }

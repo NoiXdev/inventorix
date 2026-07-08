@@ -9,6 +9,7 @@ return [
             'serial' => 'Seriennummer',
             'open_date' => 'Geöffnet am',
             'days_open' => 'Tage offen',
+            'open' => 'Öffnen',
         ],
     ],
 ];

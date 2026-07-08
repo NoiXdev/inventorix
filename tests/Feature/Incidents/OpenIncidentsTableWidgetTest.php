@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Incidents;
 
+use App\Filament\App\Resources\Assets\AssetResource;
 use App\Filament\App\Widgets\OpenIncidentsTableWidget;
 use App\Models\Incident;
 use App\Models\User;
@@ -27,6 +28,21 @@ class OpenIncidentsTableWidgetTest extends TestCase
             ->assertCanRenderTableColumn('title')
             ->assertCanRenderTableColumn('asset.model.name')
             ->assertCanRenderTableColumn('asset.serial_number')
-            ->assertCanRenderTableColumn('days_open');
+            ->assertCanRenderTableColumn('days_open')
+            ->assertTableActionExists('open');
+    }
+
+    public function test_the_open_action_links_to_the_asset_edit_page(): void
+    {
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+
+        $incident = Incident::factory()->create(['closed_date' => null]);
+
+        Livewire::test(OpenIncidentsTableWidget::class)
+            ->assertTableActionHasUrl(
+                'open',
+                AssetResource::getUrl('edit', ['record' => $incident->asset_id]),
+                record: $incident,
+            );
     }
 }
