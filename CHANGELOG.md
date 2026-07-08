@@ -1,4 +1,13 @@
-## [1.3.3](https://github.com/NoiXdev/inventorix/compare/v1.3.2...v) (2026-07-01)
+## [1.4.0](https://github.com/NoiXdev/inventorix/compare/v1.3.3...v) (2026-07-08)
+
+
+### Features
+
+* **dashboard:** add latest documents and open incidents widgets ([bfc5995](https://github.com/NoiXdev/inventorix/commit/bfc599550cd244aee5f6a4b4afb640f817f42387))
+* **dashboard:** add open action for documents widget ([dfc9782](https://github.com/NoiXdev/inventorix/commit/dfc97826d49718084386833f666ac03fd3988617))
+* **dashboard:** add open action for incidents widget ([0ce4088](https://github.com/NoiXdev/inventorix/commit/0ce4088db2735e35ba6599e9ba3d5f76a0dc4c38))
+
+## [1.3.3](https://github.com/NoiXdev/inventorix/compare/v1.3.2...v1.3.3) (2026-07-01)
 
 
 ### Bug Fixes
