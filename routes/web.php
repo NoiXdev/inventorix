@@ -12,7 +12,7 @@ use Inertia\Inertia;
 Route::get('/', fn () => to_route('filament.app.pages.dashboard'));
 
 Route::prefix('app')->group(function () {
-    Route::get('/', fn () => Inertia::render('smoke'))->name('app.smoke');
+    Route::get('/', fn () => Inertia::render('dashboard'))->name('app.dashboard');
 });
 
 Route::get('/gq', [QrCodeGeneratorController::class, 'generate'])->name('qg');

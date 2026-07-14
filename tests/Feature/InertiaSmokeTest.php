@@ -11,6 +11,6 @@ class InertiaSmokeTest extends TestCase
     {
         $this->get('/app')
             ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('smoke'));
+            ->assertInertia(fn (Assert $page) => $page->component('dashboard'));
     }
 }
