@@ -97,10 +97,13 @@ git commit -m "refactor(filament): relocate panel from /app to /app-old"
 - [ ] **Step 1: Install server + client dependencies**
 
 ```bash
-ddev composer require inertiajs/inertia-laravel tightenco/ziggy
+ddev composer require inertiajs/inertia-laravel
 ddev exec pnpm add @inertiajs/react react react-dom
 ddev exec pnpm add -D @vitejs/plugin-react @types/react @types/react-dom
 ```
+
+(Ziggy is intentionally **not** installed in Spec 1 — the frontend uses plain
+`/app/...` string URLs. Add it in a later spec if route volume justifies it.)
 
 - [ ] **Step 2: Write the failing test**
 
@@ -174,7 +177,6 @@ $middleware->web(append: [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title inertia>{{ config('app.name', 'Inventorix') }}</title>
-    @routes
     @viteReactRefresh
     @vite(['resources/css/app-inertia.css', 'resources/js/app.tsx'])
     @inertiaHead
