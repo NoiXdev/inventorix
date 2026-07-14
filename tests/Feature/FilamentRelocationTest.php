@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class FilamentRelocationTest extends TestCase
@@ -16,8 +17,11 @@ class FilamentRelocationTest extends TestCase
 
     public function test_no_longer_serves_filament_at_the_old_app_path(): void
     {
-        // /app is reserved for the new Inertia app; the Filament login must not answer here.
-        $this->get('/app/login')->assertNotFound();
+        // /app is reserved for the new Inertia app (Task 10 claimed /app/login for
+        // its own auth pages); Filament's login must not answer here.
+        $this->get('/app/login')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('auth/login'));
     }
 
     public function test_keeps_the_filament_app_route_names_resolving(): void

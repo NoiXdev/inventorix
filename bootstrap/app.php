@@ -22,9 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
-        // The app has no standalone "login" route — authentication lives in the
-        // Filament panel. Send unauthenticated web requests there.
-        $middleware->redirectGuestsTo(fn () => route('filament.app.auth.login'));
+        // Unauthenticated requests to the new Inertia app (/app, /app/*) go to
+        // its own login page; everything else (including the Filament panel)
+        // keeps going to the Filament login.
+        $middleware->redirectGuestsTo(function ($request) {
+            return $request->is('app', 'app/*')
+                ? route('app.login')
+                : route('filament.app.auth.login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
