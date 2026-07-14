@@ -30,9 +30,7 @@ class ManufacturerControllerTest extends TestCase
         $this->actingAs($this->user)->get('/app/manufacturers')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                // shouldExist: false — the React page itself lands in Task 9;
-                // this test only exercises the controller/route/props contract.
-                ->component('manufacturers/index', false)
+                ->component('manufacturers/index')
                 ->has('manufacturers.data', 3)
                 ->has('manufacturers.data.0', fn (Assert $row) => $row
                     ->has('id')->has('name')->has('models_count')->has('assets_count')
@@ -57,7 +55,7 @@ class ManufacturerControllerTest extends TestCase
         $this->actingAs($this->user)->get('/app/manufacturers')
             ->assertOk()
             ->assertInertia(function (Assert $page) use ($manufacturerA, $manufacturerB) {
-                $page->component('manufacturers/index', false);
+                $page->component('manufacturers/index');
 
                 $rows = $page->toArray()['props']['manufacturers']['data'];
 
