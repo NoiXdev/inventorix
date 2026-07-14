@@ -33,3 +33,6 @@ frankenphp-worker.php
 
 public/js/filament
 public/css/filament
+
+# Superpowers brainstorming companion
+.superpowers/
