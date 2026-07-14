@@ -4,9 +4,10 @@
 FROM node:26-alpine AS frontend-builder
 WORKDIR /app
 
-# Restore npm cache early so source changes don't bust dependency install.
-COPY package.json package-lock.json ./
-RUN npm ci
+# Install JS deps early so source changes don't bust the dependency layer.
+# pnpm is activated via corepack (version pinned by package.json "packageManager").
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 
 # Copy only the files Vite needs for the build, so PHP-only changes don't
 # invalidate the frontend build layer.
@@ -16,7 +17,7 @@ COPY tailwind.config.* ./
 COPY tsconfig.json ./
 COPY resources ./resources
 COPY public ./public
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: PHP application
 FROM dunglas/frankenphp:1-php8.4
