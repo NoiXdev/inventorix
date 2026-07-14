@@ -53,12 +53,37 @@ class TableQueryTest extends TestCase
         Manufacturer::factory()->count(30)->create();
 
         $request = Request::create('/app/manufacturers', 'GET', ['perPage' => '10', 'search' => 'x']);
-        $this->app->instance('request', $request);
 
         $result = TableQuery::for(Manufacturer::query(), $request)
             ->searchable(['name'])->paginate();
 
         $this->assertEquals(10, $result->perPage());
         $this->assertStringContainsString('search=x', $result->url(2));
+    }
+
+    public function test_clamps_out_of_range_perPage_values_to_the_default(): void
+    {
+        Manufacturer::factory()->count(2)->create();
+
+        $requestTooLow = Request::create('/app/manufacturers', 'GET', ['perPage' => '0']);
+        $resultTooLow = TableQuery::for(Manufacturer::query(), $requestTooLow)->paginate();
+        $this->assertEquals(15, $resultTooLow->perPage());
+
+        $requestTooHigh = Request::create('/app/manufacturers', 'GET', ['perPage' => '150']);
+        $resultTooHigh = TableQuery::for(Manufacturer::query(), $requestTooHigh)->paginate();
+        $this->assertEquals(15, $resultTooHigh->perPage());
+    }
+
+    public function test_search_term_with_percent_sign_is_treated_literally(): void
+    {
+        Manufacturer::factory()->create(['name' => '50% Off']);
+        Manufacturer::factory()->create(['name' => 'Acme']);
+
+        $request = Request::create('/app/manufacturers', 'GET', ['search' => '50%']);
+        $result = TableQuery::for(Manufacturer::query(), $request)
+            ->searchable(['name'])->paginate();
+
+        $this->assertEquals(1, $result->total());
+        $this->assertEquals('50% Off', $result->first()->name);
     }
 }

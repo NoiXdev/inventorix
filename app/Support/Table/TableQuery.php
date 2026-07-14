@@ -40,12 +40,12 @@ class TableQuery
         $this->applySearch();
         $this->applySort();
 
-        $perPage = (int) $this->request->integer('perPage', $default);
+        $perPage = $this->request->integer('perPage', $default);
         $perPage = $perPage > 0 && $perPage <= 100 ? $perPage : $default;
 
         return $this->query
-            ->paginate($perPage)
-            ->withQueryString();
+            ->paginate($perPage, ['*'], 'page', $this->request->integer('page', 1))
+            ->appends($this->request->query());
     }
 
     private function applySearch(): void
@@ -55,9 +55,14 @@ class TableQuery
             return;
         }
 
-        $this->query->where(function (Builder $q) use ($term): void {
+        $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
+
+        $this->query->where(function (Builder $q) use ($escaped): void {
+            $grammar = $q->getQuery()->getGrammar();
+
             foreach ($this->searchable as $column) {
-                $q->orWhere($column, 'like', "%{$term}%");
+                $wrapped = $grammar->wrap($column);
+                $q->orWhereRaw("{$wrapped} LIKE ? ESCAPE '\\'", ["%{$escaped}%"]);
             }
         });
     }
