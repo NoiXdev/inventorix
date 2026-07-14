@@ -14,6 +14,9 @@
     "@tailwindcss/vite": "^4.3.2",
     "@types/node": "^26.1.1",
     "@types/qrcode": "^1.5.6",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
     "axios": "^1.18.1",
     "concurrently": "^10.0.3",
     "happy-dom": "^20.10.6",
@@ -25,6 +28,9 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
-    "qrcode": "^1.5.4"
+    "@inertiajs/react": "^3.6.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }

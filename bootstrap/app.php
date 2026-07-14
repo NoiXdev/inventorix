@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             // \App\Http\Middleware\SetLocale::class,
             SecureHeaders::class,
+            \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
 
         // The app has no standalone "login" route — authentication lives in the

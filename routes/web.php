@@ -7,8 +7,13 @@ use App\Http\Middleware\ApplyRuntimeSettings;
 use App\Models\Handover;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 Route::get('/', fn () => to_route('filament.app.pages.dashboard'));
+
+Route::prefix('app')->group(function () {
+    Route::get('/', fn () => Inertia::render('smoke'))->name('app.smoke');
+});
 
 Route::get('/gq', [QrCodeGeneratorController::class, 'generate'])->name('qg');
 
