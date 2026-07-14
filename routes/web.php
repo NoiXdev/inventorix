@@ -17,7 +17,7 @@ Route::prefix('app')->name('app.')->group(function () {
     // Guest-only: the Inertia login page and its submit handler.
     Route::middleware('guest')->group(function () {
         Route::get('login', [AuthController::class, 'show'])->name('login');
-        Route::post('login', [AuthController::class, 'attempt'])->name('login.attempt');
+        Route::post('login', [AuthController::class, 'attempt'])->middleware('throttle:6,1')->name('login.attempt');
     });
 
     // Authenticated: everything else in the app shares the web session guard

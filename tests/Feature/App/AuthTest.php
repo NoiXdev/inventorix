@@ -48,6 +48,21 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_is_rate_limited(): void
+    {
+        $user = User::factory()->create(['password' => bcrypt('secret-password'), 'login_enabled' => true]);
+
+        for ($i = 0; $i < 6; $i++) {
+            $this->post('/app/login', ['email' => $user->email, 'password' => 'wrong'])
+                ->assertSessionHasErrors('email');
+        }
+
+        $this->post('/app/login', ['email' => $user->email, 'password' => 'wrong'])
+            ->assertStatus(429);
+
+        $this->assertGuest();
+    }
+
     public function test_redirects_unauthenticated_visitors_from_app_to_app_login(): void
     {
         $this->get('/app')->assertRedirect('/app/login');

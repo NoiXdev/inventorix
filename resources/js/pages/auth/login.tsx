@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField } from '@/components/form/text-field';
+import { FormError } from '@/components/form/form-error';
 
 export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
     const form = useForm({ email: '', password: '', remember: false });
@@ -24,6 +25,7 @@ export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
                             <label htmlFor="password" className="text-sm font-medium">Password</label>
                             <input id="password" type="password" className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
                                 value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} />
+                            <FormError message={form.errors.password} />
                         </div>
                         <Button type="submit" className="w-full" disabled={form.processing}>Sign in</Button>
                     </form>

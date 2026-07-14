@@ -24,6 +24,15 @@ export function useAppearance() {
         const saved = (localStorage.getItem('appearance') as Appearance) ?? 'system';
         setAppearance(saved);
         applyAppearance(saved);
+
+        const media = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => {
+            const current = (localStorage.getItem('appearance') as Appearance) ?? 'system';
+            if (current === 'system') applyAppearance('system');
+        };
+        media.addEventListener('change', handleChange);
+
+        return () => media.removeEventListener('change', handleChange);
     }, []);
 
     return { appearance, updateAppearance } as const;
