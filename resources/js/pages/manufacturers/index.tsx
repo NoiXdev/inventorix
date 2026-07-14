@@ -34,7 +34,13 @@ export default function ManufacturersIndex({ manufacturers }: { manufacturers: {
                 <h1 className="text-2xl font-semibold">Manufacturers</h1>
                 <Button asChild><Link href="/app/manufacturers/create">New manufacturer</Link></Button>
             </div>
-            <DataTable columns={columns} rows={manufacturers.data} pagination={manufacturers.meta} baseUrl="/app/manufacturers" />
+            <DataTable
+                columns={columns}
+                rows={manufacturers.data}
+                pagination={manufacturers.meta}
+                baseUrl="/app/manufacturers"
+                sortable={['name', 'models_count']}
+            />
         </AppLayout>
     );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildTableUrl } from '../use-table-query';
+import { buildTableUrl, nextSort } from '../use-table-query';
 
 describe('buildTableUrl', () => {
     it('sets a param and resets page to 1 when sort changes', () => {
@@ -19,5 +19,20 @@ describe('buildTableUrl', () => {
         const url = buildTableUrl('/app/manufacturers', { page: '2' }, '?perPage=25');
         expect(url).toContain('perPage=25');
         expect(url).toContain('page=2');
+    });
+});
+
+describe('nextSort', () => {
+    it('sorts ascending when the column is not currently active', () => {
+        expect(nextSort(null, 'name')).toBe('name');
+        expect(nextSort('other', 'name')).toBe('name');
+    });
+
+    it('sorts descending when the column is currently ascending', () => {
+        expect(nextSort('name', 'name')).toBe('-name');
+    });
+
+    it('sorts ascending when the column is currently descending', () => {
+        expect(nextSort('-name', 'name')).toBe('name');
     });
 });

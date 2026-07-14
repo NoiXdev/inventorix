@@ -18,3 +18,14 @@ export function buildTableUrl(
 export function visitTable(baseUrl: string, params: Record<string, string>): void {
     router.get(buildTableUrl(baseUrl, params), {}, { preserveState: true, preserveScroll: true, replace: true });
 }
+
+/**
+ * Given the current `sort` query value and the column being clicked, returns
+ * the next sort value to apply: asc -> desc -> asc, starting from asc when
+ * the column isn't already the active sort.
+ */
+export function nextSort(current: string | null, column: string): string {
+    if (current === column) return `-${column}`;
+    if (current === `-${column}`) return column;
+    return column;
+}

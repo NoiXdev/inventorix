@@ -1918,3 +1918,14 @@ git commit -m "chore(inertia): finalize foundation spec 1 verification"
 - **Deviations from spec (intentional, noted):** (a) no `ManufacturerPolicy` exists, so authorization is `auth`-middleware only; (b) the Filament form's required `models` multiselect is dropped — the Inertia form edits `name` only, counts shown read-only in the table.
 - **Type consistency:** `PaginationMeta` (Task 6) matches the `meta` shape returned by the controller (Task 8) and consumed by the index page (Task 9). `PageProps`/`User` (Task 4) match the middleware share (Task 2). `TableQuery` API (Task 5) matches its controller usage (Task 8). `ManufacturerForm` method/submitUrl props (Task 9) match the routes (Task 8).
 - **MFA:** deferred per the spec — not implemented; Filament MFA remains on `/app-old`.
+
+## Deferred from Spec 1 (DataTable)
+
+The design spec (§4/§5) describes a fuller `DataTable` than what Spec 1 actually builds. The following features were intentionally **not** implemented in this pass and should be picked up when a resource first needs them:
+
+- **Per-column filters** — filtering is currently limited to the single free-text `search` param across the `searchable` columns; there is no per-column filter UI or query param.
+- **Row-selection checkboxes** — no selection column or selection state exists on `DataTable` yet.
+- **Bulk-actions toolbar** — no toolbar for acting on a selection (depends on row-selection above).
+- **Bulk destroy** — no batch-delete endpoint or UI; `destroy` is single-row only (see `ManufacturerController::destroy`).
+
+Column sorting (server-side via `TableQuery::sortable` + the `nextSort`/clickable-header wiring) *is* implemented as of this fix pass.
