@@ -17,6 +17,7 @@
 - Models are UUID primary keys (`HasUuids`). No database schema changes in this spec.
 - No per-resource policy for Manufacturers (none exists today); gate on the `auth` middleware only.
 - TDD: write the failing test first for all server logic and table/controller/auth behavior. Commit after every task.
+- **PHP tests use PHPUnit, not Pest** (there is no Pest in this repo). Write test files as PHPUnit classes extending `Tests\TestCase` with `public function test_*(): void` methods and `$this->assert*` / `$this->assertInertia(...)`, matching the existing `tests/` convention. Any `it(...)`/`expect(...)` shown in a task's code block is a sketch of the *assertions* to make — translate it to PHPUnit method form. Run PHP tests with `ddev exec ./vendor/bin/phpunit <path>` (full suite: `ddev exec php artisan test`).
 
 ---
 
@@ -51,7 +52,7 @@ it('keeps the filament.app.* route names resolving', function () {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/FilamentRelocationTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/FilamentRelocationTest.php`
 Expected: FAIL — `/app-old/login` returns 404 (still at `/app`).
 
 - [ ] **Step 3: Change the panel path**
@@ -67,7 +68,7 @@ In `app/Providers/Filament/AppPanelProvider.php`, change the single line:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/FilamentRelocationTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/FilamentRelocationTest.php`
 Expected: PASS (3 passed).
 
 - [ ] **Step 5: Manually verify**
@@ -121,7 +122,7 @@ it('renders the inertia smoke page at /app', function () {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/InertiaSmokeTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/InertiaSmokeTest.php`
 Expected: FAIL — route `/app` not defined (404) / component assertion unmet.
 
 - [ ] **Step 4: Create the Inertia middleware**
@@ -281,7 +282,7 @@ Route::prefix('app')->group(function () {
 
 Run: `ddev exec pnpm run build`
 Expected: build succeeds, emits `app-inertia` + `app` bundles.
-Run: `ddev exec ./vendor/bin/pest tests/Feature/InertiaSmokeTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/InertiaSmokeTest.php`
 Expected: PASS.
 
 - [ ] **Step 13: Manually verify both apps**
@@ -823,7 +824,7 @@ Delete `resources/js/pages/smoke.tsx` and update `tests/Feature/InertiaSmokeTest
 
 - [ ] **Step 9: Build and test**
 
-Run: `ddev exec pnpm run build && ddev exec ./vendor/bin/pest tests/Feature/InertiaSmokeTest.php`
+Run: `ddev exec pnpm run build && ddev exec ./vendor/bin/phpunit tests/Feature/InertiaSmokeTest.php`
 Expected: build succeeds; test PASS.
 
 - [ ] **Step 10: Manually verify shell + theme**
@@ -906,7 +907,7 @@ it('respects the perPage parameter and appends the query string', function () {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/Support/TableQueryTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/Support/TableQueryTest.php`
 Expected: FAIL — class `App\Support\Table\TableQuery` not found.
 
 - [ ] **Step 3: Implement `TableQuery`**
@@ -995,7 +996,7 @@ class TableQuery
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/Support/TableQueryTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/Support/TableQueryTest.php`
 Expected: PASS (4 passed).
 
 - [ ] **Step 5: Commit**
@@ -1368,7 +1369,7 @@ it('deletes a manufacturer', function () {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/App/ManufacturerControllerTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/App/ManufacturerControllerTest.php`
 Expected: FAIL — routes/controller not defined.
 
 - [ ] **Step 3: Create the form request**
@@ -1490,7 +1491,7 @@ Route::prefix('app')->name('app.')->group(function () {
 
 - [ ] **Step 6: Run tests to verify they pass**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/App/ManufacturerControllerTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/App/ManufacturerControllerTest.php`
 Expected: PASS (6 passed).
 
 - [ ] **Step 7: Commit**
@@ -1711,7 +1712,7 @@ it('logs out', function () {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/App/AuthTest.php`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/App/AuthTest.php`
 Expected: FAIL — routes/pages not defined.
 
 - [ ] **Step 3: Create the auth controller**
@@ -1854,7 +1855,7 @@ export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
 
 - [ ] **Step 7: Run all new tests**
 
-Run: `ddev exec ./vendor/bin/pest tests/Feature/App`
+Run: `ddev exec ./vendor/bin/phpunit tests/Feature/App`
 Expected: PASS (Auth + Manufacturer suites green).
 
 - [ ] **Step 8: Build and manually verify end-to-end**
@@ -1879,7 +1880,7 @@ git commit -m "feat(auth): Inertia login/logout + Entra button, guard /app"
 
 - [ ] **Step 1: Run the full test suite**
 
-Run: `ddev exec ./vendor/bin/pest`
+Run: `ddev exec ./vendor/bin/phpunit`
 Expected: all green (new + pre-existing Filament tests unaffected).
 
 - [ ] **Step 2: Run the JS test suite**
