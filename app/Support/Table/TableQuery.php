@@ -62,7 +62,7 @@ class TableQuery
 
             foreach ($this->searchable as $column) {
                 $wrapped = $grammar->wrap($column);
-                $q->orWhereRaw("{$wrapped} LIKE ? ESCAPE '\\'", ["%{$escaped}%"]);
+                $q->orWhereRaw("{$wrapped} LIKE ? ESCAPE ?", ["%{$escaped}%", '\\']);
             }
         });
     }
