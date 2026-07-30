@@ -30,11 +30,9 @@ export async function composeLabel(
         case 'qr-uuid':
             drawQrWithText(ctx, matrix, canvas.width, canvas.height, padding, [shortUuid(item.uuid)]);
             break;
-        case 'qr-asset': {
-            const lines = [item.metadata!.modelName, item.metadata!.serial];
-            drawQrWithText(ctx, matrix, canvas.width, canvas.height, padding, lines);
+        case 'qr-asset':
+            drawQrAsset(ctx, matrix, canvas.width, canvas.height, padding, item);
             break;
-        }
     }
 
     return ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -82,6 +80,69 @@ function drawQrWithText(
         const truncated = truncateToWidth(ctx, line, qrAreaWidth);
         ctx.fillText(truncated, canvasW / 2, textStartY + fontSize * (i + 0.5));
     });
+}
+
+/**
+ * Asset label: a small QR on the left, the model / manufacturer / created-at lines
+ * stacked to its right, and the full asset UUID across a footer band at the bottom.
+ */
+function drawQrAsset(
+    ctx: CanvasRenderingContext2D,
+    matrix: boolean[][],
+    canvasW: number,
+    canvasH: number,
+    padding: number,
+    item: LabelItem,
+): void {
+    const meta = item.metadata;
+    const footerHeight = Math.floor(canvasH * 0.14);
+    const footerTop = canvasH - footerHeight;
+    const topH = footerTop - 2 * padding;
+
+    // QR on the left — capped so the text has room beside it.
+    const qrTarget = Math.min(topH, Math.floor(canvasW * 0.45));
+    const modulePx = Math.max(1, Math.floor(qrTarget / matrix.length));
+    const qrSize = modulePx * matrix.length;
+    const qrX = padding;
+    const qrY = padding + Math.floor((topH - qrSize) / 2);
+    drawMatrix(ctx, matrix, qrX, qrY, modulePx);
+
+    // Text lines beside the QR (skip any that are missing).
+    const lines = [meta?.modelName, meta?.manufacturer, meta?.createdAt].filter(
+        (l): l is string => typeof l === 'string' && l.length > 0,
+    );
+    const textX = qrX + qrSize + padding;
+    const textW = canvasW - textX - padding;
+    if (lines.length > 0 && textW > 0) {
+        const lineFont = Math.max(8, Math.floor(qrSize / (lines.length + 1)));
+        const lineStep = Math.floor(lineFont * 1.35);
+        ctx.font = `${lineFont}px sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const blockH = lineStep * lines.length;
+        let ty = padding + Math.floor((topH - blockH) / 2) + Math.floor(lineStep / 2);
+        for (const line of lines) {
+            ctx.fillText(truncateToWidth(ctx, line, textW), textX, ty);
+            ty += lineStep;
+        }
+    }
+
+    // Divider + full UUID across the footer, font scaled to fit the width.
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = Math.max(1, Math.floor(canvasH * 0.003));
+    ctx.beginPath();
+    ctx.moveTo(padding, footerTop);
+    ctx.lineTo(canvasW - padding, footerTop);
+    ctx.stroke();
+
+    const maxW = canvasW - 2 * padding;
+    ctx.font = '100px monospace';
+    const width100 = ctx.measureText(item.uuid).width || 1;
+    const uuidFont = Math.max(5, Math.min(Math.floor(footerHeight * 0.7), Math.floor((100 * maxW) / width100)));
+    ctx.font = `${uuidFont}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.uuid, canvasW / 2, footerTop + Math.floor(footerHeight / 2));
 }
 
 function drawMatrix(

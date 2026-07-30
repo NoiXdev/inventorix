@@ -2,9 +2,7 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
-
-enum AttachmentCategory: string implements HasLabel
+enum AttachmentCategory: string
 {
     case RECHNUNG = 'rechnung';
     case FOTO = 'foto';

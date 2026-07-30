@@ -32,15 +32,11 @@ if [ -n "${DB_HOST:-}" ]; then
 fi
 
 php artisan package:discover --ansi
-php artisan filament:upgrade --ansi
 php artisan config:cache
 php artisan event:cache
 php artisan view:cache
 # route:cache is intentionally skipped: Route::inertia() and other macros use closures.
-
-echo "▶ Install assets"
-php artisan filament:assets
-php artisan vendor:publish --tag=livewire:assets
+# Frontend assets are built by Vite into public/build at image-build time; nothing to publish at boot.
 
 # RUN_MIGRATIONS=true is the default; set to "false" on multi-replica
 # deployments and run migrations as a one-shot job to avoid races.

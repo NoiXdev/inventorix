@@ -22,7 +22,10 @@ return new class extends Migration
         Schema::create('taggables', function (Blueprint $table) {
             $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
 
-            $table->morphs('taggable');
+            // Our taggable models (Asset) use UUID keys — taggable_id must be a
+            // uuid column, not the default bigint from morphs(). MariaDB truncates
+            // a UUID into a bigint column (SQLite's dynamic typing hides it).
+            $table->uuidMorphs('taggable');
 
             $table->unique(['tag_id', 'taggable_id', 'taggable_type']);
         });

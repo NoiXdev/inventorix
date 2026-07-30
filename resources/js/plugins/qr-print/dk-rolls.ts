@@ -12,7 +12,7 @@ export const DK_ROLLS: RollSpec[] = [
         printableStartByte: 3,
         printableEndByte: 90,
     },
-    {
+    /*{
         id: 'dk-11209',
         label: 'DK-11209 (29 × 62 mm)',
         mediaTypeByte: 0x0b,
@@ -33,7 +33,7 @@ export const DK_ROLLS: RollSpec[] = [
         printHeightPx: 1064,
         printableStartByte: 52,
         printableEndByte: 91,
-    },
+    },*/
 ];
 
 export function getRollById(id: string): RollSpec {

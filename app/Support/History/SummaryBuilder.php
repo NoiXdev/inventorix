@@ -5,8 +5,8 @@ namespace App\Support\History;
 use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Models\Incident;
+use App\Models\Person;
 use App\Models\Place;
-use App\Models\User;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 
@@ -35,7 +35,7 @@ class SummaryBuilder
             'updated' => trans('history.summary.fields_changed', [
                 'count' => count($activity->attribute_changes['attributes'] ?? []),
             ]),
-            'owner_changed' => $this->userArrow($activity),
+            'owner_changed' => $this->ownerArrow($activity),
             'place_changed' => $this->placeArrow($activity),
             'state_changed' => $this->stateArrow($activity),
             'note' => trans('history.event.note').': '.Str::limit(
@@ -50,12 +50,13 @@ class SummaryBuilder
         };
     }
 
-    private function userArrow(Activity $activity): string
+    private function ownerArrow(Activity $activity): string
     {
+        // Asset ownership is tracked on Person (owner_id), not User.
         return $this->arrow(
             $activity->properties['from'] ?? null,
             $activity->properties['to'] ?? null,
-            fn ($id) => User::find($id)?->name,
+            fn ($id) => Person::find($id)?->name,
         );
     }
 

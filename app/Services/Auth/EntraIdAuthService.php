@@ -54,17 +54,9 @@ class EntraIdAuthService
     {
         $raw = $msUser->user;
 
-        $first = $raw['givenName'] ?? $user->firstname;
-        $last = $raw['surname'] ?? $user->lastname;
-        $name = $raw['displayName'] ?? trim($first.' '.$last);
         $email = $raw['mail'] ?? $raw['userPrincipalName'] ?? $msUser->email ?? $user->email;
 
-        $user->forceFill([
-            'firstname' => $first,
-            'lastname' => $last,
-            'name' => $name,
-            'email' => $email,
-        ])->save();
+        $user->forceFill(['email' => $email])->save();
     }
 
     private function extractEmail(SocialiteUser $msUser): ?string

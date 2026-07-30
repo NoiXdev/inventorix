@@ -10,5 +10,6 @@ As example
 `ddev php`
 
 
-# FilamentPHP
+# Stack
+The app is Laravel 13 + Inertia v2 + React 19 (TypeScript) under the `/app` route prefix, with shadcn/ui and TanStack Table. Filament has been removed (cutover complete).
 

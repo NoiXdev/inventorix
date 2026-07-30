@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Models\Handover;
+use App\Models\Person;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -18,7 +19,7 @@ class HandoverFactory extends Factory
         return [
             'type' => HandoverType::ISSUE->value,
             'recipient_kind' => RecipientKind::INTERNAL->value,
-            'recipient_user_id' => User::factory(),
+            'recipient_person_id' => Person::factory(),
             'recipient_name' => fake()->name(),
             'recipient_email' => fake()->safeEmail(),
             'accessories' => null,

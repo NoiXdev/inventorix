@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\ApplySettingsToJob;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
@@ -36,5 +37,9 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Event::listen(JobProcessing::class, ApplySettingsToJob::class);
+
+        ResetPassword::createUrlUsing(fn (object $notifiable, string $token) => url(
+            '/app/reset-password/'.$token.'?email='.urlencode($notifiable->getEmailForPasswordReset()),
+        ));
     }
 }

@@ -4,7 +4,9 @@ export interface LabelItem {
     uuid: Uuid;
     metadata?: {
         modelName: string;
-        serial: string;
+        serial?: string;
+        manufacturer?: string;
+        createdAt?: string;
     };
 }
 

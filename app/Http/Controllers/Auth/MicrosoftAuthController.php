@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Exceptions\Auth\EntraAuthException;
 use App\Services\Auth\EntraIdAuthService;
-use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
@@ -34,14 +33,14 @@ class MicrosoftAuthController
             Auth::guard('web')->login($user, remember: true);
             request()->session()->regenerate();
 
-            return redirect()->intended(Filament::getUrl());
+            return redirect()->intended('/app');
         } catch (EntraAuthException $e) {
-            return redirect()->route('filament.app.auth.login')
+            return redirect()->route('app.login')
                 ->with('entra_error', $e->getUserMessage());
         } catch (Throwable $e) {
             report($e);
 
-            return redirect()->route('filament.app.auth.login')
+            return redirect()->route('app.login')
                 ->with('entra_error', __('Microsoft sign-in failed. Please try again.'));
         }
     }

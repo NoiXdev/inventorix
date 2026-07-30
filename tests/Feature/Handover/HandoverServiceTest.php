@@ -9,6 +9,7 @@ use App\Enums\RecipientKind;
 use App\Exceptions\HandoverStateConflictException;
 use App\Models\Asset;
 use App\Models\Handover;
+use App\Models\Person;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,7 +30,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_issue_sets_state_in_use_and_owner_to_recipient(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create([
             'state' => AssetState::STORAGE->value,
@@ -39,7 +40,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: $recipient->email,
             assetIds: [$asset->id],
@@ -57,7 +58,7 @@ class HandoverServiceTest extends TestCase
         $this->assertDatabaseHas('handovers', [
             'id' => $handover->id,
             'type' => HandoverType::ISSUE->value,
-            'recipient_user_id' => $recipient->id,
+            'recipient_person_id' => $recipient->id,
             'created_by' => $manager->id,
         ]);
 
@@ -78,7 +79,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_lend_sets_state_lend_and_owner_to_recipient(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
 
         $handover = $this->dispatch(HandoverType::LEND, $recipient, $asset);
@@ -95,7 +96,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_return_clears_owner_and_moves_to_storage(): void
     {
-        $previousOwner = User::factory()->create();
+        $previousOwner = Person::factory()->create();
         $asset = Asset::factory()->create([
             'state' => AssetState::IN_USE->value,
             'owner_id' => $previousOwner->id,
@@ -117,7 +118,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_return_defect_clears_owner_and_moves_to_need_repair(): void
     {
-        $previousOwner = User::factory()->create();
+        $previousOwner = Person::factory()->create();
         $asset = Asset::factory()->create([
             'state' => AssetState::IN_USE->value,
             'owner_id' => $previousOwner->id,
@@ -136,14 +137,14 @@ class HandoverServiceTest extends TestCase
 
     public function test_state_conflict_throws_and_leaves_no_db_rows(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::IN_USE->value]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,                   // requires NEW or STORAGE
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$asset->id],
@@ -170,13 +171,13 @@ class HandoverServiceTest extends TestCase
 
     public function test_unknown_asset_id_throws_state_conflict(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: ['00000000-0000-0000-0000-000000000000'],
@@ -195,7 +196,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_throwing_inside_transaction_deletes_signature_file(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
 
         // Force the inner Handover insert to fail via a non-existent created_by UUID;
@@ -205,7 +206,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$asset->id],
@@ -235,7 +236,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::EXTERNAL,
-            recipientUserId: null,
+            recipientPersonId: null,
             recipientName: 'Jane External',
             recipientEmail: 'jane@example.com',
             assetIds: [$asset->id],
@@ -251,7 +252,7 @@ class HandoverServiceTest extends TestCase
         $handover = app(HandoverService::class)->commit($data);
         $asset->refresh();
 
-        $this->assertNull($handover->recipient_user_id);
+        $this->assertNull($handover->recipient_person_id);
         $this->assertSame('Jane External', $handover->recipient_name);
         $this->assertSame(AssetState::IN_USE, $asset->state);
         $this->assertNull($asset->owner_id);
@@ -264,9 +265,9 @@ class HandoverServiceTest extends TestCase
 
     public function test_bulk_handover_attaches_each_asset_with_its_own_snapshots(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
-        $previousOwner = User::factory()->create();
+        $previousOwner = Person::factory()->create();
 
         $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
         $b = Asset::factory()->create(['state' => AssetState::NEW->value, 'owner_id' => $previousOwner->id]);
@@ -274,7 +275,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: $recipient->email,
             assetIds: [$a->id, $b->id],
@@ -310,7 +311,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_bulk_with_one_invalid_state_rolls_everything_back(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $valid = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
         $invalid = Asset::factory()->create(['state' => AssetState::IN_USE->value]);  // not allowed for ISSUE
@@ -318,7 +319,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$valid->id, $invalid->id],
@@ -345,7 +346,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_commit_writes_handover_completed_activity_per_asset(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $this->actingAs($manager);
         $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
@@ -354,7 +355,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: $recipient->email,
             assetIds: [$a->id, $b->id],
@@ -386,14 +387,14 @@ class HandoverServiceTest extends TestCase
 
     public function test_invalid_base64_payload_throws(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$asset->id],
@@ -412,14 +413,14 @@ class HandoverServiceTest extends TestCase
 
     public function test_non_png_payload_throws(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$asset->id],
@@ -438,7 +439,7 @@ class HandoverServiceTest extends TestCase
 
     public function test_too_large_signature_throws(): void
     {
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
 
@@ -447,7 +448,7 @@ class HandoverServiceTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,
             assetIds: [$asset->id],
@@ -464,14 +465,14 @@ class HandoverServiceTest extends TestCase
         app(HandoverService::class)->commit($data);
     }
 
-    private function dispatch(HandoverType $type, User $recipient, Asset $asset): Handover
+    private function dispatch(HandoverType $type, Person $recipient, Asset $asset): Handover
     {
         $manager = User::factory()->create();
 
         $data = new HandoverData(
             type: $type,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: $recipient->email,
             assetIds: [$asset->id],

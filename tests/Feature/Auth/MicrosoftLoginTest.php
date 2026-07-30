@@ -5,6 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use App\Settings\AuthSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
 use Mockery;
@@ -52,9 +53,6 @@ class MicrosoftLoginTest extends TestCase
         $user = User::factory()->create([
             'entra_id' => 'oid-abc-123',
             'email' => 'unrelated@elsewhere.test',
-            'firstname' => 'Old',
-            'lastname' => 'Name',
-            'name' => 'Old Name',
             'login_enabled' => true,
         ]);
 
@@ -66,8 +64,6 @@ class MicrosoftLoginTest extends TestCase
         $this->assertAuthenticatedAs($user);
 
         $fresh = $user->fresh();
-        $this->assertSame('Alice', $fresh->firstname);
-        $this->assertSame('Example', $fresh->lastname);
         $this->assertSame('alice@example.com', $fresh->email);
     }
 
@@ -94,7 +90,7 @@ class MicrosoftLoginTest extends TestCase
 
         $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
 
-        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertRedirect(route('app.login'));
         $response->assertSessionHas('entra_error');
         $this->assertGuest();
     }
@@ -110,7 +106,7 @@ class MicrosoftLoginTest extends TestCase
 
         $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
 
-        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertRedirect(route('app.login'));
         $response->assertSessionHas('entra_error', __('Your account is disabled. Contact an administrator.'));
         $this->assertGuest();
     }
@@ -128,7 +124,7 @@ class MicrosoftLoginTest extends TestCase
 
         $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
 
-        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertRedirect(route('app.login'));
         $response->assertSessionHas('entra_error', __('This Microsoft account is not from the authorized tenant.'));
         $this->assertGuest();
     }
@@ -142,7 +138,7 @@ class MicrosoftLoginTest extends TestCase
 
         $response = $this->get('/auth/microsoft/callback?code=fake&state=fake');
 
-        $response->assertRedirect(route('filament.app.auth.login'));
+        $response->assertRedirect(route('app.login'));
         $response->assertSessionHas('entra_error', __('Microsoft sign-in failed. Please try again.'));
         $this->assertGuest();
     }
@@ -200,9 +196,9 @@ class MicrosoftLoginTest extends TestCase
 
     public function test_login_page_renders_button_when_feature_enabled(): void
     {
-        $this->get(route('filament.app.auth.login'))
+        $this->get(route('app.login'))
             ->assertOk()
-            ->assertSeeText(__('Login via Entra ID'));
+            ->assertInertia(fn (Assert $page) => $page->component('auth/login')->where('entraEnabled', true));
     }
 
     public function test_login_page_does_not_render_button_when_feature_disabled(): void
@@ -213,8 +209,8 @@ class MicrosoftLoginTest extends TestCase
         $auth->microsoft_enabled = false;
         $auth->save();
 
-        $this->get(route('filament.app.auth.login'))
+        $this->get(route('app.login'))
             ->assertOk()
-            ->assertDontSeeText(__('Login via Entra ID'));
+            ->assertInertia(fn (Assert $page) => $page->component('auth/login')->where('entraEnabled', false));
     }
 }

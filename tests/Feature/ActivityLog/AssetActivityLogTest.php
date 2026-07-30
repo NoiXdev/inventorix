@@ -4,6 +4,7 @@ namespace Tests\Feature\ActivityLog;
 
 use App\Enums\AssetState;
 use App\Models\Asset;
+use App\Models\Person;
 use App\Models\Place;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,7 +79,7 @@ class AssetActivityLogTest extends TestCase
     public function test_owner_change_writes_an_owner_changed_activity(): void
     {
         $asset = Asset::factory()->create();
-        $newOwner = User::factory()->create();
+        $newOwner = Person::factory()->create();
         $oldOwnerId = $asset->owner_id;
 
         $asset->update(['owner_id' => $newOwner->id]);
@@ -130,7 +131,7 @@ class AssetActivityLogTest extends TestCase
     public function test_a_semantic_change_also_keeps_the_generic_updated_row(): void
     {
         $asset = Asset::factory()->create();
-        $newOwner = User::factory()->create();
+        $newOwner = Person::factory()->create();
 
         $asset->update(['owner_id' => $newOwner->id]);
 

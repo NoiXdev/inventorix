@@ -1,0 +1,12 @@
+# Vulnerabilities compiled into the upstream FrankenPHP base image
+# (dunglas/frankenphp:1-php8.4) — its embedded Go toolchain + Go deps.
+# NOT fixable from our Dockerfile (they live in the compiled `frankenphp`
+# binary, not in an apt/composer/npm package). They sit in FrankenPHP's
+# gRPC/x/text/stdlib code paths, which this app does not expose as a gRPC
+# server, so real-world exposure is low. Re-check and REMOVE each entry once
+# a FrankenPHP base image ships the fixed versions (Go >= 1.26.5,
+# golang.org/x/text >= 0.39.0, google.golang.org/grpc >= 1.82.1).
+CVE-2026-56852
+CVE-2026-39822
+GHSA-hrxh-6v49-42gf
+GHSA-r277-6w6q-xmqw

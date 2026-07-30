@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable([
     'id',
     'type', 'recipient_kind',
-    'recipient_user_id', 'recipient_name', 'recipient_email',
+    'recipient_person_id', 'recipient_name', 'recipient_email',
     'accessories', 'condition_notes', 'terms_text',
     'signature_path', 'signature_ip', 'signature_user_agent',
     'pdf_path', 'signed_at', 'created_by', 'email_sent_at',
@@ -33,9 +33,9 @@ class Handover extends Model
         ];
     }
 
-    public function recipientUser(): BelongsTo
+    public function recipientPerson(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'recipient_user_id');
+        return $this->belongsTo(Person::class, 'recipient_person_id');
     }
 
     public function createdBy(): BelongsTo

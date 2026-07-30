@@ -11,7 +11,7 @@ final class HandoverData
     public function __construct(
         public HandoverType $type,
         public RecipientKind $recipientKind,
-        public ?string $recipientUserId,
+        public ?string $recipientPersonId,
         public string $recipientName,
         public ?string $recipientEmail,
         public array $assetIds,

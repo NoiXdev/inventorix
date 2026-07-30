@@ -3,7 +3,7 @@
         "allowJs": true,
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "jsx": "preserve",
+        "jsx": "react-jsx",
         "strict": true,
         "isolatedModules": true,
         "target": "ESNext",
@@ -11,12 +11,14 @@
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "noEmit": true,
+        "types": ["vite/client"],
         "paths": {
             "@/*": ["./resources/js/*"]
         }
     },
     "include": [
         "resources/js/**/*.ts",
+        "resources/js/**/*.tsx",
         "resources/js/**/*.d.ts"
     ]
 }

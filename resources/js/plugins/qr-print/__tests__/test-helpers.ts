@@ -1,3 +1,20 @@
+import type { RollSpec } from '../types';
+
+// A stable roll fixture for the engine tests (protocol / rasterizer / controller).
+// These exercise the print pipeline independently of which rolls are enabled in
+// the app's DK_ROLLS list, so they use this fixture rather than getRollById().
+export const DK_11209: RollSpec = {
+    id: 'dk-11209',
+    label: 'DK-11209 (29 × 62 mm)',
+    mediaTypeByte: 0x0b,
+    widthMm: 29,
+    lengthMm: 62,
+    printWidthPx: 306,
+    printHeightPx: 731,
+    printableStartByte: 52,
+    printableEndByte: 91,
+};
+
 // happy-dom does not currently expose a constructible ImageData. Polyfill a
 // minimal shape sufficient for our tests (rasterizer reads width/height/data).
 export function ensureImageDataPolyfill(): void {
