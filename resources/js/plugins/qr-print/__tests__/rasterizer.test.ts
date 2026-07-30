@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { rasterize } from '../rasterizer';
-import { getRollById } from '../dk-rolls';
+import { DK_11209 } from './test-helpers';
 
 // happy-dom does not currently expose a constructible ImageData. Polyfill a
 // minimal shape sufficient for the rasterizer (it reads width/height/data).
@@ -38,7 +38,7 @@ function makeImageData(width: number, height: number, blackPixels: Array<[number
 }
 
 describe('rasterizer', () => {
-    const roll = getRollById('dk-11209');
+    const roll = DK_11209;
 
     it('produces one Uint8Array per raster line', () => {
         const img = makeImageData(roll.printWidthPx, 10, []);

@@ -38,17 +38,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
 
-      - name: Install npm dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build frontend assets
         # composer install runs `artisan package:discover` in post-autoload-dump,
-        # which boots Filament's panel provider and resolves Vite::asset() — that
-        # requires public/build/manifest.json to exist before composer install.
-        run: npm run build
+        # which resolves Vite::asset() — that requires public/build/manifest.json
+        # to exist before composer install.
+        run: pnpm run build
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -82,17 +84,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
 
-      - name: Install npm dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Build frontend assets
         # composer install runs `artisan package:discover` in post-autoload-dump,
-        # which boots Filament's panel provider and resolves Vite::asset() — that
-        # requires public/build/manifest.json to exist before composer install.
-        run: npm run build
+        # which resolves Vite::asset() — that requires public/build/manifest.json
+        # to exist before composer install.
+        run: pnpm run build
 
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -104,6 +108,85 @@ jobs:
         run: php artisan key:generate
 
       - name: Run PHPUnit
+        run: php artisan test --compact
+
+  test-mariadb:
+    name: PHPUnit (MariaDB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+    services:
+      # Match dev/prod (ddev is MariaDB 11.8). Catches driver-specific SQL bugs
+      # that the SQLite `test` job cannot see (e.g. strict types / UUID-in-morph
+      # truncation), which is exactly why this job exists alongside SQLite.
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: testing
+          MARIADB_USER: laravel
+          MARIADB_PASSWORD: secret
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: "8.4"
+          extensions: bcmath, exif, gd, intl, opcache, pcntl, pdo_mysql, mysqli, redis, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
+        with:
+          node-version: 22
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend assets
+        # composer install runs `artisan package:discover` in post-autoload-dump,
+        # which resolves Vite::asset() — that requires public/build/manifest.json
+        # to exist before composer install.
+        run: pnpm run build
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Copy .env.example
+        run: cp .env.example .env
+
+      - name: Generate APP_KEY
+        run: php artisan key:generate
+
+      - name: Run PHPUnit (MariaDB)
+        # These override the (non-forced) DB_CONNECTION/DB_DATABASE in phpunit.xml
+        # so the suite runs against the MariaDB service instead of SQLite.
+        env:
+          DB_CONNECTION: mariadb
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+          DB_DATABASE: testing
+          DB_USERNAME: laravel
+          DB_PASSWORD: secret
         run: php artisan test --compact
 
   docker:
@@ -122,9 +205,11 @@ jobs:
           context: .
           push: false
           load: true
+          # Always pull the freshest base + run apt upgrade against current
+          # security updates; a cached base/apt layer served stale OS packages
+          # that Trivy (rightly) flagged as vulnerable.
+          pull: true
           tags: inventorix:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Scan image with Trivy
         # Pinned to SHA, not tag — CVE-2026-33634 was a tag-hijacking attack
@@ -136,3 +221,6 @@ jobs:
           ignore-unfixed: true
           exit-code: 1
           format: table
+          # Documented, time-bound suppressions for CVEs baked into the upstream
+          # FrankenPHP binary (not fixable from our Dockerfile). See .trivyignore.
+          trivyignores: .trivyignore

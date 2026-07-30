@@ -7,19 +7,21 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/PHP-8.4-777BB4.svg" alt="PHP 8.4">
   <img src="https://img.shields.io/badge/Laravel-13-FF2D20.svg" alt="Laravel 13">
-  <img src="https://img.shields.io/badge/Filament-5-F59E0B.svg" alt="Filament 5">
+  <img src="https://img.shields.io/badge/React-19-61DAFB.svg" alt="React 19">
+  <img src="https://img.shields.io/badge/Inertia-2-9553E9.svg" alt="Inertia v2">
 </p>
 
 ## About Inventorix
 
 Inventorix is a self-hostable inventory management application built on
-Laravel 13 and Filament 5. It's designed for small teams that need to track
-assets, locations, and movements with a clean admin UI and SSO out of the box.
+Laravel 13 with a React 19 / Inertia v2 front end. It's designed for small
+teams that need to track assets, locations, and movements with a clean UI and
+SSO out of the box.
 
 Highlights:
 
-- Filament v5 admin panel
-- QR-code generation for assets
+- React/Inertia single-page app
+- QR-code label printing (Brother WebUSB) + camera scanning
 - PDF export (DomPDF)
 - Microsoft Entra ID (Azure AD) SSO via Socialite
 - Activity log + tags via the Spatie ecosystem

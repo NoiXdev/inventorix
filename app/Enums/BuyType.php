@@ -2,9 +2,7 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
-
-enum BuyType: string implements HasLabel
+enum BuyType: string
 {
     case ONCE = 'once';
     case ABO = 'abo';
@@ -12,8 +10,8 @@ enum BuyType: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::ONCE => 'Abo',
-            self::ABO => 'Einmalig (gekauft)',
+            self::ONCE => 'Einmalig (gekauft)',
+            self::ABO => 'Abo',
         };
     }
 }

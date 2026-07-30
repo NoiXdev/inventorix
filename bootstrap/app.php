@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\ApplyRuntimeSettings;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecureHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -18,12 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             // \App\Http\Middleware\SetLocale::class,
+            ApplyRuntimeSettings::class,
             SecureHeaders::class,
+            HandleInertiaRequests::class,
         ]);
 
-        // The app has no standalone "login" route — authentication lives in the
-        // Filament panel. Send unauthenticated web requests there.
-        $middleware->redirectGuestsTo(fn () => route('filament.app.auth.login'));
+        // Filament is gone; every unauthenticated request now goes to the
+        // Inertia app's own login page.
+        $middleware->redirectGuestsTo(fn () => route('app.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -87,18 +87,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v6
         with:
-          node-version: 20
-          cache: npm
+          node-version: 22
+
+      - name: Enable pnpm via Corepack
+        run: corepack enable
 
       - name: Build frontend assets
         run: |
-          npm ci --no-audit --no-fund
+          pnpm install --frozen-lockfile
           # Authoritative version bump: the "Compute next version" step is the
-          # single source of truth. Write it into package.json/package-lock.json
-          # BEFORE building so any build-time embedded version matches the tag.
-          # The changelog step below is changelog-text-only and must NOT bump.
-          npm version "${{ steps.bump.outputs.next }}" --no-git-tag-version --allow-same-version
-          npm run build
+          # single source of truth. Write it into package.json BEFORE building so
+          # any build-time embedded version matches the tag. `npm pkg set` only
+          # edits package.json (no lockfile side-effects). The changelog step
+          # below is changelog-text-only and must NOT bump.
+          npm pkg set version="${{ steps.bump.outputs.next }}"
+          pnpm run build
 
       - name: Install Composer production deps
         run: |
@@ -232,7 +235,7 @@ jobs:
           GIT_COMMITTER_NAME: noix-dev-bot
           GIT_COMMITTER_EMAIL: noix-dev-bot@noix.dev
         run: |
-          git add CHANGELOG.md package.json package-lock.json
+          git add CHANGELOG.md package.json pnpm-lock.yaml
           if git diff --staged --quiet; then
             echo "Nothing to commit"
           else

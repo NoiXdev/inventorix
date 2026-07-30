@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ensureImageDataPolyfill, makeWhiteImageData } from './test-helpers';
-import { getRollById } from '../dk-rolls';
+import { DK_11209, ensureImageDataPolyfill, makeWhiteImageData } from './test-helpers';
 import type { LabelItem } from '../types';
 
 // Mock composeLabel: happy-dom cannot render canvas, and Task 11 tests the
@@ -60,7 +59,7 @@ describe('PrintController', () => {
         const progress: number[] = [];
         await controller.print({
             items,
-            roll: getRollById('dk-11209'),
+            roll: DK_11209,
             layout: 'qr-only',
         }, (p) => progress.push(p.completedLabels));
 

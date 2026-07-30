@@ -2,11 +2,7 @@
 
 namespace App\Enums;
 
-use Filament\Support\Colors\Color;
-use Filament\Support\Contracts\HasColor;
-use Filament\Support\Contracts\HasLabel;
-
-enum HandoverType: string implements HasColor, HasLabel
+enum HandoverType: string
 {
     case ISSUE = 'issue';
     case LEND = 'lend';
@@ -16,16 +12,6 @@ enum HandoverType: string implements HasColor, HasLabel
     public function getLabel(): ?string
     {
         return trans('handover.type.'.$this->value);
-    }
-
-    public function getColor(): string|array|null
-    {
-        return match ($this) {
-            self::ISSUE => Color::Green,
-            self::LEND => Color::Slate,
-            self::RETURN_ => Color::Gray,
-            self::RETURN_DEFECT => Color::Red,
-        };
     }
 
     /** @return array<int, AssetState> */

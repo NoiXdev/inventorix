@@ -179,13 +179,10 @@ class EntraIdAuthServiceTest extends TestCase
         $svc->resolveUser($this->makeSocialiteUser());
     }
 
-    public function test_sync_attributes_overwrites_firstname_lastname_name_email(): void
+    public function test_sync_attributes_overwrites_email(): void
     {
         config()->set('services.microsoft-azure.tenant', 'test-tenant-id');
         $user = User::factory()->create([
-            'firstname' => 'Old',
-            'lastname' => 'Name',
-            'name' => 'Old Name',
             'email' => 'old@local.test',
             'entra_id' => 'oid-abc-123',
         ]);
@@ -201,11 +198,7 @@ class EntraIdAuthServiceTest extends TestCase
             ],
         ]));
 
-        $fresh = $user->fresh();
-        $this->assertSame('Alice', $fresh->firstname);
-        $this->assertSame('Example', $fresh->lastname);
-        $this->assertSame('Alice Example', $fresh->name);
-        $this->assertSame('alice@example.com', $fresh->email);
+        $this->assertSame('alice@example.com', $user->fresh()->email);
     }
 
     public function test_sync_attributes_uses_user_principal_name_when_mail_missing(): void

@@ -3,34 +3,23 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthentication;
-use Filament\Auth\MultiFactor\App\Concerns\InteractsWithAppAuthenticationRecovery;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthentication;
-use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Models\Concerns\CausesActivity;
 
-#[Fillable(['name', 'firstname', 'lastname', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+#[Fillable(['email', 'password', 'login_enabled', 'remember_token', 'entra_id', 'person_id'])]
+class User extends Authenticatable
 {
-    use CausesActivity, HasFactory, HasUuids, InteractsWithAppAuthentication, InteractsWithAppAuthenticationRecovery, Notifiable;
+    use CausesActivity, HasFactory, HasUuids, Notifiable;
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $this->login_enabled;
-    }
 
     protected function casts(): array
     {
@@ -40,8 +29,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         ];
     }
 
-    public function assets(): HasMany
+    public function person(): BelongsTo
     {
-        return $this->hasMany(Asset::class, 'owner_id');
+        return $this->belongsTo(Person::class, 'person_id');
     }
 }

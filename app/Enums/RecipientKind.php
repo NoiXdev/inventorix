@@ -2,9 +2,7 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasLabel;
-
-enum RecipientKind: string implements HasLabel
+enum RecipientKind: string
 {
     case INTERNAL = 'internal';
     case EXTERNAL = 'external';

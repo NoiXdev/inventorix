@@ -31,5 +31,8 @@ frankenphp-worker.php
 
 /docs/superpowers/
 
-public/js/filament
-public/css/filament
+# Superpowers brainstorming companion
+.superpowers/
+
+# pnpm content-addressable store
+.pnpm-store/

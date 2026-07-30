@@ -7,6 +7,7 @@ use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Models\Asset;
+use App\Models\Person;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,7 +24,7 @@ class HandoverPdfTest extends TestCase
         Storage::fake('local');
         Mail::fake();
 
-        $recipient = User::factory()->create();
+        $recipient = Person::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create([
             'state' => AssetState::STORAGE->value,
@@ -33,7 +34,7 @@ class HandoverPdfTest extends TestCase
         $data = new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientUserId: $recipient->id,
+            recipientPersonId: $recipient->id,
             recipientName: $recipient->name,
             recipientEmail: null,  // skip mail branch for this task; Task 14 covers email
             assetIds: [$asset->id],

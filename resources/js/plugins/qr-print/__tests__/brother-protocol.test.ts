@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { buildJob } from '../brother-protocol';
-import { getRollById } from '../dk-rolls';
+import { DK_11209 } from './test-helpers';
 
 describe('brother-protocol', () => {
-    const roll = getRollById('dk-11209');
+    const roll = DK_11209;
 
     it('starts with 200 zero bytes (invalidate) then ESC @ (initialize)', () => {
         const oneRaster = [new Uint8Array(90)];

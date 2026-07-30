@@ -52,7 +52,7 @@ class HandoverService
                     'id' => $handoverId,
                     'type' => $data->type->value,
                     'recipient_kind' => $data->recipientKind->value,
-                    'recipient_user_id' => $data->recipientUserId,
+                    'recipient_person_id' => $data->recipientPersonId,
                     'recipient_name' => $data->recipientName,
                     'recipient_email' => $data->recipientEmail,
                     'accessories' => $data->accessories,
@@ -66,7 +66,7 @@ class HandoverService
                 ]);
 
                 $stateTo = $data->type->stateTo()->value;
-                $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientUserId : null;
+                $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientPersonId : null;
 
                 foreach ($data->assetIds as $assetId) {
                     $asset = $assets[$assetId];
