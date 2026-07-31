@@ -62,7 +62,10 @@ class UserController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('users/create', ['personOptions' => $this->personOptions()]);
+        return Inertia::render('users/create', [
+            'personOptions' => $this->personOptions(),
+            'personCreateUrl' => route('app.people.quick-store'),
+        ]);
     }
 
     public function store(UserRequest $request): RedirectResponse
@@ -92,6 +95,7 @@ class UserController extends Controller
                 'person_id' => $user->person_id,
             ],
             'personOptions' => $this->personOptions(),
+            'personCreateUrl' => route('app.people.quick-store'),
             'isSelf' => $user->is($request->user()),
         ]);
     }
