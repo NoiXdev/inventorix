@@ -42,6 +42,7 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
         setLastname(l);
         setEmail('');
         setErrors({});
+        setFormError('');
         setDialogOpen(true);
     };
 
