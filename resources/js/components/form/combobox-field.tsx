@@ -16,7 +16,7 @@ interface Props {
     required?: boolean;
     placeholder?: string;
     nullable?: boolean;
-    footer?: (query: string) => React.ReactNode;
+    footer?: (query: string, close: () => void) => React.ReactNode;
 }
 
 export function ComboboxField({
@@ -90,7 +90,7 @@ export function ComboboxField({
                                 ))
                             )}
                         </div>
-                        {footer && <div className="mt-1 border-t pt-1">{footer(query)}</div>}
+                        {footer && <div className="mt-1 border-t pt-1">{footer(query, close)}</div>}
                     </div>
                 )}
             </div>
