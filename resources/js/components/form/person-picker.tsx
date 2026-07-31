@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { ComboboxField } from './combobox-field';
 import { TextField } from './text-field';
+import { FormError } from './form-error';
 import { Button } from '@/components/ui/button';
 import {
     Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
@@ -32,6 +33,7 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
     const [lastname, setLastname] = useState('');
     const [email, setEmail] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [formError, setFormError] = useState('');
     const [saving, setSaving] = useState(false);
 
     const startCreate = (query: string) => {
@@ -46,6 +48,7 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
     const submit = async () => {
         setSaving(true);
         setErrors({});
+        setFormError('');
         try {
             const { data } = await axios.post(
                 createUrl,
@@ -57,11 +60,12 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
             onChange(option.value);
             setDialogOpen(false);
         } catch (e: unknown) {
-            const res = (e as { response?: { status?: number; data?: { errors?: Record<string, string[]> } } }).response;
-            if (res?.status === 422 && res.data?.errors) {
+            if (axios.isAxiosError(e) && e.response?.status === 422 && e.response.data?.errors) {
                 const mapped: Record<string, string> = {};
-                for (const [k, msgs] of Object.entries(res.data.errors)) mapped[k] = msgs[0];
+                for (const [k, msgs] of Object.entries(e.response.data.errors as Record<string, string[]>)) mapped[k] = msgs[0];
                 setErrors(mapped);
+            } else {
+                setFormError('Person konnte nicht angelegt werden. Bitte erneut versuchen.');
             }
         } finally {
             setSaving(false);
@@ -81,12 +85,12 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
                 options={items}
                 error={error}
                 nullable
-                footer={(query) =>
+                footer={(query, close) =>
                     query.trim() !== '' && !hasExactMatch(query) ? (
                         <button
                             type="button"
                             className="block w-full rounded px-2 py-1.5 text-left text-sm text-primary hover:bg-accent"
-                            onClick={() => startCreate(query)}
+                            onClick={() => { close(); startCreate(query); }}
                         >
                             „{query.trim()}" als Person anlegen
                         </button>
@@ -98,6 +102,7 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
                 <DialogContent>
                     <DialogHeader><DialogTitle>Neue Person anlegen</DialogTitle></DialogHeader>
                     <div className="space-y-4">
+                        <FormError message={formError} />
                         <TextField id="pp-firstname" label="Vorname" required autoFocus
                             value={firstname} onChange={setFirstname} error={errors.firstname} />
                         <TextField id="pp-lastname" label="Nachname" required
@@ -106,7 +111,7 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
                             value={email} onChange={setEmail} error={errors.email} />
                     </div>
                     <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Abbrechen</Button>
+                        <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)} disabled={saving}>Abbrechen</Button>
                         <Button type="button" onClick={submit} disabled={saving}>Anlegen</Button>
                     </DialogFooter>
                 </DialogContent>

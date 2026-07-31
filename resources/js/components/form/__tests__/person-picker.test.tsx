@@ -2,7 +2,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const post = vi.fn();
-vi.mock('axios', () => ({ default: { post: (...a: unknown[]) => post(...a) } }));
+vi.mock('axios', () => ({
+    default: {
+        post: (...a: unknown[]) => post(...a),
+        isAxiosError: (e: unknown): boolean => !!e && typeof e === 'object' && 'response' in e,
+    },
+}));
 
 import { PersonPicker } from '../person-picker';
 
@@ -56,5 +61,20 @@ describe('PersonPicker', () => {
         fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
         await waitFor(() => expect(screen.getByText('Nachname fehlt.')).toBeInTheDocument());
+    });
+
+    it('shows a generic error message on a non-422 failure and does not select anything', async () => {
+        post.mockRejectedValue({ response: { status: 500 } });
+        const onChange = vi.fn();
+        render(<PersonPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/people/quick" />);
+        openPanel();
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
+        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
+
+        await waitFor(() =>
+            expect(screen.getByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
+        );
+        expect(onChange).not.toHaveBeenCalled();
     });
 });
