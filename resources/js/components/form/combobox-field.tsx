@@ -17,10 +17,11 @@ interface Props {
     placeholder?: string;
     nullable?: boolean;
     footer?: (query: string, close: () => void) => React.ReactNode;
+    trailingAction?: React.ReactNode;
 }
 
 export function ComboboxField({
-    id, label, value, onChange, options, error, required, placeholder, nullable, footer,
+    id, label, value, onChange, options, error, required, placeholder, nullable, footer, trailingAction,
 }: Props) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -56,13 +57,18 @@ export function ComboboxField({
                     variant="outline"
                     aria-invalid={!!error}
                     aria-label={`${placeholder ?? `Select ${label.toLowerCase()}…`}${selected ? `, currently ${selected.label}` : ''}`}
-                    className="w-full justify-between font-normal"
+                    className={`w-full justify-between font-normal${trailingAction ? ' pr-10' : ''}`}
                     onClick={() => setOpen((o) => !o)}
                 >
                     <span className={selected ? '' : 'text-muted-foreground'}>
                         {selected ? selected.label : (placeholder ?? `Select ${label.toLowerCase()}…`)}
                     </span>
                 </Button>
+                {trailingAction && (
+                    <div className="absolute inset-y-0 right-1 flex items-center">
+                        {trailingAction}
+                    </div>
+                )}
                 {open && (
                     <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
                         <Input

@@ -14,7 +14,7 @@ import { PersonPicker } from '../person-picker';
 const options = [{ value: 'a', label: 'Ada Lovelace' }];
 
 function openPanel() {
-    fireEvent.click(screen.getByRole('button', { name: /person/i }));
+    fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 }
 
 describe('PersonPicker', () => {
@@ -24,16 +24,16 @@ describe('PersonPicker', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Ada Lovelace' } });
-        expect(screen.queryByRole('button', { name: /anlegen/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /als person anlegen/i })).not.toBeInTheDocument();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        expect(screen.getByRole('button', { name: /anlegen/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /als person anlegen/i })).toBeInTheDocument();
     });
 
     it('opens the dialog with the name prefilled from the query', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         expect(screen.getByLabelText(/vorname/i)).toHaveValue('Max');
         expect(screen.getByLabelText(/nachname/i)).toHaveValue('Muster');
     });
@@ -44,7 +44,7 @@ describe('PersonPicker', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() => expect(onChange).toHaveBeenCalledWith('new-1'));
@@ -58,7 +58,7 @@ describe('PersonPicker', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
         await waitFor(() => expect(screen.getByText('Nachname fehlt.')).toBeInTheDocument());
     });
@@ -69,7 +69,7 @@ describe('PersonPicker', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() =>
@@ -83,7 +83,7 @@ describe('PersonPicker', () => {
         render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() =>
@@ -94,8 +94,17 @@ describe('PersonPicker', () => {
 
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
 
         expect(screen.queryByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).not.toBeInTheDocument();
+    });
+
+    it('opens an empty create dialog via the trailing "+" action without opening the panel', () => {
+        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        // The "+" action is always visible next to the field, independent of the dropdown.
+        fireEvent.click(screen.getByRole('button', { name: 'Neue Person anlegen' }));
+        expect(screen.getByLabelText(/vorname/i)).toHaveValue('');
+        expect(screen.getByLabelText(/nachname/i)).toHaveValue('');
+        expect(screen.getByLabelText(/e-mail/i)).toHaveValue('');
     });
 });

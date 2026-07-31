@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
+import { Plus } from 'lucide-react';
 import { ComboboxField } from './combobox-field';
 import { TextField } from './text-field';
 import { FormError } from './form-error';
@@ -86,6 +87,18 @@ export function PersonPicker({ id, label, value, onChange, options, error, creat
                 options={items}
                 error={error}
                 nullable
+                trailingAction={
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Neue Person anlegen"
+                        className="size-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => startCreate('')}
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                }
                 footer={(query, close) =>
                     query.trim() !== '' && !hasExactMatch(query) ? (
                         <button
