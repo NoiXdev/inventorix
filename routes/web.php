@@ -61,6 +61,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('qr-generator/codes', [GeneratorController::class, 'codes'])->name('qr-generator.codes');
         Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->name('users.send-reset');
         Route::resource('users', UserController::class)->except('show');
+        Route::post('people/quick', [PersonController::class, 'quickStore'])
+            ->name('people.quick-store');
         Route::resource('people', PersonController::class);
         Route::get('handovers', [HandoverController::class, 'index'])->name('handovers.index');
         Route::get('handovers/create', [HandoverController::class, 'create'])->name('handovers.create');

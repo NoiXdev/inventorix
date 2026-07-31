@@ -7,6 +7,7 @@ use App\Http\Requests\App\PersonRequest;
 use App\Models\Asset;
 use App\Models\Person;
 use App\Support\Table\TableQuery;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -54,6 +55,13 @@ class PersonController extends Controller
         Person::create($this->withName($request->validated()));
 
         return to_route('app.people.index')->with('success', 'Person created.');
+    }
+
+    public function quickStore(PersonRequest $request): JsonResponse
+    {
+        $person = Person::create($this->withName($request->validated()));
+
+        return response()->json(['id' => $person->id, 'name' => $person->name], 201);
     }
 
     public function show(Person $person): Response
