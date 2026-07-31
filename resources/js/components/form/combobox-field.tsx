@@ -36,7 +36,7 @@ export function ComboboxField({
         if (!open) return;
         const onDown = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setOpen(false);
+                close();
             }
         };
         document.addEventListener('mousedown', onDown);
@@ -55,7 +55,7 @@ export function ComboboxField({
                     id={id}
                     variant="outline"
                     aria-invalid={!!error}
-                    aria-label={placeholder ?? `Select ${label.toLowerCase()}…`}
+                    aria-label={`${placeholder ?? `Select ${label.toLowerCase()}…`}${selected ? `, currently ${selected.label}` : ''}`}
                     className="w-full justify-between font-normal"
                     onClick={() => setOpen((o) => !o)}
                 >
