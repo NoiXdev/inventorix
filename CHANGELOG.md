@@ -1,4 +1,23 @@
-## [1.4.0](https://github.com/NoiXdev/inventorix/compare/v1.3.3...v) (2026-07-08)
+## [2.0.0](https://github.com/NoiXdev/inventorix/compare/v1.4.0...v) (2026-07-31)
+
+
+### Features
+
+* **assets:** use PersonPicker for the asset owner field ([8ebc4cf](https://github.com/NoiXdev/inventorix/commit/8ebc4cfcc82c885f7bf70a3b0af839ca58eca22c))
+* **form:** add in-field "+" create action to PersonPicker ([1cc0b59](https://github.com/NoiXdev/inventorix/commit/1cc0b595a1bde50d3ce90f315dd0883c85a3de06))
+* **form:** add PersonPicker with inline person creation dialog ([609a786](https://github.com/NoiXdev/inventorix/commit/609a7868f97274fd508421b399fa62b395714b75))
+* **form:** add searchable ComboboxField with footer slot ([4326d42](https://github.com/NoiXdev/inventorix/commit/4326d42ffb7c73b5a6648a4b3ec8bd6383a81a62))
+* **form:** suppress autofill by default unless autocomplete is explicit ([1e16282](https://github.com/NoiXdev/inventorix/commit/1e1628212b153b2651b574698b567ac3507b6ec3))
+* **people:** add quick-store JSON endpoint for inline person creation ([cf83e21](https://github.com/NoiXdev/inventorix/commit/cf83e212cd12c5ccf5fee8177669dbe0c0db7a89))
+* **users:** use PersonPicker with inline creation in the user form ([52853be](https://github.com/NoiXdev/inventorix/commit/52853be2e45a158dd8464bfc25cc88af857286c7))
+
+
+### Bug Fixes
+
+* **form:** keep ComboboxField aria-label in sync with selection, reset query on outside click ([4c93287](https://github.com/NoiXdev/inventorix/commit/4c93287565d4b123a43b50f7ee41b13c904a7a29))
+* **form:** surface non-422 errors and close combobox on create in PersonPicker ([cf7b543](https://github.com/NoiXdev/inventorix/commit/cf7b543493c35b1f467509cb9fd80440eab49d67))
+
+## [1.4.0](https://github.com/NoiXdev/inventorix/compare/v1.3.3...v1.4.0) (2026-07-08)
 
 
 ### Features
