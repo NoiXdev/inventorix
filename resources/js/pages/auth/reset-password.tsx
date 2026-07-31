@@ -18,9 +18,9 @@ export default function ResetPassword({ token, email }: Props) {
                     <form onSubmit={submit} className="space-y-4">
                         <p className="text-sm text-muted-foreground">Setting the password for <strong>{email}</strong>.</p>
                         <FormError message={form.errors.email} />
-                        <PasswordField id="password" label="New password" required autoFocus
+                        <PasswordField id="password" label="New password" required autoFocus autoComplete="new-password"
                             value={form.data.password} onChange={(v) => form.setData('password', v)} error={form.errors.password} />
-                        <PasswordField id="password_confirmation" label="Confirm password"
+                        <PasswordField id="password_confirmation" label="Confirm password" autoComplete="new-password"
                             value={form.data.password_confirmation} onChange={(v) => form.setData('password_confirmation', v)}
                             error={form.errors.password_confirmation} />
                         <Button type="submit" className="w-full" disabled={form.processing}>Set password</Button>

@@ -19,11 +19,11 @@ export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
                 <CardHeader><CardTitle>Sign in to Inventorix</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
                     <form onSubmit={submit} className="space-y-4">
-                        <TextField id="email" label="Email" value={form.data.email}
+                        <TextField id="email" label="Email" value={form.data.email} autoComplete="username"
                             onChange={(v) => form.setData('email', v)} error={form.errors.email} autoFocus required />
                         <div className="space-y-2">
                             <label htmlFor="password" className="text-sm font-medium">Password</label>
-                            <input id="password" type="password" className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
+                            <input id="password" type="password" autoComplete="current-password" className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
                                 value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} />
                             <FormError message={form.errors.password} />
                         </div>

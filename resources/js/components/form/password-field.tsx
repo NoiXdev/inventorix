@@ -10,13 +10,14 @@ interface Props {
     error?: string;
     required?: boolean;
     autoFocus?: boolean;
+    autoComplete?: string;
 }
 
-export function PasswordField({ id, label, value, onChange, error, required, autoFocus }: Props) {
+export function PasswordField({ id, label, value, onChange, error, required, autoFocus, autoComplete }: Props) {
     return (
         <div className="space-y-2">
             <Label htmlFor={id}>{label}{required && <span className="text-destructive"> *</span>}</Label>
-            <Input id={id} type="password" value={value} autoFocus={autoFocus} aria-invalid={!!error}
+            <Input id={id} type="password" value={value} autoFocus={autoFocus} autoComplete={autoComplete} aria-invalid={!!error}
                 onChange={(e) => onChange(e.target.value)} />
             <FormError message={error} />
         </div>
