@@ -60,4 +60,15 @@ describe('ComboboxField', () => {
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Zoe' } });
         expect(screen.getByRole('button', { name: 'create Zoe' })).toBeInTheDocument();
     });
+
+    it('renders a trailing action inside the field', () => {
+        render(
+            <ComboboxField id="p" label="Person" value="" onChange={() => {}} options={options}
+                placeholder="Select person…"
+                trailingAction={<button type="button">add new</button>} />,
+        );
+        // Visible without opening the dropdown.
+        expect(screen.getByRole('button', { name: 'add new' })).toBeInTheDocument();
+        expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
 });
