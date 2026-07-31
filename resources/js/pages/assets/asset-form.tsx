@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/form/text-field';
 import { SelectField } from '@/components/form/select-field';
+import { PersonPicker } from '@/components/form/person-picker';
 import { DateField } from '@/components/form/date-field';
 import { NumberField } from '@/components/form/number-field';
 import { TagsInput } from '@/components/form/tags-input';
@@ -10,6 +11,7 @@ type Option = { value: string; label: string };
 export interface AssetOptions {
     stateOptions: Option[]; buyTypeOptions: Option[]; assetTypeOptions: Option[];
     ownerOptions: Option[]; placeOptions: Option[]; modelOptions: Option[];
+    personCreateUrl: string;
 }
 export interface AssetInitial {
     id: string; state: string; asset_type_id: string; owner_id: string | null; place_id: string | null;
@@ -49,7 +51,7 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
                     value={form.data.state} onChange={(v) => form.setData('state', v)} error={form.errors.state} />
                 <SelectField id="asset_type_id" label="Asset type" required options={options.assetTypeOptions}
                     value={form.data.asset_type_id} onChange={(v) => form.setData('asset_type_id', v)} error={form.errors.asset_type_id} />
-                <SelectField id="owner_id" label="Owner" nullable options={options.ownerOptions}
+                <PersonPicker id="owner_id" label="Owner" options={options.ownerOptions} createUrl={options.personCreateUrl}
                     value={form.data.owner_id} onChange={(v) => form.setData('owner_id', v)} error={form.errors.owner_id} />
                 <SelectField id="place_id" label="Place" nullable options={options.placeOptions}
                     value={form.data.place_id} onChange={(v) => form.setData('place_id', v)} error={form.errors.place_id} />
