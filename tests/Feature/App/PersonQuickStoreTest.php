@@ -32,6 +32,24 @@ class PersonQuickStoreTest extends TestCase
         ]);
     }
 
+    public function test_it_can_quick_create_a_person_without_an_email(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $response = $this->postJson('/app/people/quick', [
+            'firstname' => 'Max',
+            'lastname' => 'Muster',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('name', 'Max Muster');
+
+        $this->assertDatabaseHas('people', [
+            'name' => 'Max Muster',
+            'email' => null,
+        ]);
+    }
+
     public function test_lastname_is_required(): void
     {
         $this->actingAs(User::factory()->create());

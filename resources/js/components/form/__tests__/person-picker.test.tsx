@@ -77,4 +77,25 @@ describe('PersonPicker', () => {
         );
         expect(onChange).not.toHaveBeenCalled();
     });
+
+    it('clears the stale generic error banner when the create dialog is reopened', async () => {
+        post.mockRejectedValue({ response: { status: 500 } });
+        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        openPanel();
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
+        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
+
+        await waitFor(() =>
+            expect(screen.getByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /abbrechen/i }));
+
+        openPanel();
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
+        fireEvent.click(screen.getByRole('button', { name: /anlegen/i }));
+
+        expect(screen.queryByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).not.toBeInTheDocument();
+    });
 });

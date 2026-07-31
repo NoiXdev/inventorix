@@ -25,8 +25,8 @@ describe('UserForm', () => {
         expect(screen.getByText('Person')).toBeInTheDocument();
         expect(screen.getByLabelText('Login email')).toBeInTheDocument();
         expect(screen.getByLabelText('Login enabled')).toBeInTheDocument();
-        expect(screen.queryByLabelText(/first name/i)).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/last name/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/vorname/i)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/nachname/i)).not.toBeInTheDocument();
     });
 
     it('submits person_id, email and login_enabled on save', () => {
