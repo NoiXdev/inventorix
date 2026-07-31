@@ -21,7 +21,7 @@ const personOptions = [{ value: 'p1', label: 'Ada Lovelace' }];
 
 describe('UserForm', () => {
     it('renders person, email and login toggle fields with no name fields', () => {
-        render(<UserForm personOptions={personOptions} submitUrl="/app/users" method="post" />);
+        render(<UserForm personOptions={personOptions} personCreateUrl="/app/people/quick" submitUrl="/app/users" method="post" />);
         expect(screen.getByText('Person')).toBeInTheDocument();
         expect(screen.getByLabelText('Login email')).toBeInTheDocument();
         expect(screen.getByLabelText('Login enabled')).toBeInTheDocument();
@@ -33,6 +33,7 @@ describe('UserForm', () => {
         render(<UserForm
             initial={{ id: 'u1', email: 'ada@x.de', login_enabled: true, person_id: 'p1' }}
             personOptions={personOptions}
+            personCreateUrl="/app/people/quick"
             submitUrl="/app/users/u1"
             method="put"
         />);
@@ -44,6 +45,7 @@ describe('UserForm', () => {
         render(<UserForm
             initial={{ id: 'u1', email: 'ada@x.de', login_enabled: true, person_id: 'p1' }}
             personOptions={personOptions}
+            personCreateUrl="/app/people/quick"
             submitUrl="/app/users/u1"
             method="put"
             isSelf
