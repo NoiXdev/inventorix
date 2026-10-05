@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@inertiajs/react':
         specifier: ^3.6.1
-        version: 3.6.1(axios@1.18.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 3.6.1(axios@1.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -70,8 +70,8 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0))
       axios:
-        specifier: ^1.18.1
-        version: 1.18.1
+        specifier: ^1.20.0
+        version: 1.20.0
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -1338,8 +1338,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   buffer-image-size@0.6.4:
     resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
@@ -1501,8 +1501,8 @@ packages:
     resolution: {integrity: sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw==}
     engines: {node: '>=8'}
 
-  follow-redirects@1.16.0:
-    resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
+  follow-redirects@1.16.1:
+    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -2157,19 +2157,19 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
-  '@inertiajs/core@3.6.1(axios@1.18.1)':
+  '@inertiajs/core@3.6.1(axios@1.20.0)':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       es-toolkit: 1.49.0
-      laravel-precognition: 2.0.0(axios@1.18.1)
+      laravel-precognition: 2.0.0(axios@1.20.0)
     optionalDependencies:
-      axios: 1.18.1
+      axios: 1.20.0
 
-  '@inertiajs/react@3.6.1(axios@1.18.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@inertiajs/react@3.6.1(axios@1.20.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
     dependencies:
-      '@inertiajs/core': 3.6.1(axios@1.18.1)
+      '@inertiajs/core': 3.6.1(axios@1.20.0)
       es-toolkit: 1.49.0
-      laravel-precognition: 2.0.0(axios@1.18.1)
+      laravel-precognition: 2.0.0(axios@1.20.0)
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
     transitivePeerDependencies:
@@ -3286,9 +3286,9 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.18.1:
+  axios@1.20.0:
     dependencies:
-      follow-redirects: 1.16.0
+      follow-redirects: 1.16.1
       form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
@@ -3427,7 +3427,7 @@ snapshots:
       locate-path: 5.0.0
       path-exists: 4.0.0
 
-  follow-redirects@1.16.0: {}
+  follow-redirects@1.16.1: {}
 
   form-data@4.0.6:
     dependencies:
@@ -3508,11 +3508,11 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  laravel-precognition@2.0.0(axios@1.18.1):
+  laravel-precognition@2.0.0(axios@1.20.0):
     dependencies:
       es-toolkit: 1.49.0
     optionalDependencies:
-      axios: 1.18.1
+      axios: 1.20.0
 
   laravel-vite-plugin@3.1.0(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0)):
     dependencies:
