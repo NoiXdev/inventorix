@@ -1,4 +1,11 @@
-## [2.0.0](https://github.com/NoiXdev/inventorix/compare/v1.4.0...v) (2026-07-31)
+## [2.0.1](https://github.com/NoiXdev/inventorix/compare/v2.0.0...v) (2026-10-21)
+
+
+### Bug Fixes
+
+* **docker:** refuse to build an image with PHP below 8.4.27 ([34d1643](https://github.com/NoiXdev/inventorix/commit/34d1643638b4cde73fb28e42192ef5ee4941c4bf))
+
+## [2.0.0](https://github.com/NoiXdev/inventorix/compare/v1.4.0...v2.0.0) (2026-07-31)
 
 
 ### Features
