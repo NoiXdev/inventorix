@@ -25,6 +25,23 @@ FROM dunglas/frankenphp:1-php8.4
 
 WORKDIR /app
 
+# CVE-2026-109618 / CVE-2026-109619 (RCE via PHP's longjmp-based OOM and
+# fatal-error handling, CVSS 9.2, exploited in the wild). Fixed in PHP 8.4.27.
+# PHP is compiled into the FrankenPHP base image rather than installed from
+# apt — the base image even pins `php*` to Pin-Priority -1 — so the
+# `apt-get upgrade` below cannot patch it; only a rebuilt base image can.
+# Fail the build rather than ship a vulnerable runtime; the guard clears
+# itself as soon as the build pulls a base image with a patched PHP.
+ARG MIN_PHP_VERSION=8.4.27
+
+RUN set -eu; \
+    actual="$(php -r 'echo PHP_VERSION;')"; \
+    if [ "$(php -r 'echo version_compare(PHP_VERSION, "'"${MIN_PHP_VERSION}"'", ">=") ? "ok" : "old";')" != "ok" ]; then \
+        echo "FATAL: base image ships PHP ${actual}, need >= ${MIN_PHP_VERSION} (CVE-2026-109618/109619)." >&2; \
+        echo "Rebuild with --pull once dunglas/frankenphp republishes 1-php8.4." >&2; \
+        exit 1; \
+    fi
+
 RUN install-php-extensions \
     pdo_mysql \
     redis \
