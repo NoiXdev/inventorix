@@ -23,7 +23,7 @@ class UserFactorySmokeTest extends TestCase
 
     public function test_the_factory_produces_a_display_name(): void
     {
-        $user = \App\Models\User::factory()->make();
+        $user = User::factory()->make();
 
         $this->assertNotEmpty($user->firstname);
         $this->assertNotEmpty($user->lastname);

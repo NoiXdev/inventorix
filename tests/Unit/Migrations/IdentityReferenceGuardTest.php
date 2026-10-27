@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Migrations;
 
+use App\Models\User;
 use App\Support\Migrations\IdentityReferenceGuard;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,7 +41,7 @@ class IdentityReferenceGuardTest extends TestCase
 
     public function test_it_passes_when_every_reference_resolves(): void
     {
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
         $this->probe($user->id);
         $this->probe(null);
 
