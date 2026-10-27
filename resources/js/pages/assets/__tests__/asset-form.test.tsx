@@ -24,14 +24,14 @@ const options: AssetOptions = {
     ownerOptions: [{ value: 'p1', label: 'Ada Lovelace' }],
     placeOptions: [],
     modelOptions: [],
-    personCreateUrl: '/app/people/quick',
+    userCreateUrl: '/app/users/quick',
 };
 
 describe('AssetForm owner field', () => {
-    it('renders the Owner field as a PersonPicker with an inline create action', () => {
+    it('renders the Owner field as a UserPicker with an inline create action', () => {
         render(<AssetForm options={options} submitUrl="/app/assets" method="post" />);
         expect(screen.getByText('Owner')).toBeInTheDocument();
-        // The PersonPicker's in-field "+" create action is present.
+        // The UserPicker's in-field "+" create action is present.
         expect(screen.getByRole('button', { name: 'Neue Person anlegen' })).toBeInTheDocument();
     });
 

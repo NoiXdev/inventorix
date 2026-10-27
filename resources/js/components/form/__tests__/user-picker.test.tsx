@@ -9,7 +9,7 @@ vi.mock('axios', () => ({
     },
 }));
 
-import { PersonPicker } from '../person-picker';
+import { UserPicker } from '../user-picker';
 
 const options = [{ value: 'a', label: 'Ada Lovelace' }];
 
@@ -17,11 +17,11 @@ function openPanel() {
     fireEvent.click(screen.getByRole('button', { name: /select person/i }));
 }
 
-describe('PersonPicker', () => {
+describe('UserPicker', () => {
     beforeEach(() => { post.mockReset(); });
 
     it('shows the create action only when the query has no exact match', () => {
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Ada Lovelace' } });
         expect(screen.queryByRole('button', { name: /als person anlegen/i })).not.toBeInTheDocument();
@@ -30,7 +30,7 @@ describe('PersonPicker', () => {
     });
 
     it('opens the dialog with the name prefilled from the query', () => {
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
         fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
@@ -41,21 +41,21 @@ describe('PersonPicker', () => {
     it('posts the new person and selects the returned id', async () => {
         post.mockResolvedValue({ data: { id: 'new-1', name: 'Max Muster' } });
         const onChange = vi.fn();
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
         fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() => expect(onChange).toHaveBeenCalledWith('new-1'));
-        expect(post).toHaveBeenCalledWith('/app/people/quick',
+        expect(post).toHaveBeenCalledWith('/app/users/quick',
             { firstname: 'Max', lastname: 'Muster', email: '' },
             expect.objectContaining({ headers: { Accept: 'application/json' } }));
     });
 
     it('maps 422 validation errors onto the dialog fields', async () => {
         post.mockRejectedValue({ response: { status: 422, data: { errors: { lastname: ['Nachname fehlt.'] } } } });
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max' } });
         fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
@@ -66,7 +66,7 @@ describe('PersonPicker', () => {
     it('shows a generic error message on a non-422 failure and does not select anything', async () => {
         post.mockRejectedValue({ response: { status: 500 } });
         const onChange = vi.fn();
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
         fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
@@ -80,7 +80,7 @@ describe('PersonPicker', () => {
 
     it('clears the stale generic error banner when the create dialog is reopened', async () => {
         post.mockRejectedValue({ response: { status: 500 } });
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
         fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
@@ -100,7 +100,7 @@ describe('PersonPicker', () => {
     });
 
     it('opens an empty create dialog via the trailing "+" action without opening the panel', () => {
-        render(<PersonPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/people/quick" />);
+        render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         // The "+" action is always visible next to the field, independent of the dropdown.
         fireEvent.click(screen.getByRole('button', { name: 'Neue Person anlegen' }));
         expect(screen.getByLabelText(/vorname/i)).toHaveValue('');

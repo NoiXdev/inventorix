@@ -7,16 +7,24 @@ vi.mock('@inertiajs/react', () => ({ Link: ({ children, href }: any) => <a href=
 import UsersIndex from '../index';
 
 describe('UsersIndex', () => {
-    it('renders a user row with person name, email and assets count', () => {
+    it('renders a user row with name, email and assets count', () => {
         render(<UsersIndex users={{ data: [{ id: 'u1', name: 'Ada Lovelace', email: 'ada@x.de', login_enabled: true, assets_count: 2 }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
         expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
         expect(screen.getByText('ada@x.de')).toBeInTheDocument();
         expect(screen.getByText('2')).toBeInTheDocument();
     });
 
-    it('renders a dash for a user with no linked person', () => {
+    it('renders a dash for a user with no name', () => {
         render(<UsersIndex users={{ data: [{ id: 'u2', name: null, email: 'bob@x.de', login_enabled: false, assets_count: 0 }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
         expect(screen.getByText('bob@x.de')).toBeInTheDocument();
         expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    });
+
+    // Ported from the former people/__tests__/index.test.tsx: a user with assets shows the
+    // asset count badge on the row (the people-index equivalent of PeopleIndex's assertion).
+    it('shows the owned-assets count for a row', () => {
+        render(<UsersIndex users={{ data: [{ id: 'p1', name: 'Ada Lovelace', email: 'ada@x.de', login_enabled: true, assets_count: 3 }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
+        expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
+        expect(screen.getByText('3')).toBeInTheDocument();
     });
 });

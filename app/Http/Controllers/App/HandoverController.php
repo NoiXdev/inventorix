@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\HandoverRequest;
 use App\Models\Asset;
 use App\Models\Handover;
-use App\Models\Person;
+use App\Models\User;
 use App\Services\HandoverService;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\RedirectResponse;
@@ -62,8 +62,8 @@ class HandoverController extends Controller
                 'assignsOwner' => $t->assignsRecipientAsOwner(),
             ], HandoverType::cases()),
             'recipientKindOptions' => array_map(fn (RecipientKind $k) => ['value' => $k->value, 'label' => $k->getLabel()], RecipientKind::cases()),
-            'personOptions' => Person::query()->orderBy('name')->get()
-                ->map(fn (Person $p) => ['value' => $p->id, 'label' => $p->name, 'email' => $p->email])->all(),
+            'userOptions' => User::query()->orderBy('name')->get()
+                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name, 'email' => $u->email])->all(),
             'assetOptions' => Asset::query()->with('assetType', 'model.manufacturer')->get()
                 ->map(fn (Asset $a) => [
                     'value' => $a->id,

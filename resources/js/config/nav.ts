@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, Contact, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -25,7 +25,6 @@ export const navGroups: NavGroup[] = [
         label: 'Inventory',
         items: [
             { label: 'Assets', href: '/app/assets', icon: Package, match: (p) => p.startsWith('/app/assets') },
-            { label: 'People', href: '/app/people', icon: Contact, match: (p) => p.startsWith('/app/people') },
             { label: 'Manufacturers', href: '/app/manufacturers', icon: Factory, match: (p) => p.startsWith('/app/manufacturers') },
             { label: 'Places', href: '/app/places', icon: MapPin, match: (p) => p.startsWith('/app/places') },
             { label: 'Asset types', href: '/app/asset-types', icon: Tag, match: (p) => p.startsWith('/app/asset-types') },

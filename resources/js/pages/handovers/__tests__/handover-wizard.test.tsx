@@ -8,7 +8,7 @@ const props = {
         { value: 'return', label: 'Return', allowedStates: ['in-use', 'lend'], assignsOwner: false },
     ],
     recipientKindOptions: [{ value: 'internal', label: 'Internal' }, { value: 'external', label: 'External' }],
-    personOptions: [{ value: 'u1', label: 'Ada', email: 'ada@x.test' }],
+    userOptions: [{ value: 'u1', label: 'Ada', email: 'ada@x.test' }],
     assetOptions: [
         { value: 'a1', label: '(Acme) X1 — SN1', state: 'new' },
         { value: 'a2', label: '(Dell) U27 — SN2', state: 'in-use' },

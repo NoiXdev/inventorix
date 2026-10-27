@@ -27,7 +27,7 @@ function splitName(query: string): { firstname: string; lastname: string } {
     return { firstname: trimmed.slice(0, idx), lastname: trimmed.slice(idx + 1).trim() };
 }
 
-export function PersonPicker({ id, label, value, onChange, options, error, createUrl }: Props) {
+export function UserPicker({ id, label, value, onChange, options, error, createUrl }: Props) {
     const [items, setItems] = useState<Option[]>(options);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [firstname, setFirstname] = useState('');

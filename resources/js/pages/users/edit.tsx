@@ -3,9 +3,9 @@ import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { UserForm } from './user-form';
 
-interface Props { user: { id: string; email: string | null; login_enabled: boolean; person_id: string | null }; personOptions: { value: string; label: string }[]; personCreateUrl: string; isSelf: boolean }
+interface Props { user: { id: string; firstname: string; lastname: string; email: string | null; login_enabled: boolean }; isSelf: boolean }
 
-export default function EditUser({ user, personOptions, personCreateUrl, isSelf }: Props) {
+export default function EditUser({ user, isSelf }: Props) {
     return (
         <AppLayout title="Edit user" breadcrumbs={[{ label: 'Users', href: '/app/users' }, { label: user.email ?? 'User' }]}>
             <div className="mb-6 flex items-center justify-between">
@@ -17,7 +17,7 @@ export default function EditUser({ user, personOptions, personCreateUrl, isSelf 
                     </Button>
                 )}
             </div>
-            <UserForm initial={user} personOptions={personOptions} personCreateUrl={personCreateUrl} submitUrl={`/app/users/${user.id}`} method="put" isSelf={isSelf} />
+            <UserForm initial={user} submitUrl={`/app/users/${user.id}`} method="put" isSelf={isSelf} />
         </AppLayout>
     );
 }

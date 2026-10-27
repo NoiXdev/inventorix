@@ -17,23 +17,20 @@ vi.mock('@inertiajs/react', () => ({
 
 import { UserForm } from '../user-form';
 
-const personOptions = [{ value: 'p1', label: 'Ada Lovelace' }];
-
 describe('UserForm', () => {
-    it('renders person, email and login toggle fields with no name fields', () => {
-        render(<UserForm personOptions={personOptions} personCreateUrl="/app/people/quick" submitUrl="/app/users" method="post" />);
-        expect(screen.getByText('Person')).toBeInTheDocument();
-        expect(screen.getByLabelText('Login email')).toBeInTheDocument();
+    it('renders firstname, lastname, email and login toggle fields with no person picker', () => {
+        render(<UserForm submitUrl="/app/users" method="post" />);
+        expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
+        expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
+        expect(screen.getByLabelText('Email')).toBeInTheDocument();
         expect(screen.getByLabelText('Login enabled')).toBeInTheDocument();
-        expect(screen.queryByLabelText(/vorname/i)).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(/nachname/i)).not.toBeInTheDocument();
+        expect(screen.queryByText('Person')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /select person/i })).not.toBeInTheDocument();
     });
 
-    it('submits person_id, email and login_enabled on save', () => {
+    it('submits firstname, lastname, email and login_enabled on save', () => {
         render(<UserForm
-            initial={{ id: 'u1', email: 'ada@x.de', login_enabled: true, person_id: 'p1' }}
-            personOptions={personOptions}
-            personCreateUrl="/app/people/quick"
+            initial={{ id: 'u1', firstname: 'Ada', lastname: 'Lovelace', email: 'ada@x.de', login_enabled: true }}
             submitUrl="/app/users/u1"
             method="put"
         />);
@@ -43,13 +40,16 @@ describe('UserForm', () => {
 
     it('shows a self-guard description when isSelf is true', () => {
         render(<UserForm
-            initial={{ id: 'u1', email: 'ada@x.de', login_enabled: true, person_id: 'p1' }}
-            personOptions={personOptions}
-            personCreateUrl="/app/people/quick"
+            initial={{ id: 'u1', firstname: 'Ada', lastname: 'Lovelace', email: 'ada@x.de', login_enabled: true }}
             submitUrl="/app/users/u1"
             method="put"
             isSelf
         />);
         expect(screen.getByText('You cannot disable your own login.')).toBeInTheDocument();
+    });
+
+    it('shows a generic login description when isSelf is not set', () => {
+        render(<UserForm submitUrl="/app/users" method="post" />);
+        expect(screen.getByText('Without login, this user is only an asset owner.')).toBeInTheDocument();
     });
 });

@@ -11,23 +11,23 @@ import { AssetPicker, type AssetOption } from './asset-picker';
 
 type Option = { value: string; label: string };
 type TypeOption = { value: string; label: string; allowedStates: string[]; assignsOwner: boolean };
-type PersonOption = { value: string; label: string; email: string | null };
+type UserOption = { value: string; label: string; email: string | null };
 
 export interface HandoverWizardProps {
-    typeOptions: TypeOption[]; recipientKindOptions: Option[]; personOptions: PersonOption[];
+    typeOptions: TypeOption[]; recipientKindOptions: Option[]; userOptions: UserOption[];
     assetOptions: AssetOption[]; defaultTerms: string;
 }
 
 const STEP_OF_FIELD: Record<string, number> = {
-    type: 1, asset_ids: 1, recipient_kind: 2, recipient_person_id: 2, recipient_name: 2, recipient_email: 2,
+    type: 1, asset_ids: 1, recipient_kind: 2, recipient_user_id: 2, recipient_name: 2, recipient_email: 2,
     accessories: 3, condition_notes: 3, terms_text: 3, signature_png: 4,
 };
 
-export function HandoverWizard({ typeOptions, recipientKindOptions, personOptions, assetOptions, defaultTerms }: HandoverWizardProps) {
+export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions, assetOptions, defaultTerms }: HandoverWizardProps) {
     const [step, setStep] = useState(1);
     const form = useForm({
         type: typeOptions[0]?.value ?? '', asset_ids: [] as string[],
-        recipient_kind: recipientKindOptions[0]?.value ?? '', recipient_person_id: '',
+        recipient_kind: recipientKindOptions[0]?.value ?? '', recipient_user_id: '',
         recipient_name: '', recipient_email: '', accessories: '', condition_notes: '',
         terms_text: defaultTerms, signature_png: '',
     });
@@ -46,9 +46,9 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, personOption
         form.setData((d) => ({ ...d, type: v, asset_ids: stillOk }));
     };
 
-    const pickPerson = (v: string) => {
-        const p = personOptions.find((o) => o.value === v);
-        form.setData((d) => ({ ...d, recipient_person_id: v, recipient_name: p?.label ?? d.recipient_name, recipient_email: p?.email ?? d.recipient_email }));
+    const pickUser = (v: string) => {
+        const u = userOptions.find((o) => o.value === v);
+        form.setData((d) => ({ ...d, recipient_user_id: v, recipient_name: u?.label ?? d.recipient_name, recipient_email: u?.email ?? d.recipient_email }));
     };
 
     const submit = (e: React.FormEvent) => {
@@ -63,7 +63,7 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, personOption
 
     const canNext =
         (step === 1 && form.data.type !== '' && form.data.asset_ids.length > 0) ||
-        (step === 2 && form.data.recipient_name !== '' && (!isInternal || form.data.recipient_person_id !== '')) ||
+        (step === 2 && form.data.recipient_name !== '' && (!isInternal || form.data.recipient_user_id !== '')) ||
         step === 3;
 
     return (
@@ -92,8 +92,8 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, personOption
                     <SelectField id="recipient_kind" label="Recipient kind" required options={recipientKindOptions}
                         value={form.data.recipient_kind} onChange={(v) => form.setData('recipient_kind', v)} error={form.errors.recipient_kind} />
                     {isInternal && (
-                        <SelectField id="recipient_person_id" label="Person" required options={personOptions.map((p) => ({ value: p.value, label: p.label }))}
-                            value={form.data.recipient_person_id} onChange={pickPerson} error={form.errors.recipient_person_id} />
+                        <SelectField id="recipient_user_id" label="User" required options={userOptions.map((u) => ({ value: u.value, label: u.label }))}
+                            value={form.data.recipient_user_id} onChange={pickUser} error={form.errors.recipient_user_id} />
                     )}
                     <TextField id="recipient_name" label="Recipient name" required
                         value={form.data.recipient_name} onChange={(v) => form.setData('recipient_name', v)} error={form.errors.recipient_name} />
