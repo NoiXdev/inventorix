@@ -31,19 +31,27 @@ return new class extends Migration
         //    FKs without rewriting a single value.
         $linked = DB::table('users')->whereNotNull('person_id')->pluck('person_id')->all();
 
+        // Inserted one row at a time (not a batch insert) so freeEmail()'s
+        // collision check sees rows already written earlier in this same
+        // chunk, not just previously committed ones. Two account-less people
+        // sharing a non-null email would otherwise both pass the check before
+        // either was inserted, and the batch insert would throw a unique
+        // constraint violation on the second row.
         DB::table('people')->whereNotIn('id', $linked ?: ['-'])->orderBy('id')->chunkById(500, function ($people) {
-            DB::table('users')->insert($people->map(fn ($p) => [
-                'id' => $p->id,
-                'person_id' => null,
-                'firstname' => $p->firstname,
-                'lastname' => $p->lastname,
-                'name' => $p->name,
-                'email' => $this->freeEmail($p->email, $p->id),
-                'password' => null,
-                'login_enabled' => 0,
-                'created_at' => $p->created_at,
-                'updated_at' => $p->updated_at,
-            ])->all());
+            foreach ($people as $p) {
+                DB::table('users')->insert([
+                    'id' => $p->id,
+                    'person_id' => null,
+                    'firstname' => $p->firstname,
+                    'lastname' => $p->lastname,
+                    'name' => $p->name,
+                    'email' => $this->freeEmail($p->email, $p->id),
+                    'password' => null,
+                    'login_enabled' => 0,
+                    'created_at' => $p->created_at,
+                    'updated_at' => $p->updated_at,
+                ]);
+            }
         });
     }
 

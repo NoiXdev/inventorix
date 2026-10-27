@@ -175,4 +175,24 @@ class MergePeopleIntoUsersTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $a]);
         $this->assertDatabaseHas('users', ['id' => $b]);
     }
+
+    public function test_two_account_less_people_sharing_an_email_do_not_collide(): void
+    {
+        $a = $this->seedPerson(['email' => 'dup@example.test']);
+        $b = $this->seedPerson(['email' => 'dup@example.test']);
+
+        // The merge processes people ordered by id (chunkById), not insertion
+        // order, so whichever UUID sorts first is the one that keeps the email.
+        [$winner, $loser] = $a < $b ? [$a, $b] : [$b, $a];
+
+        Log::shouldReceive('warning')->once()
+            ->with('merge-people-into-users: dropped colliding email', \Mockery::on(
+                fn (array $ctx) => $ctx['person_id'] === $loser && $ctx['email'] === 'dup@example.test'
+            ));
+
+        $this->runMerge();
+
+        $this->assertSame('dup@example.test', DB::table('users')->where('id', $winner)->value('email'));
+        $this->assertNull(DB::table('users')->where('id', $loser)->value('email'));
+    }
 }
