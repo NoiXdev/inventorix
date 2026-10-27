@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Models\Concerns\CausesActivity;
 
-#[Fillable(['firstname', 'lastname', 'name', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id', 'person_id'])]
+#[Fillable(['firstname', 'lastname', 'name', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
 class User extends Authenticatable
 {
     use CausesActivity, HasFactory, HasUuids, Notifiable;

@@ -13,7 +13,6 @@ use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
 use App\Http\Controllers\App\ManufacturerController;
 use App\Http\Controllers\App\PasswordResetController;
-use App\Http\Controllers\App\PersonController;
 use App\Http\Controllers\App\PlaceController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ScanController;
@@ -62,8 +61,9 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->name('users.send-reset');
         Route::post('users/quick', [UserController::class, 'quickStore'])->name('users.quick-store');
         Route::resource('users', UserController::class);
-        Route::post('people/quick', [PersonController::class, 'quickStore'])->name('people.quick-store');
-        Route::resource('people', PersonController::class);
+        // Deprecated People namespace (merged into Users in v3). Keep for the v3 line.
+        Route::permanentRedirect('people', '/app/users');
+        Route::permanentRedirect('people/{person}', '/app/users/{person}');
         Route::get('handovers', [HandoverController::class, 'index'])->name('handovers.index');
         Route::get('handovers/create', [HandoverController::class, 'create'])->name('handovers.create');
         Route::post('handovers', [HandoverController::class, 'store'])->name('handovers.store');

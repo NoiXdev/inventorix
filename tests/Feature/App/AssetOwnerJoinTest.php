@@ -3,7 +3,6 @@
 namespace Tests\Feature\App;
 
 use App\Models\Asset;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -13,19 +12,16 @@ class AssetOwnerJoinTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_page_owner_options_are_sourced_from_users_not_people(): void
+    public function test_create_page_owner_options_are_sourced_from_users(): void
     {
         $user = User::factory()->withoutLogin()->create(['name' => 'Zelda Nomail']);
-        // A Person with no matching Users row must not leak into the options list.
-        Person::factory()->create(['name' => 'Ghost Person']);
 
         $this->actingAs(User::factory()->create())
             ->get('/app/assets/create')
             ->assertOk()
             ->assertInertia(fn (Assert $a) => $a
                 ->component('assets/create')
-                ->where('ownerOptions', fn ($options) => collect($options)->pluck('label')->contains('Zelda Nomail')
-                    && ! collect($options)->pluck('label')->contains('Ghost Person'))
+                ->where('ownerOptions', fn ($options) => collect($options)->pluck('label')->contains('Zelda Nomail'))
                 ->etc());
     }
 
