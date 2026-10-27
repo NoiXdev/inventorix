@@ -9,8 +9,8 @@ use App\Enums\BuyType;
 use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AssetType;
-use App\Models\Person;
 use App\Models\Place;
+use App\Models\User;
 use Spatie\Activitylog\Models\Activity;
 
 class AssetHistory
@@ -82,7 +82,7 @@ class AssetHistory
 
         $causer = $a->causer;
 
-        return $causer === null ? 'Former user' : ($causer->person?->name ?? $causer->email ?? 'Former user');
+        return $causer === null ? 'Former user' : ($causer->name ?? $causer->email ?? 'Former user');
     }
 
     private static function resolve(string $field, mixed $value): ?string
@@ -96,7 +96,7 @@ class AssetHistory
             'buy_type' => BuyType::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             'asset_type_id' => AssetType::find($value)?->name ?? '(removed)',
             'model_id' => AssetModel::find($value)?->name ?? '(removed)',
-            'owner_id' => Person::find($value)?->name ?? '(removed)',
+            'owner_id' => User::find($value)?->name ?? '(removed)',
             'place_id' => Place::find($value)?->name ?? '(removed)',
             default => (string) $value,
         };

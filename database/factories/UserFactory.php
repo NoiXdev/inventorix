@@ -24,7 +24,13 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $first = fake()->firstName();
+        $last = fake()->lastName();
+
         return [
+            'firstname' => $first,
+            'lastname' => $last,
+            'name' => $first.' '.$last,
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'login_enabled' => true,
@@ -39,6 +45,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /** An identity with no sign-in account — what `Person` used to model. */
+    public function withoutLogin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'login_enabled' => false,
+            'password' => null,
+            'remember_token' => null,
         ]);
     }
 }

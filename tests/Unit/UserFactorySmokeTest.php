@@ -20,4 +20,13 @@ class UserFactorySmokeTest extends TestCase
         $this->assertTrue(Hash::check('password', $user->password));
         $this->assertNull($user->person_id);
     }
+
+    public function test_the_factory_produces_a_display_name(): void
+    {
+        $user = \App\Models\User::factory()->make();
+
+        $this->assertNotEmpty($user->firstname);
+        $this->assertNotEmpty($user->lastname);
+        $this->assertSame($user->firstname.' '.$user->lastname, $user->name);
+    }
 }

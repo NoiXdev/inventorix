@@ -22,14 +22,15 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
-        // User no longer owns assets directly (ownership moved to Person); a user's
-        // asset count is the count of assets owned by the Person linked via person_id.
+        // Asset ownership now lives directly on User (owner_id -> users.id); the
+        // displayed name still prefers the linked Person's name until Task 7
+        // drops person_id.
         $query = User::query()
             ->leftJoin('people', 'people.id', '=', 'users.person_id')
             ->select('users.*', 'people.name as person_name')
             ->addSelect(['assets_count' => Asset::query()
                 ->selectRaw('count(*)')
-                ->whereColumn('owner_id', 'users.person_id'),
+                ->whereColumn('owner_id', 'users.id'),
             ]);
 
         $users = TableQuery::for($query, $request)

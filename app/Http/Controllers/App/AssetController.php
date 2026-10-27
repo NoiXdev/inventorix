@@ -15,6 +15,7 @@ use App\Models\Incident;
 use App\Models\Manufacturer;
 use App\Models\Person;
 use App\Models\Place;
+use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
 use Illuminate\Database\Eloquent\Builder;
@@ -40,7 +41,7 @@ class AssetController extends Controller
                 'asset_types.name as asset_type_name',
                 'asset_models.name as model_name',
                 'manufacturers.name as manufacturer_name',
-                'people.name as owner_name',
+                'users.name as owner_name',
             )
             ->withCount('incidents');
 

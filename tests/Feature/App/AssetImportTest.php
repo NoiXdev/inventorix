@@ -5,7 +5,7 @@ namespace Tests\Feature\App;
 use App\Enums\AssetState;
 use App\Models\Asset;
 use App\Models\AssetType;
-use App\Models\Person;
+use App\Models\User;
 use App\Support\Assets\AssetImport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -38,7 +38,7 @@ class AssetImportTest extends TestCase
         $this->assertSame('Acme', $asset->model->manufacturer->name);
         $this->assertSame('X1', $asset->model->name);
         $this->assertSame('Office', $asset->place->name);
-        $owner = Person::firstWhere('name', 'Ada Lovelace');
+        $owner = User::firstWhere('name', 'Ada Lovelace');
         $this->assertNotNull($owner);
         $this->assertSame('Ada', $owner->firstname);
         $this->assertSame('Lovelace', $owner->lastname);
@@ -98,9 +98,9 @@ class AssetImportTest extends TestCase
 
     public function test_owner_is_matched_case_insensitively_when_existing(): void
     {
-        $u = Person::factory()->create(['name' => 'Ada Lovelace']);
+        $u = User::factory()->withoutLogin()->create(['name' => 'Ada Lovelace']);
         (new AssetImport)->import([$this->row(['owner' => 'ada lovelace'])]);
-        $this->assertSame(1, Person::where('name', 'Ada Lovelace')->count()); // not duplicated
+        $this->assertSame(1, User::where('name', 'Ada Lovelace')->count()); // not duplicated
         $this->assertSame($u->id, Asset::firstWhere('serial_number', 'SN-1')->owner_id);
     }
 

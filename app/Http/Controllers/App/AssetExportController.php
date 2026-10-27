@@ -20,7 +20,7 @@ class AssetExportController extends Controller
                 'asset_types.name as asset_type_name',
                 'asset_models.name as model_name',
                 'manufacturers.name as manufacturer_name',
-                'people.name as owner_name',
+                'users.name as owner_name',
             )
             ->withCount('incidents');
 

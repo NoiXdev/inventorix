@@ -8,8 +8,8 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AssetType;
 use App\Models\Manufacturer;
-use App\Models\Person;
 use App\Models\Place;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -145,18 +145,19 @@ class AssetImport
             ?? $modelClass::query()->create(['name' => $name]);
     }
 
-    private function resolveOwner(string $name): Person
+    private function resolveOwner(string $name): User
     {
-        $person = Person::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
-        if ($person) {
-            return $person;
+        $user = User::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+        if ($user) {
+            return $user;
         }
         $parts = preg_split('/\s+/', $name, 2);
         $firstname = $parts[0] ?? $name;
         $lastname = ($parts[1] ?? '') !== '' ? $parts[1] : '-';
 
-        return Person::query()->create([
+        return User::query()->create([
             'name' => $name, 'firstname' => $firstname, 'lastname' => $lastname,
+            'login_enabled' => false,
         ]);
     }
 }

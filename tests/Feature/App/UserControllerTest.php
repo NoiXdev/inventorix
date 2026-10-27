@@ -32,7 +32,7 @@ class UserControllerTest extends TestCase
 
         $manufacturer = Manufacturer::factory()->create(['name' => 'Acme']);
         $assetModel = AssetModel::factory()->create(['name' => 'Widget', 'manufacturer_id' => $manufacturer->id]);
-        Asset::factory()->create(['model_id' => $assetModel->id, 'owner_id' => $person->id]);
+        Asset::factory()->create(['model_id' => $assetModel->id, 'owner_id' => $user->id]);
 
         $this->actingAs($this->actor())->get('/app/users')
             ->assertOk()
@@ -227,18 +227,18 @@ class UserControllerTest extends TestCase
         $this->actingAs($this->actor())->post("/app/users/{$target->id}/send-reset")->assertNotFound();
     }
 
-    public function test_auth_shared_user_name_uses_linked_person_name(): void
+    public function test_auth_shared_user_name_uses_the_users_own_name(): void
     {
-        $person = Person::factory()->create(['name' => 'Ada Lovelace']);
-        $user = User::factory()->create(['person_id' => $person->id, 'login_enabled' => true]);
+        // Identity lives directly on User now (Task 1); no more live person_id lookup.
+        $user = User::factory()->create(['name' => 'Ada Lovelace', 'login_enabled' => true]);
 
         $this->actingAs($user)->get('/app')
             ->assertInertia(fn (Assert $p) => $p->where('auth.user.name', 'Ada Lovelace')->etc());
     }
 
-    public function test_auth_shared_user_name_falls_back_to_email_when_no_person(): void
+    public function test_auth_shared_user_name_falls_back_to_email_when_no_name(): void
     {
-        $loginOnly = User::factory()->create(['person_id' => null, 'email' => 'svc@x.de', 'login_enabled' => true]);
+        $loginOnly = User::factory()->create(['name' => null, 'email' => 'svc@x.de', 'login_enabled' => true]);
 
         $this->actingAs($loginOnly)->get('/app')
             ->assertInertia(fn (Assert $p) => $p->where('auth.user.name', 'svc@x.de')->etc());

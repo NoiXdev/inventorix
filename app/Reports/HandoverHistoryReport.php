@@ -47,7 +47,7 @@ class HandoverHistoryReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Handover::query()
-            ->with(['recipientPerson', 'createdBy'])
+            ->with(['recipientUser', 'createdBy'])
             ->withCount('assets')
             ->when(
                 ! empty($this->filters['type']),
@@ -71,7 +71,7 @@ class HandoverHistoryReport extends AbstractReport
         return [
             ReportColumn::make('signed_at', __("{$t}.signed_at"), fn (Handover $h): ?string => $h->signed_at?->format('d.m.Y H:i')),
             ReportColumn::make('type', __("{$t}.type"), fn (Handover $h): ?string => $h->type?->getLabel()),
-            ReportColumn::make('recipient', __("{$t}.recipient"), fn (Handover $h): ?string => $h->recipientPerson?->name ?? $h->recipient_name),
+            ReportColumn::make('recipient', __("{$t}.recipient"), fn (Handover $h): ?string => $h->recipientUser?->name ?? $h->recipient_name),
             ReportColumn::make('assets_count', __("{$t}.assets_count"), fn (Handover $h): int => (int) $h->assets_count),
             ReportColumn::make('created_by', __("{$t}.created_by"), fn (Handover $h): ?string => $h->createdBy?->name),
         ];

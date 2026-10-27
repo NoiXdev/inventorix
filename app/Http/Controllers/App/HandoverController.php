@@ -80,7 +80,7 @@ class HandoverController extends Controller
         $data = new HandoverData(
             type: HandoverType::from($v['type']),
             recipientKind: RecipientKind::from($v['recipient_kind']),
-            recipientPersonId: $v['recipient_kind'] === RecipientKind::INTERNAL->value ? ($v['recipient_person_id'] ?? null) : null,
+            recipientUserId: $v['recipient_kind'] === RecipientKind::INTERNAL->value ? ($v['recipient_user_id'] ?? null) : null,
             recipientName: $v['recipient_name'],
             recipientEmail: $v['recipient_email'] ?? null,
             assetIds: $v['asset_ids'],
@@ -108,7 +108,7 @@ class HandoverController extends Controller
 
     public function show(Handover $handover): Response
     {
-        $handover->load('recipientPerson', 'createdBy', 'assets.model.manufacturer', 'assets.assetType');
+        $handover->load('recipientUser', 'createdBy', 'assets.model.manufacturer', 'assets.assetType');
 
         return Inertia::render('handovers/show', [
             'handover' => [

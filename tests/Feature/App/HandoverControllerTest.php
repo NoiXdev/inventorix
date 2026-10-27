@@ -6,7 +6,6 @@ use App\Enums\AssetState;
 use App\Jobs\GenerateHandoverPdf;
 use App\Models\Asset;
 use App\Models\Handover;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -29,12 +28,12 @@ class HandoverControllerTest extends TestCase
     {
         Queue::fake();
         $actor = $this->actor();
-        $recipient = Person::factory()->create();
+        $recipient = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::NEW->value, 'owner_id' => null]);
 
         $this->actingAs($actor)->post('/app/handovers', [
-            'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_person_id' => $recipient->id,
-            'recipient_name' => $recipient->name, 'recipient_email' => 'r@example.test',
+            'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_user_id' => $recipient->id,
+            'recipient_name' => 'Jane Recipient', 'recipient_email' => 'r@example.test',
             'asset_ids' => [$asset->id], 'terms_text' => 'Terms apply.', 'signature_png' => self::PNG,
         ])->assertRedirect();
 
@@ -84,7 +83,14 @@ class HandoverControllerTest extends TestCase
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_name' => 'X',
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => self::PNG,
-        ])->assertSessionHasErrors('recipient_person_id');
+        ])->assertSessionHasErrors('recipient_user_id');
+    }
+
+    public function test_internal_handover_requires_a_recipient_user(): void
+    {
+        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+            ->post('/app/handovers', ['recipient_kind' => 'internal', 'recipient_user_id' => null])
+            ->assertSessionHasErrors('recipient_user_id');
     }
 
     public function test_store_requires_signature(): void

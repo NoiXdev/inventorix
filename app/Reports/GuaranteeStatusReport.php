@@ -3,7 +3,7 @@
 namespace App\Reports;
 
 use App\Models\Asset;
-use App\Models\Person;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 class GuaranteeStatusReport extends AbstractReport
@@ -48,8 +48,8 @@ class GuaranteeStatusReport extends AbstractReport
             [
                 'key' => 'employees', 'type' => 'multiselect',
                 'label' => __('evaluation.reports.guarantee_status.filter.employees'),
-                'options' => Person::query()->orderBy('name')->get()
-                    ->map(fn (Person $p): array => ['value' => (string) $p->id, 'label' => $p->name])->all(),
+                'options' => User::query()->orderBy('name')->get()
+                    ->map(fn (User $u): array => ['value' => (string) $u->id, 'label' => $u->name])->all(),
             ],
         ];
     }

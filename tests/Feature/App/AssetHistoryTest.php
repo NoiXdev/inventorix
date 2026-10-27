@@ -6,7 +6,6 @@ namespace Tests\Feature\App;
 
 use App\Enums\AssetState;
 use App\Models\Asset;
-use App\Models\Person;
 use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,10 +18,9 @@ class AssetHistoryTest extends TestCase
 
     public function test_resolves_owner_change_to_names_and_records_causer(): void
     {
-        $causerPerson = Person::factory()->create(['name' => 'Cara Causer']);
-        $actor = User::factory()->create(['person_id' => $causerPerson->id, 'login_enabled' => true]);
-        $oldOwner = Person::factory()->create(['name' => 'Olive Old']);
-        $newOwner = Person::factory()->create(['name' => 'Nate New']);
+        $actor = User::factory()->create(['name' => 'Cara Causer', 'login_enabled' => true]);
+        $oldOwner = User::factory()->withoutLogin()->create(['name' => 'Olive Old']);
+        $newOwner = User::factory()->withoutLogin()->create(['name' => 'Nate New']);
 
         $this->actingAs($actor);
         $asset = Asset::factory()->create(['owner_id' => $oldOwner->id, 'state' => AssetState::NEW->value]);
@@ -55,7 +53,7 @@ class AssetHistoryTest extends TestCase
     public function test_missing_referenced_record_resolves_to_removed(): void
     {
         $actor = User::factory()->create(['login_enabled' => true]);
-        $gone = Person::factory()->create();
+        $gone = User::factory()->withoutLogin()->create();
         $this->actingAs($actor);
         $asset = Asset::factory()->create(['owner_id' => null]);
         $asset->update(['owner_id' => $gone->id]);
@@ -78,7 +76,7 @@ class AssetHistoryTest extends TestCase
     public function test_excludes_semantic_observer_entries(): void
     {
         $actor = User::factory()->create(['login_enabled' => true]);
-        $newOwner = Person::factory()->create();
+        $newOwner = User::factory()->withoutLogin()->create();
 
         $this->actingAs($actor);
         $asset = Asset::factory()->create();

@@ -3,7 +3,6 @@
 namespace Tests\Feature\App\Reports;
 
 use App\Models\Asset;
-use App\Models\Person;
 use App\Models\User;
 use App\Reports\AssetsPerEmployeeReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,7 +44,7 @@ class AssetListReportsTest extends TestCase
 
     public function test_assets_per_employee_pdf_groups_by_owner(): void
     {
-        $a = Person::factory()->create(['name' => 'Alice']);
+        $a = User::factory()->withoutLogin()->create(['name' => 'Alice']);
         Asset::factory()->count(2)->create(['owner_id' => $a->id]);
         Asset::factory()->create(['owner_id' => null]); // no-owner group
 
@@ -58,7 +57,7 @@ class AssetListReportsTest extends TestCase
 
     public function test_assets_per_employee_filters_employees(): void
     {
-        $a = Person::factory()->create();
+        $a = User::factory()->withoutLogin()->create();
         Asset::factory()->create(['owner_id' => $a->id]);
         Asset::factory()->create(); // different owner
 

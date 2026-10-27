@@ -21,7 +21,7 @@ class HandoverRequest extends FormRequest
         return [
             'type' => ['required', Rule::enum(HandoverType::class)],
             'recipient_kind' => ['required', Rule::enum(RecipientKind::class)],
-            'recipient_person_id' => ['nullable', 'required_if:recipient_kind,internal', 'uuid', 'exists:people,id'],
+            'recipient_user_id' => ['nullable', 'required_if:recipient_kind,internal', 'uuid', 'exists:users,id'],
             'recipient_name' => ['required', 'string', 'max:255'],
             'recipient_email' => ['nullable', 'email', 'max:255'],
             'asset_ids' => ['required', 'array', 'min:1'],

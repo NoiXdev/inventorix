@@ -5,8 +5,8 @@ namespace Tests\Unit\History;
 use App\Enums\AssetState;
 use App\Models\Asset;
 use App\Models\Incident;
-use App\Models\Person;
 use App\Models\Place;
+use App\Models\User;
 use App\Support\History\SummaryBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
@@ -55,8 +55,8 @@ class SummaryBuilderTest extends TestCase
 
     public function test_owner_changed_summary_resolves_names(): void
     {
-        $old = Person::factory()->create(['name' => 'Anna']);
-        $new = Person::factory()->create(['name' => 'Lukas']);
+        $old = User::factory()->withoutLogin()->create(['name' => 'Anna']);
+        $new = User::factory()->withoutLogin()->create(['name' => 'Lukas']);
         $activity = $this->buildActivity([
             'description' => 'owner_changed',
             'properties' => ['from' => $old->id, 'to' => $new->id],
@@ -66,7 +66,7 @@ class SummaryBuilderTest extends TestCase
 
     public function test_owner_changed_summary_handles_null(): void
     {
-        $new = Person::factory()->create(['name' => 'Lukas']);
+        $new = User::factory()->withoutLogin()->create(['name' => 'Lukas']);
         $activity = $this->buildActivity([
             'description' => 'owner_changed',
             'properties' => ['from' => null, 'to' => $new->id],

@@ -8,7 +8,6 @@ use App\Models\AssetModel;
 use App\Models\AssetType;
 use App\Models\Incident;
 use App\Models\Manufacturer;
-use App\Models\Person;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -28,7 +27,7 @@ class AssetControllerTest extends TestCase
         $mfr = Manufacturer::factory()->create(['name' => 'Acme']);
         $model = AssetModel::factory()->create(['name' => 'X1', 'manufacturer_id' => $mfr->id]);
         $type = AssetType::factory()->create(['name' => 'Laptop']);
-        $owner = Person::factory()->create(['name' => 'Ada Lovelace']);
+        $owner = User::factory()->withoutLogin()->create(['name' => 'Ada Lovelace']);
         $asset = Asset::factory()->create([
             'model_id' => $model->id, 'asset_type_id' => $type->id, 'owner_id' => $owner->id,
         ]);

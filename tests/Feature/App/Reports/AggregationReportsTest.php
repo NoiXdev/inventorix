@@ -4,7 +4,6 @@ namespace Tests\Feature\App\Reports;
 
 use App\Enums\AssetState;
 use App\Models\Asset;
-use App\Models\Person;
 use App\Models\User;
 use App\Reports\AssetValueReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,7 +33,7 @@ class AggregationReportsTest extends TestCase
 
     public function test_asset_value_aggregated_vs_detailed(): void
     {
-        $owner = Person::factory()->create();
+        $owner = User::factory()->withoutLogin()->create();
         Asset::factory()->count(2)->create(['owner_id' => $owner->id, 'buy_price' => 100]);
 
         // aggregated (default): grouped rows, no pagination, no totals

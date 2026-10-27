@@ -29,7 +29,7 @@ class AssetRequest extends FormRequest
             'id' => ['nullable', 'uuid', 'unique:assets,id'],
             'state' => ['required', Rule::enum(AssetState::class)],
             'asset_type_id' => ['required', 'uuid', 'exists:asset_types,id'],
-            'owner_id' => ['nullable', 'uuid', 'exists:people,id'],
+            'owner_id' => ['nullable', 'uuid', 'exists:users,id'],
             'place_id' => ['nullable', 'uuid', 'exists:places,id'],
             'model_id' => ['nullable', 'uuid', 'exists:asset_models,id'],
             'serial_number' => ['nullable', 'string', 'max:255'],

@@ -8,7 +8,6 @@ use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Mail\HandoverSigned;
 use App\Models\Asset;
-use App\Models\Person;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,15 +24,15 @@ class HandoverEmailTest extends TestCase
         Storage::fake('local');
         Mail::fake();
 
-        $recipient = Person::factory()->create(['email' => 'alice@example.com']);
+        $recipient = User::factory()->create(['email' => 'alice@example.com']);
         $manager = User::factory()->create();
         $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
 
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::INTERNAL,
-            recipientPersonId: $recipient->id,
-            recipientName: $recipient->name,
+            recipientUserId: $recipient->id,
+            recipientName: fake()->name(),
             recipientEmail: 'alice@example.com',
             assetIds: [$asset->id],
             accessories: null,
@@ -61,7 +60,7 @@ class HandoverEmailTest extends TestCase
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,
             recipientKind: RecipientKind::EXTERNAL,
-            recipientPersonId: null,
+            recipientUserId: null,
             recipientName: 'Walk-in',
             recipientEmail: null,
             assetIds: [$asset->id],

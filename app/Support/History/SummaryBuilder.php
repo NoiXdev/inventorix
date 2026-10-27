@@ -5,8 +5,8 @@ namespace App\Support\History;
 use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Models\Incident;
-use App\Models\Person;
 use App\Models\Place;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 
@@ -52,11 +52,11 @@ class SummaryBuilder
 
     private function ownerArrow(Activity $activity): string
     {
-        // Asset ownership is tracked on Person (owner_id), not User.
+        // Asset ownership is tracked on User (owner_id).
         return $this->arrow(
             $activity->properties['from'] ?? null,
             $activity->properties['to'] ?? null,
-            fn ($id) => Person::find($id)?->name,
+            fn ($id) => User::find($id)?->name,
         );
     }
 
