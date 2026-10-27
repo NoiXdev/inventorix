@@ -24,16 +24,16 @@ describe('UserPicker', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Ada Lovelace' } });
-        expect(screen.queryByRole('button', { name: /als person anlegen/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /als benutzer anlegen/i })).not.toBeInTheDocument();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        expect(screen.getByRole('button', { name: /als person anlegen/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /als benutzer anlegen/i })).toBeInTheDocument();
     });
 
     it('opens the dialog with the name prefilled from the query', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
         expect(screen.getByLabelText(/vorname/i)).toHaveValue('Max');
         expect(screen.getByLabelText(/nachname/i)).toHaveValue('Muster');
     });
@@ -44,7 +44,7 @@ describe('UserPicker', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() => expect(onChange).toHaveBeenCalledWith('new-1'));
@@ -58,7 +58,7 @@ describe('UserPicker', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
         await waitFor(() => expect(screen.getByText('Nachname fehlt.')).toBeInTheDocument());
     });
@@ -69,11 +69,11 @@ describe('UserPicker', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={onChange} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() =>
-            expect(screen.getByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
+            expect(screen.getByText('Benutzer konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
         );
         expect(onChange).not.toHaveBeenCalled();
     });
@@ -83,26 +83,26 @@ describe('UserPicker', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
         fireEvent.click(screen.getByRole('button', { name: /^anlegen$/i }));
 
         await waitFor(() =>
-            expect(screen.getByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
+            expect(screen.getByText('Benutzer konnte nicht angelegt werden. Bitte erneut versuchen.')).toBeInTheDocument(),
         );
 
         fireEvent.click(screen.getByRole('button', { name: /abbrechen/i }));
 
         openPanel();
         fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Max Muster' } });
-        fireEvent.click(screen.getByRole('button', { name: /als person anlegen/i }));
+        fireEvent.click(screen.getByRole('button', { name: /als benutzer anlegen/i }));
 
-        expect(screen.queryByText('Person konnte nicht angelegt werden. Bitte erneut versuchen.')).not.toBeInTheDocument();
+        expect(screen.queryByText('Benutzer konnte nicht angelegt werden. Bitte erneut versuchen.')).not.toBeInTheDocument();
     });
 
     it('opens an empty create dialog via the trailing "+" action without opening the panel', () => {
         render(<UserPicker id="person_id" label="Person" value="" onChange={() => {}} options={options} createUrl="/app/users/quick" />);
         // The "+" action is always visible next to the field, independent of the dropdown.
-        fireEvent.click(screen.getByRole('button', { name: 'Neue Person anlegen' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Neuen Benutzer anlegen' }));
         expect(screen.getByLabelText(/vorname/i)).toHaveValue('');
         expect(screen.getByLabelText(/nachname/i)).toHaveValue('');
         expect(screen.getByLabelText(/e-mail/i)).toHaveValue('');

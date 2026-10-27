@@ -67,7 +67,7 @@ export function UserPicker({ id, label, value, onChange, options, error, createU
                 for (const [k, msgs] of Object.entries(e.response.data.errors as Record<string, string[]>)) mapped[k] = msgs[0];
                 setErrors(mapped);
             } else {
-                setFormError('Person konnte nicht angelegt werden. Bitte erneut versuchen.');
+                setFormError('Benutzer konnte nicht angelegt werden. Bitte erneut versuchen.');
             }
         } finally {
             setSaving(false);
@@ -92,7 +92,7 @@ export function UserPicker({ id, label, value, onChange, options, error, createU
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label="Neue Person anlegen"
+                        aria-label="Neuen Benutzer anlegen"
                         className="size-7 text-muted-foreground hover:text-foreground"
                         onClick={() => startCreate('')}
                     >
@@ -106,7 +106,7 @@ export function UserPicker({ id, label, value, onChange, options, error, createU
                             className="block w-full rounded px-2 py-1.5 text-left text-sm text-primary hover:bg-accent"
                             onClick={() => { close(); startCreate(query); }}
                         >
-                            „{query.trim()}" als Person anlegen
+                            „{query.trim()}" als Benutzer anlegen
                         </button>
                     ) : null
                 }
@@ -114,7 +114,7 @@ export function UserPicker({ id, label, value, onChange, options, error, createU
 
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent>
-                    <DialogHeader><DialogTitle>Neue Person anlegen</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Neuen Benutzer anlegen</DialogTitle></DialogHeader>
                     <div className="space-y-4">
                         <FormError message={formError} />
                         <TextField id="pp-firstname" label="Vorname" required autoFocus

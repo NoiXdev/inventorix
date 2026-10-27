@@ -32,12 +32,12 @@ describe('AssetForm owner field', () => {
         render(<AssetForm options={options} submitUrl="/app/assets" method="post" />);
         expect(screen.getByText('Owner')).toBeInTheDocument();
         // The UserPicker's in-field "+" create action is present.
-        expect(screen.getByRole('button', { name: 'Neue Person anlegen' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Neuen Benutzer anlegen' })).toBeInTheDocument();
     });
 
     it('opens the create dialog from the Owner field without submitting the form', () => {
         render(<AssetForm options={options} submitUrl="/app/assets" method="post" />);
-        fireEvent.click(screen.getByRole('button', { name: 'Neue Person anlegen' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Neuen Benutzer anlegen' }));
         expect(screen.getByLabelText(/vorname/i)).toBeInTheDocument();
         expect(submit).not.toHaveBeenCalled();
     });
