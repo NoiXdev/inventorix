@@ -17,7 +17,8 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'person_id' => ['nullable', 'uuid', 'exists:people,id'],
+            'firstname' => ['required', 'string', 'max:255'],
+            'lastname' => ['required', 'string', 'max:255'],
             'login_enabled' => ['boolean'],
             'email' => [
                 'required_if:login_enabled,true', 'nullable', 'email', 'max:255',

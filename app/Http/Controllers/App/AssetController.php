@@ -198,7 +198,7 @@ class AssetController extends Controller
             'placeOptions' => $this->options(Place::query()),
             'ownerOptions' => User::query()->orderBy('name')->get()
                 ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name])->all(),
-            'personCreateUrl' => route('app.people.quick-store'),
+            'personCreateUrl' => route('app.users.quick-store'),
             'modelOptions' => AssetModel::query()->with('manufacturer')->orderBy('name')->get()
                 ->map(fn (AssetModel $m) => ['value' => $m->id, 'label' => '('.optional($m->manufacturer)->name.') '.$m->name])->all(),
         ];

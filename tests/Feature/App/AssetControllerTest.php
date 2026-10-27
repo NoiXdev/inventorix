@@ -137,6 +137,29 @@ class AssetControllerTest extends TestCase
         ])->assertSessionHasErrors('owner_id');
     }
 
+    /**
+     * Regression for the tracked quick-add-owner gap: the inline "quick add owner"
+     * flow on the asset form must produce a `users` row, since AssetRequest validates
+     * `owner_id` against `exists:users,id`. Exercises the real route end to end.
+     */
+    public function test_an_owner_created_via_the_quick_add_flow_can_be_used_to_save_an_asset(): void
+    {
+        $type = AssetType::factory()->create();
+
+        $quickAdd = $this->actingAs($this->actor())
+            ->postJson('/app/users/quick', ['firstname' => 'Ada', 'lastname' => 'Lovelace'])
+            ->assertCreated();
+        $ownerId = $quickAdd->json('id');
+
+        $this->actingAs($this->actor())->post('/app/assets', [
+            'state' => 'new', 'asset_type_id' => $type->id, 'owner_id' => $ownerId,
+        ])->assertRedirect('/app/assets')->assertSessionHasNoErrors();
+
+        $asset = Asset::where('owner_id', $ownerId)->first();
+        $this->assertNotNull($asset);
+        $this->assertSame('Ada Lovelace', $asset->owner->name);
+    }
+
     public function test_update_changes_fields_and_tags(): void
     {
         $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
