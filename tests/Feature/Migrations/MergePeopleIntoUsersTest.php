@@ -176,6 +176,48 @@ class MergePeopleIntoUsersTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $b]);
     }
 
+    public function test_person_whose_id_already_belongs_to_an_unrelated_user_is_skipped_not_duplicated(): void
+    {
+        $sharedId = (string) Str::uuid();
+        $otherPersonId = $this->seedPerson(['firstname' => 'Other', 'lastname' => 'Link', 'name' => 'Other Link']);
+
+        // Person A shares its UUID with user U — the original v2 backfill
+        // invariant — but U has since been re-pointed at a different person
+        // via v2's user-edit form. A is now, from this migration's point of
+        // view, "account-less", yet its id collides with an existing user.
+        DB::table('people')->insert([
+            'id' => $sharedId,
+            'firstname' => 'Stale',
+            'lastname' => 'Identity',
+            'name' => 'Stale Identity',
+            'email' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('users')->insert([
+            'id' => $sharedId,
+            'person_id' => $otherPersonId,
+            'email' => 'login@example.test',
+            'password' => 'x',
+            'login_enabled' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Log::shouldReceive('warning')->once()
+            ->with('merge-people-into-users: skipped person with id already used by an unrelated user', \Mockery::on(
+                fn (array $ctx) => $ctx['person_id'] === $sharedId
+            ));
+
+        $this->runMerge();
+
+        // No duplicate insert was attempted; the existing user row survives,
+        // having absorbed the *linked* person's identity as usual.
+        $this->assertSame(1, DB::table('users')->where('id', $sharedId)->count());
+        $row = DB::table('users')->where('id', $sharedId)->first();
+        $this->assertSame('Other Link', $row->name);
+    }
+
     public function test_two_account_less_people_sharing_an_email_do_not_collide(): void
     {
         $a = $this->seedPerson(['email' => 'dup@example.test']);

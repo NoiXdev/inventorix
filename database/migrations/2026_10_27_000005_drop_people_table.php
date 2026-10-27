@@ -30,6 +30,13 @@ return new class extends Migration
 
         // Re-create one person per user, same UUID, so the 000003 down() can
         // re-point the ownership FKs at people without rewriting any value.
+        //
+        // Note: a full rollback that stops here (without also rolling back
+        // 000003/000002) leaves the synthesized account-less users in place,
+        // because this sets person_id = id for every user, and 000002::down()
+        // only deletes rows matching whereNull('person_id') — none do. That end
+        // state is still functional (every row resolves), and rolling forward
+        // again from here is clean.
         DB::table('users')->orderBy('id')->chunkById(500, function ($users) {
             DB::table('people')->insert($users->map(fn ($u) => [
                 'id' => $u->id,

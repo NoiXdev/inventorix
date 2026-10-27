@@ -35,5 +35,9 @@ describe('HandoverWizard', () => {
         // "Recipient kind" is unique to step 2 (the progress bar's "Recipient"
         // label is always present, so match the field label instead).
         expect(screen.getByText('Recipient kind')).toBeInTheDocument();
+        // recipient_kind defaults to the first option ('internal'), so the
+        // recipient_user_id field (labelled "User") must render alongside it —
+        // this is the field that was renamed mid-refactor.
+        expect(screen.getByLabelText(/^User/)).toBeInTheDocument();
     });
 });

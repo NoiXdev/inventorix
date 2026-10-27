@@ -17,7 +17,7 @@ export default function UserShow({ user, assets }: Props) {
         <AppLayout title={user.name ?? 'User'} breadcrumbs={[{ label: 'Users', href: '/app/users' }, { label: user.name ?? 'User' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold">{user.name}</h1>
+                    <h1 className="text-2xl font-semibold">{user.name ?? user.email ?? '—'}</h1>
                     {user.email && <p className="text-sm text-muted-foreground">{user.email}</p>}
                     <Badge className="mt-1" variant={user.login_enabled ? 'default' : 'secondary'}>
                         {user.login_enabled ? 'Login enabled' : 'No login'}

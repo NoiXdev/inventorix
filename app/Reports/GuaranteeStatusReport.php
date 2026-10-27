@@ -49,7 +49,7 @@ class GuaranteeStatusReport extends AbstractReport
                 'key' => 'employees', 'type' => 'multiselect',
                 'label' => __('evaluation.reports.guarantee_status.filter.employees'),
                 'options' => User::query()->orderBy('name')->get()
-                    ->map(fn (User $u): array => ['value' => (string) $u->id, 'label' => $u->name])->all(),
+                    ->map(fn (User $u): array => ['value' => (string) $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
             ],
         ];
     }

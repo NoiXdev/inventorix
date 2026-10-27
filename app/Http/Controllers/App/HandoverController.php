@@ -63,7 +63,7 @@ class HandoverController extends Controller
             ], HandoverType::cases()),
             'recipientKindOptions' => array_map(fn (RecipientKind $k) => ['value' => $k->value, 'label' => $k->getLabel()], RecipientKind::cases()),
             'userOptions' => User::query()->orderBy('name')->get()
-                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name, 'email' => $u->email])->all(),
+                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—', 'email' => $u->email])->all(),
             'assetOptions' => Asset::query()->with('assetType', 'model.manufacturer')->get()
                 ->map(fn (Asset $a) => [
                     'value' => $a->id,

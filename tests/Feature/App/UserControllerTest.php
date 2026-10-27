@@ -34,7 +34,9 @@ class UserControllerTest extends TestCase
         $this->actingAs($this->actor())->get('/app/users')
             ->assertOk()
             ->assertInertia(fn (Assert $a) => $a->component('users/index')
-                ->has('users.data')->etc());
+                ->has('users.data')
+                ->where('users.data', fn ($rows) => collect($rows)->firstWhere('id', $u->id)['assets_count'] === 2)
+                ->etc());
     }
 
     public function test_store_derives_name(): void

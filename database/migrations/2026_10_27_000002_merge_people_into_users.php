@@ -8,50 +8,74 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Linked users absorb their person's identity. The login address wins;
-        //    the person's contact address is only adopted when the user has none.
-        DB::table('users')->whereNotNull('person_id')->orderBy('id')->chunkById(500, function ($users) {
-            foreach ($users as $user) {
-                $person = DB::table('people')->where('id', $user->person_id)->first();
-                if (! $person) {
-                    continue;
+        DB::transaction(function () {
+            // 1. Linked users absorb their person's identity. The login address wins;
+            //    the person's contact address is only adopted when the user has none.
+            DB::table('users')->whereNotNull('person_id')->orderBy('id')->chunkById(500, function ($users) {
+                foreach ($users as $user) {
+                    $person = DB::table('people')->where('id', $user->person_id)->first();
+                    if (! $person) {
+                        continue;
+                    }
+
+                    DB::table('users')->where('id', $user->id)->update([
+                        'firstname' => $person->firstname,
+                        'lastname' => $person->lastname,
+                        'name' => $person->name,
+                        'email' => $user->email ?: $this->freeEmail($person->email, $person->id),
+                    ]);
                 }
+            });
 
-                DB::table('users')->where('id', $user->id)->update([
-                    'firstname' => $person->firstname,
-                    'lastname' => $person->lastname,
-                    'name' => $person->name,
-                    'email' => $user->email ?: $this->freeEmail($person->email, $person->id),
-                ]);
-            }
-        });
+            // 2. A person whose UUID already exists in `users` *is* that user, by
+            //    construction of the original v2 backfill — its ownership FKs
+            //    already resolve against that id. This happens even when nothing
+            //    currently links to it: v2's user-edit form let an admin re-point
+            //    or clear a user's person_id after the UUIDs were aliased. Inserting
+            //    it again would collide on the primary key, so skip it — but log it,
+            //    since it leaves a stale duplicate identity to reconcile afterwards.
+            DB::table('people')
+                ->whereIn('id', fn ($q) => $q->select('id')->from('users'))
+                ->whereNotIn('id', fn ($q) => $q->select('person_id')->from('users')->whereNotNull('person_id'))
+                ->orderBy('id')
+                ->chunkById(500, function ($people) {
+                    foreach ($people as $p) {
+                        Log::warning('merge-people-into-users: skipped person with id already used by an unrelated user', [
+                            'person_id' => $p->id,
+                        ]);
+                    }
+                });
 
-        // 2. Every person with no account becomes a login-disabled user, REUSING
-        //    the person's UUID. That is what lets 000003 re-point the ownership
-        //    FKs without rewriting a single value.
-        $linked = DB::table('users')->whereNotNull('person_id')->pluck('person_id')->all();
-
-        // Inserted one row at a time (not a batch insert) so freeEmail()'s
-        // collision check sees rows already written earlier in this same
-        // chunk, not just previously committed ones. Two account-less people
-        // sharing a non-null email would otherwise both pass the check before
-        // either was inserted, and the batch insert would throw a unique
-        // constraint violation on the second row.
-        DB::table('people')->whereNotIn('id', $linked ?: ['-'])->orderBy('id')->chunkById(500, function ($people) {
-            foreach ($people as $p) {
-                DB::table('users')->insert([
-                    'id' => $p->id,
-                    'person_id' => null,
-                    'firstname' => $p->firstname,
-                    'lastname' => $p->lastname,
-                    'name' => $p->name,
-                    'email' => $this->freeEmail($p->email, $p->id),
-                    'password' => null,
-                    'login_enabled' => 0,
-                    'created_at' => $p->created_at,
-                    'updated_at' => $p->updated_at,
-                ]);
-            }
+            // 3. Every remaining person with no account becomes a login-disabled
+            //    user, REUSING the person's UUID. That is what lets 000003 re-point
+            //    the ownership FKs without rewriting a single value.
+            //
+            // Inserted one row at a time (not a batch insert) so freeEmail()'s
+            // collision check sees rows already written earlier in this same
+            // chunk, not just previously committed ones. Two account-less people
+            // sharing a non-null email would otherwise both pass the check before
+            // either was inserted, and the batch insert would throw a unique
+            // constraint violation on the second row.
+            DB::table('people')
+                ->whereNotIn('id', fn ($q) => $q->select('person_id')->from('users')->whereNotNull('person_id'))
+                ->whereNotIn('id', fn ($q) => $q->select('id')->from('users'))
+                ->orderBy('id')
+                ->chunkById(500, function ($people) {
+                    foreach ($people as $p) {
+                        DB::table('users')->insert([
+                            'id' => $p->id,
+                            'person_id' => null,
+                            'firstname' => $p->firstname,
+                            'lastname' => $p->lastname,
+                            'name' => $p->name,
+                            'email' => $this->freeEmail($p->email, $p->id),
+                            'password' => null,
+                            'login_enabled' => 0,
+                            'created_at' => $p->created_at,
+                            'updated_at' => $p->updated_at,
+                        ]);
+                    }
+                });
         });
     }
 

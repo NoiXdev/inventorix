@@ -10,9 +10,9 @@ return new class extends Migration
     public function up(): void
     {
         // Only the handover recipient moves here. The asset-ownership FKs move in
-        // Task 3, together with the AssetFactory flip to User — re-pointing them
-        // before that flip breaks every test that builds an Asset, because a
-        // freshly created Person has no matching users row.
+        // migration 000004, together with the AssetFactory flip to User —
+        // re-pointing them before that flip breaks every test that builds an
+        // Asset, because a freshly created Person has no matching users row.
         IdentityReferenceGuard::assertAllResolve([
             ['handovers', 'recipient_person_id'],
         ]);

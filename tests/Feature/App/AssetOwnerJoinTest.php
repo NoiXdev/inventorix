@@ -25,6 +25,27 @@ class AssetOwnerJoinTest extends TestCase
                 ->etc());
     }
 
+    public function test_create_page_owner_options_tolerate_a_null_name(): void
+    {
+        // v2 allowed a user to exist with person_id = null, which post-merge
+        // means name is NULL (name became nullable in 000001). The option
+        // label must never be null — the frontend combobox calls
+        // label.toLowerCase() on every option during initial render.
+        $user = User::factory()->withoutLogin()->create(['name' => null, 'email' => null]);
+
+        $this->actingAs(User::factory()->create())
+            ->get('/app/assets/create')
+            ->assertOk()
+            ->assertInertia(fn (Assert $a) => $a
+                ->component('assets/create')
+                ->where('ownerOptions', function ($options) use ($user) {
+                    $option = collect($options)->firstWhere('value', $user->id);
+
+                    return $option !== null && $option['label'] !== null;
+                })
+                ->etc());
+    }
+
     public function test_asset_index_is_searchable_by_an_account_less_owner_name(): void
     {
         $owner = User::factory()->withoutLogin()->create([
