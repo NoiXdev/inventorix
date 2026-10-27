@@ -140,7 +140,7 @@ class UserController extends Controller
 
     public function quickStore(UserRequest $request): JsonResponse
     {
-        $user = User::create($this->withName($request->validated()) + ['login_enabled' => false]);
+        $user = User::create(array_merge($this->withName($request->validated()), ['login_enabled' => false]));
 
         return response()->json(['id' => $user->id, 'name' => $user->name], 201);
     }

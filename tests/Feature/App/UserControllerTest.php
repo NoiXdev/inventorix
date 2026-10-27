@@ -104,6 +104,20 @@ class UserControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['name' => 'Ada Lovelace', 'login_enabled' => false]);
     }
 
+    public function test_quick_store_forces_login_disabled_even_if_requested(): void
+    {
+        Notification::fake();
+
+        $this->actingAs($this->actor())->postJson('/app/users/quick', [
+            'firstname' => 'Ada', 'lastname' => 'Lovelace', 'email' => 'ada@x.de', 'login_enabled' => true,
+        ])->assertCreated();
+
+        $user = User::where('name', 'Ada Lovelace')->firstOrFail();
+        $this->assertFalse($user->login_enabled);
+        $this->assertNull($user->password);
+        Notification::assertNothingSent();
+    }
+
     public function test_login_enabled_requires_an_email(): void
     {
         $this->actingAs($this->actor())->post('/app/users', [
@@ -111,14 +125,30 @@ class UserControllerTest extends TestCase
         ])->assertSessionHasErrors('email');
     }
 
+    public function test_store_with_login_enabled_sets_password_and_sends_reset_email(): void
+    {
+        Notification::fake();
+
+        $this->actingAs($this->actor())->post('/app/users', [
+            'firstname' => 'Ada', 'lastname' => 'Lovelace', 'email' => 'ada@example.test', 'login_enabled' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $user = User::where('email', 'ada@example.test')->firstOrFail();
+        $this->assertNotNull($user->password);
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
     public function test_a_user_without_an_email_can_be_created_and_own_assets(): void
     {
+        Notification::fake();
+
         $this->actingAs($this->actor())->post('/app/users', [
             'firstname' => 'No', 'lastname' => 'Mail', 'email' => '', 'login_enabled' => false,
         ])->assertRedirect()->assertSessionHasNoErrors();
 
         $u = User::where('name', 'No Mail')->firstOrFail();
         $this->assertNull($u->email);
+        Notification::assertNothingSent();
         Asset::factory()->create(['owner_id' => $u->id]);
         $this->assertCount(1, $u->refresh()->assets);
     }
@@ -135,6 +165,31 @@ class UserControllerTest extends TestCase
     {
         $me = $this->actor();
         $this->actingAs($me)->delete('/app/users/'.$me->id)->assertForbidden();
+    }
+
+    public function test_edit_returns_user_fields_and_self_flag(): void
+    {
+        $actor = $this->actor();
+        $target = User::factory()->create([
+            'firstname' => 'Grace', 'lastname' => 'Hopper', 'email' => 'grace@example.test', 'login_enabled' => true,
+        ]);
+
+        $this->actingAs($actor)->get("/app/users/{$target->id}/edit")
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->component('users/edit')
+                ->where('user.id', $target->id)
+                ->where('user.firstname', 'Grace')
+                ->where('user.lastname', 'Hopper')
+                ->where('user.email', 'grace@example.test')
+                ->where('user.login_enabled', true)
+                ->where('isSelf', false)
+                ->missing('user.person_id')
+                ->missing('personOptions')
+                ->etc());
+
+        $this->actingAs($actor)->get("/app/users/{$actor->id}/edit")
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->component('users/edit')->where('isSelf', true)->etc());
     }
 
     public function test_email_must_be_unique_ignoring_self_on_update(): void
