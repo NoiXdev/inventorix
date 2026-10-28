@@ -40,6 +40,8 @@ Route::prefix('app')->name('app.')->group(function () {
     Route::middleware(['auth', ApplyRuntimeSettings::class])->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('manufacturers/{manufacturer}/image', [ManufacturerController::class, 'image'])
+            ->name('manufacturers.image');
         Route::resource('manufacturers', ManufacturerController::class)->except('show');
         Route::resource('places', PlaceController::class)->except('show');
         Route::resource('asset-types', AssetTypeController::class)->except('show');

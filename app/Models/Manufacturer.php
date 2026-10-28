@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['name'])]
+// image_path is set by the controller from an upload, never mass-assigned:
+// accepting it as input would let a client point the row at any stored file.
+#[Fillable(['name', 'url', 'support_url', 'warranty_lookup_url', 'support_phone', 'support_email', 'notes'])]
 class Manufacturer extends Model
 {
     use Creator, HasFactory, HasUuids, SoftDeletes;

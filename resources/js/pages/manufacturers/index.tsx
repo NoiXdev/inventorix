@@ -7,10 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 
-interface Row { id: string; name: string; models_count: number; assets_count: number; }
+interface Row { id: string; name: string; image_url: string | null; models_count: number; assets_count: number; }
 
 const columns: ColumnDef<Row>[] = [
-    { accessorKey: 'name', header: 'Name' },
+    {
+        accessorKey: 'name',
+        header: 'Name',
+        cell: ({ row }) => (
+            <div className="flex items-center gap-2">
+                {row.original.image_url
+                    ? <img src={row.original.image_url} alt="" className="h-6 w-6 rounded border object-contain" />
+                    : <span className="h-6 w-6 rounded border bg-muted" aria-hidden="true" />}
+                <span>{row.original.name}</span>
+            </div>
+        ),
+    },
     { accessorKey: 'models_count', header: 'Models', cell: ({ row }) => <Badge variant="secondary">{row.original.models_count}</Badge> },
     { accessorKey: 'assets_count', header: 'Assets', cell: ({ row }) => <Badge variant="secondary">{row.original.assets_count}</Badge> },
     {

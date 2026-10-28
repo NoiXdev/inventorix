@@ -33,7 +33,7 @@ class ManufacturerControllerTest extends TestCase
                 ->component('manufacturers/index')
                 ->has('manufacturers.data', 3)
                 ->has('manufacturers.data.0', fn (Assert $row) => $row
-                    ->has('id')->has('name')->has('models_count')->has('assets_count')
+                    ->has('id')->has('name')->has('image_url')->has('models_count')->has('assets_count')
                 )
             );
     }
