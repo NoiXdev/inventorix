@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use App\Concerns\Creator;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['name'])]
 class Manufacturer extends Model
 {
-    use HasFactory, HasUuids;
+    use Creator, HasFactory, HasUuids, SoftDeletes;
 
     public function models(): HasMany
     {
