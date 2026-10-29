@@ -16,5 +16,7 @@ class DatabaseSeeder extends Seeder
             'password' => 'Start23!',
             'login_enabled' => true,
         ]);
+
+        $this->call(ManufacturerSeeder::class);
     }
 }
