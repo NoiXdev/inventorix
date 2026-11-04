@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { TextField } from '@/components/form/text-field';
 import { SelectField } from '@/components/form/select-field';
 import { FormError } from '@/components/form/form-error';
+import { FormCard, FormCardContent, FormCardHeader } from '@/components/form/form-card';
 import { SignaturePad } from '@/components/handover/signature-pad';
 import { AssetPicker, type AssetOption } from './asset-picker';
 
@@ -67,7 +68,7 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions,
         step === 3;
 
     return (
-        <form onSubmit={submit} className="max-w-2xl space-y-6">
+        <form onSubmit={submit} className="space-y-6">
             <ol className="flex gap-2 text-sm">
                 {['Type & assets', 'Recipient', 'Details', 'Review & sign'].map((label, i) => (
                     <li key={label} className={`rounded px-2 py-1 ${step === i + 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>{i + 1}. {label}</li>
@@ -75,62 +76,71 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions,
             </ol>
 
             {step === 1 && (
-                <div className="space-y-4">
-                    <SelectField id="type" label="Type" required options={typeOptions.map((t) => ({ value: t.value, label: t.label }))}
-                        value={form.data.type} onChange={setType} error={form.errors.type} />
-                    <div className="space-y-1">
-                        <Label>Assets</Label>
-                        <AssetPicker options={eligibleAssets} selected={form.data.asset_ids} onChange={(ids) => form.setData('asset_ids', ids)} />
-                        <FormError message={form.errors.asset_ids} />
-                    </div>
-                </div>
+                <FormCard>
+                    <FormCardHeader title="Type & assets" />
+                    <FormCardContent>
+                        <SelectField id="type" label="Type" required options={typeOptions.map((t) => ({ value: t.value, label: t.label }))}
+                            value={form.data.type} onChange={setType} error={form.errors.type} />
+                        <div className="space-y-1">
+                            <Label>Assets</Label>
+                            <AssetPicker options={eligibleAssets} selected={form.data.asset_ids} onChange={(ids) => form.setData('asset_ids', ids)} />
+                            <FormError message={form.errors.asset_ids} />
+                        </div>
+                    </FormCardContent>
+                </FormCard>
             )}
 
             {step === 2 && (
-                <div className="space-y-4">
-                    <h2 className="text-lg font-medium">Recipient</h2>
-                    <SelectField id="recipient_kind" label="Recipient kind" required options={recipientKindOptions}
-                        value={form.data.recipient_kind} onChange={(v) => form.setData('recipient_kind', v)} error={form.errors.recipient_kind} />
-                    {isInternal && (
-                        <SelectField id="recipient_user_id" label="User" required options={userOptions.map((u) => ({ value: u.value, label: u.label }))}
-                            value={form.data.recipient_user_id} onChange={pickUser} error={form.errors.recipient_user_id} />
-                    )}
-                    <TextField id="recipient_name" label="Recipient name" required
-                        value={form.data.recipient_name} onChange={(v) => form.setData('recipient_name', v)} error={form.errors.recipient_name} />
-                    <TextField id="recipient_email" label="Recipient email"
-                        value={form.data.recipient_email} onChange={(v) => form.setData('recipient_email', v)} error={form.errors.recipient_email} />
-                </div>
+                <FormCard>
+                    <FormCardHeader title="Recipient" />
+                    <FormCardContent className="md:grid-cols-2">
+                        <SelectField id="recipient_kind" label="Recipient kind" required options={recipientKindOptions}
+                            value={form.data.recipient_kind} onChange={(v) => form.setData('recipient_kind', v)} error={form.errors.recipient_kind} />
+                        {isInternal && (
+                            <SelectField id="recipient_user_id" label="User" required options={userOptions.map((u) => ({ value: u.value, label: u.label }))}
+                                value={form.data.recipient_user_id} onChange={pickUser} error={form.errors.recipient_user_id} />
+                        )}
+                        <TextField id="recipient_name" label="Recipient name" required
+                            value={form.data.recipient_name} onChange={(v) => form.setData('recipient_name', v)} error={form.errors.recipient_name} />
+                        <TextField id="recipient_email" label="Recipient email"
+                            value={form.data.recipient_email} onChange={(v) => form.setData('recipient_email', v)} error={form.errors.recipient_email} />
+                    </FormCardContent>
+                </FormCard>
             )}
 
             {step === 3 && (
-                <div className="space-y-4">
-                    <h2 className="text-lg font-medium">Details</h2>
-                    <div className="space-y-2"><Label htmlFor="accessories">Accessories</Label>
-                        <Textarea id="accessories" value={form.data.accessories} onChange={(e) => form.setData('accessories', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="condition_notes">Condition notes</Label>
-                        <Textarea id="condition_notes" value={form.data.condition_notes} onChange={(e) => form.setData('condition_notes', e.target.value)} /></div>
-                    <div className="space-y-2"><Label htmlFor="terms_text">Terms</Label>
-                        <Textarea id="terms_text" rows={6} value={form.data.terms_text} onChange={(e) => form.setData('terms_text', e.target.value)} />
-                        <FormError message={form.errors.terms_text} /></div>
-                </div>
+                <FormCard>
+                    <FormCardHeader title="Details" />
+                    <FormCardContent>
+                        <div className="space-y-2"><Label htmlFor="accessories">Accessories</Label>
+                            <Textarea id="accessories" value={form.data.accessories} onChange={(e) => form.setData('accessories', e.target.value)} /></div>
+                        <div className="space-y-2"><Label htmlFor="condition_notes">Condition notes</Label>
+                            <Textarea id="condition_notes" value={form.data.condition_notes} onChange={(e) => form.setData('condition_notes', e.target.value)} /></div>
+                        <div className="space-y-2"><Label htmlFor="terms_text">Terms</Label>
+                            <Textarea id="terms_text" rows={6} value={form.data.terms_text} onChange={(e) => form.setData('terms_text', e.target.value)} />
+                            <FormError message={form.errors.terms_text} /></div>
+                    </FormCardContent>
+                </FormCard>
             )}
 
             {step === 4 && (
-                <div className="space-y-4">
-                    <h2 className="text-lg font-medium">Review &amp; sign</h2>
-                    <div className="rounded-md border p-3 text-sm text-muted-foreground">
-                        <div><strong className="text-foreground">{selectedType?.label}</strong> to <strong className="text-foreground">{form.data.recipient_name || '—'}</strong></div>
-                        <div>{form.data.asset_ids.length} asset(s)</div>
-                        {selectedType?.assignsOwner && (
-                            <div className="mt-1 text-xs text-muted-foreground">The recipient will be set as the owner of these assets.</div>
-                        )}
-                    </div>
-                    <div className="space-y-1">
-                        <Label>Signature</Label>
-                        <SignaturePad value={form.data.signature_png} onChange={(b64) => form.setData('signature_png', b64)} />
-                        <FormError message={form.errors.signature_png} />
-                    </div>
-                </div>
+                <FormCard>
+                    <FormCardHeader title="Review & sign" />
+                    <FormCardContent>
+                        <div className="rounded-md border p-3 text-sm text-muted-foreground">
+                            <div><strong className="text-foreground">{selectedType?.label}</strong> to <strong className="text-foreground">{form.data.recipient_name || '—'}</strong></div>
+                            <div>{form.data.asset_ids.length} asset(s)</div>
+                            {selectedType?.assignsOwner && (
+                                <div className="mt-1 text-xs text-muted-foreground">The recipient will be set as the owner of these assets.</div>
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <Label>Signature</Label>
+                            <SignaturePad value={form.data.signature_png} onChange={(b64) => form.setData('signature_png', b64)} />
+                            <FormError message={form.errors.signature_png} />
+                        </div>
+                    </FormCardContent>
+                </FormCard>
             )}
 
             <div className="flex justify-between">
