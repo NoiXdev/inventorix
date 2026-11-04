@@ -44,13 +44,25 @@ class AppServiceProvider extends ServiceProvider
         ));
 
         // Audit columns to pair with the App\Concerns\Creator trait.
-        // `after()` only applies on MySQL/MariaDB; SQLite ignores it.
+        // `after()` only applies on MySQL/MariaDB; SQLite ignores it. It is only
+        // valid when altering a table: MariaDB rejects AFTER inside CREATE TABLE,
+        // where the columns simply land in declaration order instead.
         Blueprint::macro('creator', function (bool $withDeleted = true) {
-            $this->foreignUuid('created_by')->nullable()->after('created_at')->constrained('users')->nullOnDelete();
-            $this->foreignUuid('updated_by')->nullable()->after('updated_at')->constrained('users')->nullOnDelete();
+            $column = function (string $name, string $after) {
+                $definition = $this->foreignUuid($name)->nullable();
+
+                if (! $this->creating()) {
+                    $definition->after($after);
+                }
+
+                $definition->constrained('users')->nullOnDelete();
+            };
+
+            $column('created_by', 'created_at');
+            $column('updated_by', 'updated_at');
 
             if ($withDeleted) {
-                $this->foreignUuid('deleted_by')->nullable()->after('deleted_at')->constrained('users')->nullOnDelete();
+                $column('deleted_by', 'deleted_at');
             }
         });
 
