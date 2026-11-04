@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 // image is set by the controller from an upload, never mass-assigned:
@@ -26,5 +27,10 @@ class Category extends Model
             'checkin_email' => 'boolean',
             'category_type' => CategoryType::class,
         ];
+    }
+
+    public function models(): HasMany
+    {
+        return $this->hasMany(AssetModel::class, 'category_id');
     }
 }

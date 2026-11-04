@@ -95,7 +95,7 @@ class AssetHistory
             'state' => AssetState::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             'buy_type' => BuyType::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             'asset_type_id' => AssetType::find($value)?->name ?? '(removed)',
-            'model_id' => AssetModel::find($value)?->name ?? '(removed)',
+            'model_id' => AssetModel::withTrashed()->find($value)?->name ?? '(removed)',
             'owner_id' => User::find($value)?->name ?? '(removed)',
             'place_id' => Place::find($value)?->name ?? '(removed)',
             default => (string) $value,

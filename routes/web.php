@@ -49,6 +49,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('manufacturers', ManufacturerController::class)->except('show');
         Route::resource('places', PlaceController::class)->except('show');
         Route::resource('asset-types', AssetTypeController::class)->except('show');
+        Route::get('asset-models/{asset_model}/image', [AssetModelController::class, 'image'])
+            ->name('asset-models.image');
         Route::resource('asset-models', AssetModelController::class)->except('show');
         Route::resource('depreciations', DepreciationController::class)->except('show');
         Route::get('categories/{category}/image', [CategoryController::class, 'image'])

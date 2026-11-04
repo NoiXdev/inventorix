@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable(['name'])]
@@ -20,5 +21,10 @@ class CustomFieldset extends Model
         return $this->belongsToMany(CustomField::class, 'custom_field_has_custom_fieldsets')
             ->withPivot(['order', 'required'])
             ->orderByPivot('order');
+    }
+
+    public function models(): HasMany
+    {
+        return $this->hasMany(AssetModel::class, 'fieldset_id');
     }
 }
