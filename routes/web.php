@@ -8,6 +8,7 @@ use App\Http\Controllers\App\AssetModelController;
 use App\Http\Controllers\App\AssetTypeController;
 use App\Http\Controllers\App\AuthController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
 use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
@@ -46,6 +47,7 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('places', PlaceController::class)->except('show');
         Route::resource('asset-types', AssetTypeController::class)->except('show');
         Route::resource('asset-models', AssetModelController::class)->except('show');
+        Route::resource('depreciations', DepreciationController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
         Route::resource('assets', AssetController::class);
