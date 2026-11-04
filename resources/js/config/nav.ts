@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, LayoutList, ListPlus, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -37,6 +37,8 @@ export const navGroups: NavGroup[] = [
         label: 'Administration',
         items: [
             { label: 'Users', href: '/app/users', icon: Users, match: (p) => p.startsWith('/app/users') },
+            { label: 'Custom fields', href: '/app/custom-fields', icon: ListPlus, match: (p) => p.startsWith('/app/custom-fields') },
+            { label: 'Fieldsets', href: '/app/custom-fieldsets', icon: LayoutList, match: (p) => p.startsWith('/app/custom-fieldsets') },
         ],
     },
     {

@@ -11,13 +11,14 @@ interface Props {
     required?: boolean;
     autoFocus?: boolean;
     autoComplete?: string;
+    placeholder?: string;
 }
 
-export function TextField({ id, label, value, onChange, error, required, autoFocus, autoComplete }: Props) {
+export function TextField({ id, label, value, onChange, error, required, autoFocus, autoComplete, placeholder }: Props) {
     return (
         <div className="space-y-2">
             <Label htmlFor={id}>{label}{required && <span className="text-destructive"> *</span>}</Label>
-            <Input id={id} value={value} autoFocus={autoFocus} autoComplete={autoComplete} aria-invalid={!!error}
+            <Input id={id} value={value} autoFocus={autoFocus} autoComplete={autoComplete} placeholder={placeholder} aria-invalid={!!error}
                 onChange={(e) => onChange(e.target.value)} />
             <FormError message={error} />
         </div>

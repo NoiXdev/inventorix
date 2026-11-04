@@ -8,6 +8,8 @@ use App\Http\Controllers\App\AssetModelController;
 use App\Http\Controllers\App\AssetTypeController;
 use App\Http\Controllers\App\AuthController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\CustomFieldController;
+use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
@@ -52,6 +54,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('categories/{category}/image', [CategoryController::class, 'image'])
             ->name('categories.image');
         Route::resource('categories', CategoryController::class)->except('show');
+        Route::resource('custom-fields', CustomFieldController::class)->except('show');
+        Route::resource('custom-fieldsets', CustomFieldsetController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
         Route::resource('assets', AssetController::class);
