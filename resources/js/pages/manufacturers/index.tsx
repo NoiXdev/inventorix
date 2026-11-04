@@ -27,6 +27,7 @@ const columns: ColumnDef<Row>[] = [
     {
         id: 'actions',
         header: '',
+        size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
                 <Button asChild variant="ghost" size="icon"><Link href={`/app/manufacturers/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>

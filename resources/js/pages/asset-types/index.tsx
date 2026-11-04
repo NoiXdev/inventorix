@@ -11,7 +11,7 @@ interface Row { id: string; name: string; }
 const columns: ColumnDef<Row>[] = [
     { accessorKey: 'name', header: 'Name' },
     {
-        id: 'actions', header: '',
+        id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
                 <Button asChild variant="ghost" size="icon"><Link href={`/app/asset-types/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>

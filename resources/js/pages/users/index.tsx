@@ -17,7 +17,7 @@ const columns: ColumnDef<Row>[] = [
     ) },
     { id: 'assets_count', accessorFn: (r) => r.assets_count, header: 'Assets', cell: ({ row }) => <Badge variant="secondary">{row.original.assets_count}</Badge> },
     {
-        id: 'actions', header: '',
+        id: 'actions', header: '', size: 136,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
                 <Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}`}><Eye className="h-4 w-4" /></Link></Button>

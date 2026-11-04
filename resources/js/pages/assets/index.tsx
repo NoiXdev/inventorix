@@ -54,7 +54,7 @@ export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, ma
         { id: 'assets.buy_price', accessorFn: (r) => r.buy_price, header: 'Buy price', cell: ({ row }) => row.original.buy_price ?? '—' },
         { id: 'incidents_count', accessorFn: (r) => r.incidents_count, header: 'Incidents', cell: ({ row }) => <Badge variant="secondary">{row.original.incidents_count}</Badge> },
         {
-            id: 'actions', header: '',
+            id: 'actions', header: '', size: 176,
             cell: ({ row }) => (
                 <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => setPrintItems([itemFor(row.original)])} aria-label="Print QR"><QrCode className="h-4 w-4" /></Button>
