@@ -84,6 +84,9 @@ class Asset extends Model
                 'guarantee_end',
                 'invoice',
                 'state',
+                // Custom field columns, trashed fields included: their columns
+                // still exist and can still change.
+                ...CustomField::withTrashed()->pluck('db_column')->filter()->all(),
             ])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()

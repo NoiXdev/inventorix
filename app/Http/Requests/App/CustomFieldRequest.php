@@ -4,8 +4,10 @@ namespace App\Http\Requests\App;
 
 use App\Enums\CustomFieldElement;
 use App\Models\CustomField;
+use App\Support\CustomFields\CustomFieldColumns;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CustomFieldRequest extends FormRequest
@@ -27,8 +29,23 @@ class CustomFieldRequest extends FormRequest
                 'required',
                 Rule::in(array_keys(CustomField::PREDEFINED_FORMATS)),
                 function (string $attribute, mixed $value, Closure $fail): void {
-                    if ($this->input('element') !== CustomFieldElement::TEXT->value && in_array($value, CustomField::TEXT_ONLY_FORMATS, true)) {
+                    $element = $this->input('element');
+                    $textOnly = [...CustomField::TEXT_ONLY_FORMATS, 'CUSTOM REGEX'];
+
+                    if ($element !== CustomFieldElement::TEXT->value && in_array($value, $textOnly, true)) {
                         $fail('This format can only be used with a text element.');
+                    } elseif ($value === 'DATE' && $element !== CustomFieldElement::DATE_PICKER->value) {
+                        $fail('The DATE format needs the date picker element.');
+                    } elseif ($value === 'DATETIME' && $element !== CustomFieldElement::DATETIME_PICKER->value) {
+                        $fail('The DATETIME format needs the datetime picker element.');
+                    }
+
+                    // DATE / DATETIME fields are backed by a native date column,
+                    // the others by text; switching would mean converting the
+                    // column and every value in it.
+                    $existing = $this->field();
+                    if ($existing && CustomFieldColumns::isDateFormat($existing->formatName()) !== CustomFieldColumns::isDateFormat($value)) {
+                        $fail('The format cannot be changed to or from DATE / DATETIME. Create a new field instead.');
                     }
                 },
             ],
@@ -46,7 +63,28 @@ class CustomFieldRequest extends FormRequest
                 'nullable', 'string', 'max:65535',
             ],
             'help_text' => ['nullable', 'string', 'max:5000'],
-            'field_encrypted' => ['boolean'],
+            'field_encrypted' => [
+                'boolean',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    $encrypted = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+
+                    if ($encrypted && CustomFieldColumns::isDateFormat($this->input('format'))) {
+                        $fail('Date fields cannot be encrypted: their column only holds dates.');
+                    } elseif ($encrypted && in_array($this->input('element'), ['checkbox', 'radio'], true)) {
+                        $fail('Checkbox and radio fields cannot be encrypted.');
+                    } elseif ($encrypted && filter_var($this->input('is_unique'), FILTER_VALIDATE_BOOLEAN)) {
+                        $fail('Encrypted fields cannot be unique: encrypted values cannot be compared.');
+                    }
+
+                    // Existing values would stay as they are — plain text read as
+                    // ciphertext, or ciphertext shown as text.
+                    $existing = $this->field();
+                    if ($existing && $existing->field_encrypted !== $encrypted
+                        && DB::table(CustomFieldColumns::TABLE)->whereNotNull($existing->db_column)->exists()) {
+                        $fail('Encryption cannot be switched while assets have a value for this field.');
+                    }
+                },
+            ],
             'show_in_email' => ['boolean'],
             'show_in_requestable_list' => ['boolean'],
             'is_unique' => ['boolean'],
@@ -56,6 +94,14 @@ class CustomFieldRequest extends FormRequest
             'display_checkin' => ['boolean'],
             'display_audit' => ['boolean'],
         ];
+    }
+
+    /** The field being edited, or null when creating one. */
+    private function field(): ?CustomField
+    {
+        $field = $this->route('custom_field');
+
+        return $field instanceof CustomField ? $field : null;
     }
 
     /**

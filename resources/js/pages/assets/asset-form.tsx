@@ -7,17 +7,21 @@ import { DateField } from '@/components/form/date-field';
 import { NumberField } from '@/components/form/number-field';
 import { TagsInput } from '@/components/form/tags-input';
 import { FormCard, FormCardContent, FormCardHeader } from '@/components/form/form-card';
+import { CustomFieldInput, type CustomFieldDefinition, type CustomFieldValue } from '@/components/form/custom-field-input';
 
 type Option = { value: string; label: string };
 export interface AssetOptions {
     stateOptions: Option[]; buyTypeOptions: Option[]; assetTypeOptions: Option[];
     ownerOptions: Option[]; placeOptions: Option[]; modelOptions: Option[];
     userCreateUrl: string;
+    /** Model id => the custom fields of its fieldset. */
+    customFieldsByModel?: Record<string, CustomFieldDefinition[]>;
 }
 export interface AssetInitial {
     id: string; state: string; asset_type_id: string; owner_id: string | null; place_id: string | null;
     model_id: string | null; serial_number: string | null; buy_date: string | null; guarantee_end: string | null;
     buy_type: string | null; buy_price: string; invoice: string | null; tags: string[];
+    custom_fields?: Record<string, CustomFieldValue>;
 }
 interface Props { initial?: AssetInitial; options: AssetOptions; submitUrl: string; method: 'post' | 'put'; forceId?: string | null; }
 
@@ -36,7 +40,10 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
         buy_price: initial?.buy_price ?? '',
         invoice: initial?.invoice ?? '',
         tags: initial?.tags ?? [],
+        custom_fields: initial?.custom_fields ?? {} as Record<string, CustomFieldValue>,
     });
+    const customFields = options.customFieldsByModel?.[form.data.model_id] ?? [];
+    const errors = form.errors as Record<string, string | undefined>;
 
     const submit = (e: React.FormEvent) => { e.preventDefault(); form.submit(method, submitUrl); };
 
@@ -60,6 +67,20 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
                     </div>
                 </FormCardContent>
             </FormCard>
+
+            {customFields.length > 0 && (
+                <FormCard>
+                    <FormCardHeader title="Custom fields" description="Defined by the model's fieldset." />
+                    <FormCardContent className="md:grid-cols-2">
+                        {customFields.map((field) => (
+                            <CustomFieldInput key={field.db_column} field={field}
+                                value={form.data.custom_fields[field.db_column] ?? null}
+                                onChange={(v) => form.setData('custom_fields', { ...form.data.custom_fields, [field.db_column]: v })}
+                                error={errors[`custom_fields.${field.db_column}`] ?? errors[`custom_fields.${field.db_column}.0`]} />
+                        ))}
+                    </FormCardContent>
+                </FormCard>
+            )}
 
             <FormCard>
                 <FormCardHeader title="Assignment" />

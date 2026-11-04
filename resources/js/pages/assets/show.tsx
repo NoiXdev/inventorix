@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { Lock } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ interface Props {
     attachmentCategoryOptions: { value: string; label: string }[];
     incidents: IncidentItem[];
     history: HistoryEntry[];
+    customFields: { name: string; value: string | null; encrypted: boolean }[];
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -35,7 +37,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents, history }: Props) {
+export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents, history, customFields = [] }: Props) {
     return (
         <AppLayout title="Asset" breadcrumbs={[{ label: 'Assets', href: '/app/assets' }, { label: asset.serial_number ?? 'Asset' }]}>
             <div className="mb-6 flex items-center justify-between">
@@ -75,6 +77,20 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                             <Field label="Updated">{asset.updated_at ?? '—'}</Field>
                         </CardContent>
                     </Card>
+                    {customFields.length > 0 && (
+                        <Card className="mt-4">
+                            <CardContent className="grid grid-cols-2 gap-6 py-6 md:grid-cols-3">
+                                {customFields.map((f) => (
+                                    <Field key={f.name} label={f.name}>
+                                        <span className="inline-flex items-center gap-1 whitespace-pre-line">
+                                            {f.encrypted && <Lock className="h-3 w-3 text-muted-foreground" aria-label="Encrypted" />}
+                                            {f.value ?? '—'}
+                                        </span>
+                                    </Field>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="attachments" className="mt-4">

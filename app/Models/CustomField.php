@@ -4,20 +4,23 @@ namespace App\Models;
 
 use App\Concerns\Creator;
 use App\Enums\CustomFieldElement;
+use App\Observers\CustomFieldObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+// db_column is set by CustomFieldObserver from the name, never mass-assigned:
+// it names a real column on `assets`.
 #[Fillable([
     'name',
     'format',
     'element',
     'field_values',
     'field_encrypted',
-    'db_column',
     'help_text',
     'show_in_email',
     'show_in_requestable_list',
@@ -28,6 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'display_checkin',
     'display_audit',
 ])]
+#[ObservedBy(CustomFieldObserver::class)]
 class CustomField extends Model
 {
     use Creator, HasFactory, HasUuids, SoftDeletes;

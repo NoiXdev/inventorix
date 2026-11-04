@@ -11,12 +11,14 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AssetType;
 use App\Models\Attachment;
+use App\Models\CustomField;
 use App\Models\Incident;
 use App\Models\Manufacturer;
 use App\Models\Place;
 use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
+use App\Support\CustomFields\AssetCustomFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +36,8 @@ class AssetController extends Controller
         // withCount(): Eloquent's select() overwrites the entire column list,
         // so calling it after withCount() would wipe out the incidents_count
         // subselect that withCount() adds via addSelect().
+        $listed = AssetCustomFields::listed();
+
         $query = Asset::query()
             ->select(
                 'assets.id', 'assets.state', 'assets.serial_number', 'assets.buy_price', 'assets.created_at',
@@ -41,6 +45,7 @@ class AssetController extends Controller
                 'asset_models.name as model_name',
                 'manufacturers.name as manufacturer_name',
                 'users.name as owner_name',
+                ...$listed->map(fn (CustomField $f) => 'assets.'.$f->db_column),
             )
             ->withCount('incidents');
 
@@ -58,6 +63,7 @@ class AssetController extends Controller
             'buy_price' => $a->buy_price,
             'created_at' => optional($a->created_at)->format('d.m.Y'),
             'incidents_count' => $a->incidents_count,
+            'custom' => $listed->mapWithKeys(fn (CustomField $f) => [$f->db_column => $a->getAttribute($f->db_column)])->all(),
         ]);
 
         return Inertia::render('assets/index', [
@@ -73,6 +79,7 @@ class AssetController extends Controller
             'stateOptions' => $this->stateOptions(),
             'assetTypeOptions' => $this->options(AssetType::query()),
             'manufacturerOptions' => $this->options(Manufacturer::query()),
+            'customColumns' => $listed->map(fn (CustomField $f) => ['key' => $f->db_column, 'label' => $f->name])->values()->all(),
             'importResult' => $request->session()->get('importResult'),
         ]);
     }
@@ -100,6 +107,7 @@ class AssetController extends Controller
         if (! empty($forcedId)) {
             $asset->id = $forcedId; // HasUuids only auto-generates when the key is empty
         }
+        AssetCustomFields::fill($asset, $request->customFields(), $request->validated('custom_fields') ?? []);
         $asset->save();
         $asset->syncTags($tags);
 
@@ -114,6 +122,12 @@ class AssetController extends Controller
         return Inertia::render('assets/show', [
             'asset' => $this->detail($asset),
             'history' => AssetHistory::for($asset),
+            'customFields' => AssetCustomFields::forModel($asset->model_id)
+                ->map(fn (CustomField $f) => [
+                    'name' => $f->name,
+                    'value' => AssetCustomFields::plain($asset, $f),
+                    'encrypted' => $f->field_encrypted,
+                ])->values()->all(),
             'incidents' => $asset->incidents->map(fn (Incident $i) => [
                 'id' => $i->id,
                 'title' => $i->title,
@@ -162,6 +176,7 @@ class AssetController extends Controller
                 'buy_price' => $asset->buy_price !== null ? (string) $asset->buy_price : '',
                 'invoice' => $asset->invoice,
                 'tags' => $asset->tags->pluck('name')->all(),
+                'custom_fields' => AssetCustomFields::values($asset, CustomField::query()->get()),
             ],
         ]));
     }
@@ -174,7 +189,9 @@ class AssetController extends Controller
         // (the shared AssetForm carries an `id` field for the forced-create path).
         unset($data['tags'], $data['id']);
 
-        $asset->update($data);
+        $asset->fill($data);
+        AssetCustomFields::fill($asset, $request->customFields(), $request->validated('custom_fields') ?? []);
+        $asset->save();
         $asset->syncTags($tags);
 
         return to_route('app.assets.index')->with('success', 'Asset updated.');
@@ -201,6 +218,13 @@ class AssetController extends Controller
             'userCreateUrl' => route('app.users.quick-store'),
             'modelOptions' => AssetModel::query()->with('manufacturer')->orderBy('name')->get()
                 ->map(fn (AssetModel $m) => ['value' => $m->id, 'label' => '('.optional($m->manufacturer)->name.') '.$m->name])->all(),
+            // Model id => its fieldset's fields, so the form can swap the
+            // custom field inputs when the model changes.
+            'customFieldsByModel' => AssetModel::query()->whereNotNull('fieldset_id')->with('fieldset.fields')->get()
+                ->filter(fn (AssetModel $m) => $m->fieldset !== null)
+                ->mapWithKeys(fn (AssetModel $m) => [
+                    $m->id => $m->fieldset->fields->map(fn (CustomField $f) => AssetCustomFields::definition($f))->values()->all(),
+                ])->all(),
         ];
     }
 

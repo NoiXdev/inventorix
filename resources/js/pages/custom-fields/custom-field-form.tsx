@@ -17,6 +17,7 @@ export interface CustomFieldOptions {
 export interface CustomFieldInitial {
     id: string;
     name: string;
+    db_column: string | null;
     element: string;
     format: string;
     custom_regex: string | null;
@@ -93,8 +94,15 @@ export function CustomFieldForm({ initial, elementOptions, formatOptions, textOn
             <FormCard>
                 <FormCardHeader title="General" />
                 <FormCardContent className="md:grid-cols-2">
-                    <TextField id="name" label="Name" required autoFocus
-                        value={form.data.name} onChange={(v) => form.setData('name', v)} error={form.errors.name} />
+                    <div className="space-y-2">
+                        <TextField id="name" label="Name" required autoFocus
+                            value={form.data.name} onChange={(v) => form.setData('name', v)} error={form.errors.name} />
+                        {initial?.db_column && (
+                            <p className="text-sm text-muted-foreground">
+                                Stored in column <code className="font-mono">{initial.db_column}</code>; renaming the field renames it.
+                            </p>
+                        )}
+                    </div>
                     <SelectField id="element" label="Element" required options={elementOptions}
                         value={form.data.element} onChange={setElement} error={form.errors.element} />
                     <SelectField id="format" label="Format" required options={formats}

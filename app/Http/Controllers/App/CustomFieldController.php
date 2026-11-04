@@ -64,6 +64,7 @@ class CustomFieldController extends Controller
             'customField' => [
                 'id' => $customField->id,
                 'name' => $customField->name,
+                'db_column' => $customField->db_column,
                 'element' => $customField->element->value,
                 'format' => $customField->formatName(),
                 // Shown without the `regex:` prefix the rule is stored with.
@@ -94,7 +95,8 @@ class CustomFieldController extends Controller
     public function destroy(CustomField $customField): RedirectResponse
     {
         // Soft delete: the field disappears from its fieldsets (the relation
-        // skips trashed fields) but comes back with them if restored.
+        // skips trashed fields) but comes back with them if restored. Its
+        // assets column and values stay; only a force delete drops them.
         $customField->delete();
 
         return to_route('app.custom-fields.index')->with('success', 'Custom field deleted.');
@@ -109,7 +111,7 @@ class CustomFieldController extends Controller
                 fn (string $name) => ['value' => $name, 'label' => $name],
                 array_keys(CustomField::PREDEFINED_FORMATS),
             ),
-            'textOnlyFormats' => CustomField::TEXT_ONLY_FORMATS,
+            'textOnlyFormats' => [...CustomField::TEXT_ONLY_FORMATS, 'CUSTOM REGEX'],
         ];
     }
 

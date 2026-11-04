@@ -2,6 +2,8 @@
 
 namespace App\Support\Assets;
 
+use App\Models\CustomField;
+use App\Support\CustomFields\AssetCustomFields;
 use App\Support\Table\TableQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -21,9 +23,13 @@ class AssetTableQuery
             ->leftJoin('manufacturers', 'manufacturers.id', '=', 'asset_models.manufacturer_id')
             ->leftJoin('users', 'users.id', '=', 'assets.owner_id');
 
+        // Custom fields shown in the list are searchable and sortable like any
+        // other column.
+        $custom = AssetCustomFields::listed()->map(fn (CustomField $f) => 'assets.'.$f->db_column)->all();
+
         return TableQuery::for($query, $request)
-            ->searchable(['assets.serial_number', 'asset_types.name', 'manufacturers.name', 'asset_models.name', 'users.name'])
-            ->sortable(['assets.state', 'asset_type_name', 'manufacturer_name', 'model_name', 'owner_name', 'assets.serial_number', 'assets.buy_price', 'incidents_count'])
+            ->searchable(['assets.serial_number', 'asset_types.name', 'manufacturers.name', 'asset_models.name', 'users.name', ...$custom])
+            ->sortable(['assets.state', 'asset_type_name', 'manufacturer_name', 'model_name', 'owner_name', 'assets.serial_number', 'assets.buy_price', 'incidents_count', ...$custom])
             ->filterable([
                 'state' => 'assets.state',
                 'asset_type_id' => 'assets.asset_type_id',

@@ -18,6 +18,7 @@ interface Row {
     asset_type_name: string | null; manufacturer_name: string | null; model_name: string | null;
     owner_name: string | null; serial_number: string | null; buy_price: number | null;
     created_at: string | null; incidents_count: number;
+    custom: Record<string, string | null>;
 }
 type Option = { value: string; label: string };
 
@@ -38,10 +39,12 @@ const itemFor = (r: Row): LabelItem => ({
 interface Props {
     assets: { data: Row[]; meta: PaginationMeta };
     stateOptions: Option[]; assetTypeOptions: Option[]; manufacturerOptions: Option[];
+    /** Custom fields flagged show_in_listview. */
+    customColumns?: { key: string; label: string }[];
     importResult?: { imported: number; failed: { row: number; message: string }[] } | null;
 }
 
-export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, manufacturerOptions, importResult }: Props) {
+export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, manufacturerOptions, customColumns = [], importResult }: Props) {
     const [printItems, setPrintItems] = useState<LabelItem[] | null>(null);
 
     const columns: ColumnDef<Row>[] = [
@@ -53,6 +56,10 @@ export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, ma
         { id: 'assets.serial_number', accessorFn: (r) => r.serial_number, header: 'Serial', cell: ({ row }) => row.original.serial_number ?? '—' },
         { id: 'assets.buy_price', accessorFn: (r) => r.buy_price, header: 'Buy price', cell: ({ row }) => row.original.buy_price ?? '—' },
         { id: 'incidents_count', accessorFn: (r) => r.incidents_count, header: 'Incidents', cell: ({ row }) => <Badge variant="secondary">{row.original.incidents_count}</Badge> },
+        ...customColumns.map((c): ColumnDef<Row> => ({
+            id: `assets.${c.key}`, accessorFn: (r) => r.custom?.[c.key], header: c.label,
+            cell: ({ row }) => row.original.custom?.[c.key] ?? '—',
+        })),
         {
             id: 'actions', header: '', size: 176,
             cell: ({ row }) => (
@@ -96,7 +103,7 @@ export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, ma
                 pagination={assets.meta}
                 baseUrl="/app/assets"
                 rowHref={(r) => `/app/assets/${r.id}`}
-                sortable={['assets.state', 'asset_type_name', 'manufacturer_name', 'model_name', 'owner_name', 'assets.serial_number', 'assets.buy_price', 'incidents_count']}
+                sortable={['assets.state', 'asset_type_name', 'manufacturer_name', 'model_name', 'owner_name', 'assets.serial_number', 'assets.buy_price', 'incidents_count', ...customColumns.map((c) => `assets.${c.key}`)]}
                 filters={[
                     { key: 'state', label: 'State', options: stateOptions },
                     { key: 'asset_type_id', label: 'Type', options: assetTypeOptions },

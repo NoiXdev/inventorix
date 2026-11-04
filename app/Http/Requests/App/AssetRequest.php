@@ -4,7 +4,10 @@ namespace App\Http\Requests\App;
 
 use App\Enums\AssetState;
 use App\Enums\BuyType;
+use App\Models\CustomField;
+use App\Support\CustomFields\AssetCustomFields;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class AssetRequest extends FormRequest
@@ -40,6 +43,24 @@ class AssetRequest extends FormRequest
             'invoice' => ['nullable', 'string', 'max:255'],
             'tags' => ['nullable', 'array'],
             'tags.*' => ['string', 'max:255'],
+            ...AssetCustomFields::rules($this->customFields(), $this->route('asset')),
         ];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return AssetCustomFields::attributeNames($this->customFields());
+    }
+
+    /**
+     * The custom fields of the submitted model's fieldset — the ones this
+     * request may set and must validate.
+     *
+     * @return Collection<int, CustomField>
+     */
+    public function customFields(): Collection
+    {
+        return once(fn () => AssetCustomFields::forModel($this->input('model_id')));
     }
 }
