@@ -1,0 +1,45 @@
+#!/bin/sh
+
+#ddev-generated
+## Description: Pull remote database, files and setup into this project
+## Usage: sync [flags] [command] - run "ddev sync help" for every flag
+## Example: "ddev sync --dry-run"\n"ddev sync doctor"\n"ddev sync --target=production --steps=db"\n"ddev sync -vv"
+
+# `## Usage` points at `ddev sync help` because DDEV's own overview for a
+# custom command shows only these annotations and DDEV's global flags - never
+# the wrapped program's. DDEV does offer a `## Flags` annotation, but
+# declaring the engine's fifteen options there would restate them in a second
+# place that drifts the first time one changes, and DDEV would then parse
+# them instead of this script passing them through untouched.
+#
+# This file lives in commands/sync/, so DDEV runs it inside the `sync`
+# service rather than on the host or in the web container - which is where
+# the engine, its profiles and its binaries are.
+#
+# The interpreter is /bin/sh, not bash: the sync image is Alpine and has no
+# bash, so `#!/usr/bin/env bash` fails there with "not found" (exit 127).
+#
+# Everything after `ddev sync` is handed to the engine as typed, except that
+# DDEV itself splits arguments at spaces before this script runs, so a value
+# containing a space (`--target "a b"`) arrives as two words. The project is
+# mounted at /var/www/html, which is the engine's own default project root,
+# so no path flag is needed here.
+#
+# --home is needed, though. The engine reads its global configuration layer -
+# the file where targets belong, so that production hosts and users are not
+# committed with the project - as <home>/.ddev/ddev-sync/config.yaml, resolved
+# from the home of whoever runs it. In here that home is /home/ddev, a
+# project-local directory, so the developer's own file would never be found.
+# docker-compose.ddev-sync.yaml mounts it read-only under the stand-in home
+# named below; see there for why that is not /home/ddev itself.
+#
+# It comes before "$@" so that a developer who passes their own --home still
+# wins: the engine takes the last occurrence of the flag.
+#
+# Worth knowing while debugging the sidecar: `ddev exec -s sync ddev-sync ...`
+# bypasses this file and therefore this flag, so the engine looks for the
+# global layer under the container's own home, finds nothing, and reports
+# "No sync targets are defined." - which is the very symptom the mount exists
+# to prevent. Reach for `ddev sync ...` instead; it is the only form that
+# carries the flag.
+ddev-sync --home /mnt/ddev-sync-host-home "$@"

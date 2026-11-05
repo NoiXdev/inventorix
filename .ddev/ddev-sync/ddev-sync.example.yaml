@@ -1,0 +1,137 @@
+#ddev-generated
+# Reference copy of the configuration template, installed by the ddev-sync
+# add-on and replaced whenever the add-on is updated: do not edit it. Your
+# own configuration is .ddev/ddev-sync.yaml, which was created from this
+# template once. Everything above the blank line is left out of that copy.
+
+# Configuration for ddev-sync in this project. This file is yours: the add-on
+# never overwrites it, and `ddev add-on remove` leaves it alone.
+#
+# Targets usually belong in ~/.ddev/ddev-sync/config.yaml instead, so that
+# your hosts and users are not committed with the project: the add-on mounts
+# that directory into its container read-only, so a target defined there is
+# read for this project too, and for every other project you install the
+# add-on into. Keep in this file what the whole team shares.
+#
+# One target key needs something the add-on does not provide: `ssh_alias`
+# takes a host from ~/.ssh/config, and the add-on gives the sidecar no such
+# file. Nor would copying a real one in help much, because its entries point
+# at identity files, Include directives and control paths that do not exist in
+# the container - authentication here goes through the forwarded agent. Name
+# `host`, `user` and `port` here instead.
+version: 1
+
+# `ddev sync init` writes the first target into your copy of this file,
+# asking for the name, the connection and the stage, and then checks it. It
+# writes nothing anywhere else - including the global file above, which the
+# sidecar can only read. By hand, the shape is:
+
+# targets:
+#   production:
+#     host: web01.example
+#     user: deploy
+#     port: 22
+#     path: /srv/app/
+#     stage: production       # production | staging | testing | dev
+#     layout: plain           # plain | deployer
+
+# Or, when the project is deployed with Deployer, let it state the connection
+# instead of repeating it here, in place of the target above. Beside the
+# block, `host`, `user`, `port`, `path`, `layout` and `ssh_alias` must then
+# not be set; `stage` is still required. The connection is read from
+# `dep config` in the web container, so the project has to be running - and
+# reading it evaluates the project's own `deploy.php`, even in a dry run.
+#   production:
+#     deployer:
+#       host: web01.example     # Deployer's alias; omit if there is only one
+#     stage: production
+
+# Or, when production runs in Docker and you have no rights on its host
+# beyond ordinary SSH. The stack publishes a small sync endpoint on the host's
+# own loopback address, and the engine reaches it through the host - so
+# `host` and `user` are the *Docker host*, as you connect to it today, and
+# `sync_port` is the port the stack publishes.
+#   production:
+#     provider: docker          # server (the default) | docker
+#     host: prod.example
+#     user: deploy
+#     sync_port: 2222
+#     path: /data/              # the path inside the endpoint, not on the host
+#     stage: production
+# Three things differ from a server target. `path` is read inside the
+# endpoint, so it names the mount points the stack gave it. `layout: deployer`
+# is refused: the endpoint has no releases/current structure to resolve.
+# And WordPress is not supported under this provider, because its credentials
+# and its table prefix both come from WP-CLI, which needs a PHP the endpoint
+# deliberately does not carry - the refusal says so rather than failing later.
+
+# Which steps `ddev sync` ticks, here for a project with no files but a setup.
+# Change the ticks in a run and it offers to save them here.
+# steps:
+#   default: [db, setup]
+#   by_target:
+#     production: [db]
+
+# Where the remote's database credentials come from:
+#   env      - read from a .env on the remote (the default)
+#   explicit - from `database.credentials` below; they are secrets, so put
+#              them in .ddev/ddev-sync/local.yaml, which the add-on's shipped
+#              .gitignore already covers - there is nothing to check yourself
+#   wp_cli   - ask the remote's WP-CLI (WordPress; also reads the table prefix)
+# database:
+#   remote_credentials: env
+#   credentials:              # only read when remote_credentials is explicit
+#     host: db.internal
+#     port: 3306
+#     name: app
+#     user: app
+#     password: change-me
+#   env_file: .env            # the remote .env's name, when it differs from
+#                             # this project's own env.file below; falls back
+#                             # to env.file when unset
+#   verify_server_cert: false # skip the remote client's check of the database
+#                             # server's TLS certificate. Off only by choice:
+#                             # for a MariaDB 11.4+ client against MySQL's
+#                             # self-signed certificate, e.g. under provider: docker
+
+# The URL this site serves in production. WordPress rewrites it to the local
+# DDEV address after the import (`wp search-replace`), so a sync cannot do
+# that step without knowing it. `ddev sync init` asks for it; a sync whose
+# profile needs it and does not have it stops before touching the database.
+# sanitize:
+#   production_url: https://www.example.com
+#   # How the sanitize rules treat personal data (all default to off):
+#   # disable_seeding: true       # mask personal data instead of generating realistic values
+#   # disable_sanitize: true      # skip the personal-data rules only; other rules still run.
+#   #                             # Production personal data then stays on this machine.
+#   # disable_sanitize_all: true  # run no sanitize rule at all. Production personal data
+#   #                             # AND the password hashes stay on this machine.
+#   # email_domain: example.fake  # domain of faked emails (a rule's own email_domain wins)
+#   rules:
+#     # A `fake` rule replaces personal data with stable, realistic values.
+#     # `columns` maps a column to a kind; `key` is the column the values
+#     # derive from (default id). The kinds:
+#     #   name        "First Last"          first_name   "First"
+#     #   last_name   "Last"                email        first.last.<hex>@example.fake
+#     #   text        a sentence            integer      a number between min and max
+#     #   zip         a five-digit code     city         a city name
+#     #   phone       a +1 555 01xx number  ip           an address from a documentation range
+#     # A kind that takes settings is written in full instead of as one word:
+#     #   comment: { type: text, length: 80 }
+#     #   age:     { type: integer, min: 18, max: 90 }   # min and max are required
+#     #   address: { type: ip, version: 6 }              # 4 (the default) or 6
+#     # Settings: `length` (text; at most this many characters, default 255),
+#     # `min` / `max` (integer; whole numbers, min not above max), `version`
+#     # (ip). No other kind takes a setting.
+#     - name: fake-reservations
+#       operation: fake
+#       table: reservations
+#       columns:
+#         name: name
+#         email: email
+#         comment: text
+#     # An unmarked sql rule counts as protective and keeps running under
+#     # `disable_sanitize`; mark one that only touches personal data.
+#     - name: blank-newsletter
+#       sql: "UPDATE newsletter SET email = ''"
+#       personal_data: true

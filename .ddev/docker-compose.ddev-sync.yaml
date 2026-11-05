@@ -1,0 +1,96 @@
+#ddev-generated
+# The engine runs beside the project rather than inside the web container,
+# so that it does not depend on the project's PHP, its extensions or its
+# composer state - and so that a broken project can still be synced.
+#
+# It deliberately carries no PHP itself. Framework commands run in the web
+# container through the docker socket below, because the PHP a project needs
+# is the project's own, not this image's.
+services:
+  sync:
+    # The two defaults below are repeated in the `setting` calls at the end of
+    # ddev-sync/prepare-sidecar.sh, because the hook has to resolve the same
+    # image to read /etc/passwd out of it and cannot ask compose what it would
+    # use without running compose. Change one and change the other, or the hook
+    # reads the user database of a different image than the service runs, and
+    # the symptom is OpenSSH's "No user exists for uid".
+    image: ${DDEV_SYNC_IMAGE:-noixdev/ddev-sync}:${DDEV_SYNC_VERSION:-0.1.0-rc.7}
+    container_name: ddev-${DDEV_SITENAME}-sync
+    # The image's entrypoint is the engine itself, so a `command:` would be
+    # handed to it as arguments ("No such command 'sleep'") and the container
+    # would exit. The service only has to stay up for `ddev sync` to exec into
+    # it, so the entrypoint is replaced rather than the command set.
+    entrypoint: ["sleep", "infinity"]
+    # `sleep` as PID 1 ignores SIGTERM, so without an init process every
+    # `ddev stop` would wait out Docker's kill timeout.
+    init: true
+    # As the developer, so that a dump, a rewritten .env and rsynced files
+    # end up owned by them rather than by root.
+    user: "$DDEV_UID:$DDEV_GID"
+    # The gid that owns the socket, discovered on every start by
+    # ddev-sync/prepare-sidecar.sh - see there for why it cannot be a constant.
+    # There is deliberately no default: a wrong group fails as a permission
+    # error that reads like a bug in the tool, so a missing value stops the
+    # start instead.
+    group_add:
+      - "${DDEV_SYNC_DOCKER_GID:?not set - the pre-start hook in .ddev/config.ddev-sync.yaml discovers it, so run `ddev restart`, or reinstall the add-on if that file is missing}"
+    working_dir: /var/www/html
+    environment:
+      # `proxy-socket`, not `socket`: the forwarded agent directory holds
+      # both, and only the proxy is world-accessible (0666), while `socket`
+      # is 0600 and belongs to the developer's uid. Here the sidecar runs as
+      # that very uid, so either would work; the proxy is the choice that
+      # keeps working if the service ever runs as anyone else, which is what
+      # the image does by default. Verified against DDEV v1.25.4 - base
+      # design §12.
+      - SSH_AUTH_SOCK=/home/.ssh-agent/proxy-socket
+      - DDEV_SITENAME
+      - DDEV_PRIMARY_URL
+    volumes:
+      - ../:/var/www/html
+      # DDEV runs a service's custom commands from /mnt/ddev_config/commands/
+      # and mounts nothing there for a service it does not know: without this
+      # line `ddev sync` fails with "not found" (exit 127), which reads like a
+      # missing interpreter. Read-only, because nothing needs to write through
+      # this path - it exists so DDEV can find a command. It is no barrier: the
+      # same .ddev/ is writable through /var/www/html/.ddev above, which is
+      # where the engine reads and writes the project's configuration.
+      - ./:/mnt/ddev_config:ro
+      # The image only knows its own user, and OpenSSH aborts when the running
+      # uid has no passwd entry. The file is the image's own plus one line for
+      # this uid, written by ddev-sync/prepare-sidecar.sh on every start.
+      - ./ddev-sync/passwd:/etc/passwd:ro
+      # The home directory that entry names, created by the same script. It
+      # persists, because ssh keeps known_hosts in it and a fresh one after
+      # every `ddev stop` would mean trusting each host blindly again.
+      - ./ddev-sync/home:/home/ddev
+      # The engine's global configuration layer, which is where targets belong
+      # so that production hosts and users are not committed with the project.
+      # The engine resolves that layer as <home>/.ddev/ddev-sync/config.yaml,
+      # so the directory is mounted under a stand-in home and commands/sync/sync
+      # points the engine at it with --home; see there.
+      #
+      # Deliberately NOT under /home/ddev, the home the passwd entry names,
+      # although that is where the engine would look by default: /home/ddev is
+      # itself a bind mount of a project directory, so Docker would create the
+      # mount point for this one inside it, on the host - and while the sidecar
+      # is running, Docker Desktop for Mac then refuses to let the host remove
+      # that directory ("Permission denied"). `ddev add-on remove` does not stop
+      # containers, so removal would fail on exactly the normal case. Under
+      # /mnt the mount point is created in the container's own filesystem and
+      # leaves nothing behind.
+      #
+      # Read-only: the engine only reads this layer, and a sync that could
+      # rewrite the developer's global configuration is a larger thing than
+      # this needs to be. There is deliberately no default, for the same reason
+      # as the gid above - guessing a home directory would mount something
+      # surprising.
+      - "${DDEV_SYNC_HOST_HOME:?not set - the pre-start hook in .ddev/config.ddev-sync.yaml discovers it, so run `ddev restart`, or reinstall the add-on if that file is missing}/.ddev/ddev-sync:/mnt/ddev-sync-host-home/.ddev/ddev-sync:ro"
+      - ddev-ssh-agent_socket_dir:/home/.ssh-agent
+      # Framework commands run in the web container, which means talking to
+      # the daemon. This is host-root-equivalent access and is documented as
+      # such in SECURITY.md; the alternative, installing the engine into the
+      # web image, means a local image build on every first start.
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      com.ddev.site-name: ${DDEV_SITENAME}

@@ -1,0 +1,40 @@
+name: ddev-sync
+repository: NoiXdev/ddev-sync
+version: v0.1.0-rc.7
+install_date: "2026-11-05T08:05:43+01:00"
+project_files:
+    - ddev-sync/ddev-sync.example.yaml
+    - docker-compose.ddev-sync.yaml
+    - config.ddev-sync.yaml
+    - ddev-sync/prepare-sidecar.sh
+    - ddev-sync/.gitignore
+    - commands/sync/sync
+global_files: []
+removal_actions:
+    - |
+      #ddev-description:Remove what the pre-start hook generated
+      # `removal_actions` run before DDEV deletes the files above, so the hook
+      # is still in place here, but nothing will run it again. The passwd file
+      # and the sidecar's home directory (which holds its known_hosts) are not in
+      # `project_files` because they are generated, so they are removed here, and
+      # the two lines the hook writes go out of the project's env files. The edit
+      # goes through `cat >` to keep each file's mode and any symlink in its
+      # place.
+      #
+      # Both files, because the hook writes `.env.local` and a project installed
+      # before that move still has the two lines in `.env`. Removing the add-on
+      # should leave neither behind, whichever file this project used.
+      rm -rf "${DDEV_APPROOT}/.ddev/ddev-sync/passwd" "${DDEV_APPROOT}/.ddev/ddev-sync/home"
+      for env_file in "${DDEV_APPROOT}/.ddev/.env.local" "${DDEV_APPROOT}/.ddev/.env"; do
+        [ -f "${env_file}" ] || continue
+        tmp="$(mktemp "${env_file}.XXXXXX")" || exit 1
+        if { grep -v -e '^DDEV_SYNC_DOCKER_GID=' -e '^DDEV_SYNC_HOST_HOME=' "${env_file}" \
+            || [ $? -eq 1 ]; } > "${tmp}" \
+          && cat "${tmp}" > "${env_file}"; then
+          rm -f "${tmp}"
+        else
+          rm -f "${tmp}"
+          echo "Could not remove DDEV_SYNC_DOCKER_GID and DDEV_SYNC_HOST_HOME from ${env_file}" >&2
+          exit 1
+        fi
+      done

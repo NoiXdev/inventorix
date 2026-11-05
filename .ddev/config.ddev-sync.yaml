@@ -1,0 +1,6 @@
+#ddev-generated
+# DDEV merges the hooks of every config.*.yaml with those of config.yaml, so
+# this adds to a project's own pre-start hooks instead of replacing them.
+hooks:
+  pre-start:
+    - exec-host: bash "${DDEV_APPROOT}/.ddev/ddev-sync/prepare-sidecar.sh"

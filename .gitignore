@@ -36,3 +36,6 @@ frankenphp-worker.php
 
 # pnpm content-addressable store
 .pnpm-store/
+
+##dev sync
+.ddev/ddev-sync.yaml

@@ -1,0 +1,13 @@
+#ddev-generated
+# Both are written by prepare-sidecar.sh on every start and belong to the
+# machine they were written on, not to the project. The glob covers the
+# `passwd.XXXXXX` temporary files the script writes beside the real one: a hook
+# killed outright does not get to run its cleanup trap, and what it leaves
+# behind should not show up in the developer's `git status`.
+/passwd*
+/home/
+
+# `ddev sync init` writes the local configuration layer here - database
+# credentials among other things - so it is ignored for the same reason the
+# generated files above are: it belongs to this machine, not to the project.
+/local.yaml
