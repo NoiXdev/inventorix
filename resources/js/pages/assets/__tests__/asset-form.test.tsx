@@ -22,7 +22,7 @@ const options: AssetOptions = {
     buyTypeOptions: [],
     assetTypeOptions: [{ value: 't1', label: 'Laptop' }],
     ownerOptions: [{ value: 'p1', label: 'Ada Lovelace' }],
-    placeOptions: [],
+    locationOptions: [],
     modelOptions: [],
     userCreateUrl: '/app/users/quick',
 };

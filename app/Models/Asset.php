@@ -18,7 +18,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Tags\HasTags;
 
-#[Fillable(['state', 'asset_type_id', 'owner_id', 'place_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
+#[Fillable(['state', 'asset_type_id', 'owner_id', 'location_id', 'model_id', 'serial_number', 'buy_date', 'buy_type', 'buy_price', 'guarantee_end', 'invoice'])]
 #[ObservedBy(AssetObserver::class)]
 class Asset extends Model
 {
@@ -39,9 +39,10 @@ class Asset extends Model
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function place(): BelongsTo
+    public function location(): BelongsTo
     {
-        return $this->belongsTo(Place::class, 'place_id');
+        // Trashed locations included, so an asset still shows where it is.
+        return $this->belongsTo(Location::class, 'location_id')->withTrashed();
     }
 
     public function incidents(): HasMany
@@ -76,7 +77,7 @@ class Asset extends Model
                 'asset_type_id',
                 'model_id',
                 'owner_id',
-                'place_id',
+                'location_id',
                 'serial_number',
                 'buy_date',
                 'buy_type',

@@ -10,7 +10,7 @@ const user = { id: 'u1', name: 'Ada Lovelace', firstname: 'Ada', lastname: 'Love
 
 describe('UserShow', () => {
     it('lists owned assets', () => {
-        render(<UserShow user={user} assets={[{ id: 'a1', model_name: 'X1', serial_number: 'SN1', state: 'in-use', state_label: 'In Benutzung', place_name: 'HQ' }]} />);
+        render(<UserShow user={user} assets={[{ id: 'a1', model_name: 'X1', serial_number: 'SN1', state: 'in-use', state_label: 'In Benutzung', location_name: 'HQ' }]} />);
         expect(screen.getByText('X1')).toBeInTheDocument();
     });
     it('shows an empty state', () => {

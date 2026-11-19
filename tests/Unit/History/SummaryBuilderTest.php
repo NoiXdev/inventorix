@@ -5,7 +5,7 @@ namespace Tests\Unit\History;
 use App\Enums\AssetState;
 use App\Models\Asset;
 use App\Models\Incident;
-use App\Models\Place;
+use App\Models\Location;
 use App\Models\User;
 use App\Support\History\SummaryBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,10 +76,22 @@ class SummaryBuilderTest extends TestCase
 
     public function test_place_changed_summary_resolves_names(): void
     {
-        $old = Place::factory()->create(['name' => 'Lager A']);
-        $new = Place::factory()->create(['name' => 'Lager B']);
+        $old = Location::factory()->create(['name' => 'Lager A']);
+        $new = Location::factory()->create(['name' => 'Lager B']);
         $activity = $this->buildActivity([
             'description' => 'place_changed',
+            'properties' => ['from' => $old->id, 'to' => $new->id],
+        ]);
+        $this->assertSame('Lager A → Lager B', (new SummaryBuilder)->forActivity($activity));
+    }
+
+    public function test_location_changed_summary_resolves_names_of_trashed_locations_too(): void
+    {
+        $old = Location::factory()->create(['name' => 'Lager A']);
+        $new = Location::factory()->create(['name' => 'Lager B']);
+        $old->delete();
+        $activity = $this->buildActivity([
+            'description' => 'location_changed',
             'properties' => ['from' => $old->id, 'to' => $new->id],
         ]);
         $this->assertSame('Lager A → Lager B', (new SummaryBuilder)->forActivity($activity));

@@ -22,7 +22,7 @@ class AssetImportControllerTest extends TestCase
         return UploadedFile::fake()->createWithContent('assets.csv', $body);
     }
 
-    private const HEADER = "id,state,asset_type,manufacturer,model,place,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags\n";
+    private const HEADER = "id,state,asset_type,manufacturer,model,location,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags\n";
 
     public function test_import_creates_assets_and_flashes_summary(): void
     {
@@ -47,6 +47,18 @@ class AssetImportControllerTest extends TestCase
         $this->actingAs($this->actor())
             ->post('/app/assets/import', ['file' => $this->csv($body)])
             ->assertSessionHas('importResult', fn ($r) => $r['imported'] === 1 && count($r['failed']) === 1);
+    }
+
+    public function test_import_accepts_the_old_place_header(): void
+    {
+        $body = str_replace(',location,', ',place,', self::HEADER)
+            .",in-use,Laptop,Acme,X1,Office,,SN-A,,,,,\n";
+
+        $this->actingAs($this->actor())
+            ->post('/app/assets/import', ['file' => $this->csv($body)])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('Office', Asset::sole()->location->name);
     }
 
     public function test_import_rejects_wrong_header(): void

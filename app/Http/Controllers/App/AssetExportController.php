@@ -14,7 +14,7 @@ class AssetExportController extends Controller
     public function index(Request $request): StreamedResponse
     {
         $query = Asset::query()
-            ->with(['tags', 'place'])
+            ->with(['tags', 'location'])
             ->select(
                 'assets.*',
                 'asset_types.name as asset_type_name',
@@ -37,7 +37,7 @@ class AssetExportController extends Controller
                     $asset->asset_type_name,
                     $asset->manufacturer_name,
                     $asset->model_name,
-                    optional($asset->place)->name,
+                    optional($asset->location)->name,
                     $asset->owner_name,
                     $asset->serial_number,
                     optional($asset->buy_date)->format('Y-m-d'),

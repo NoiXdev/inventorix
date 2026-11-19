@@ -102,7 +102,7 @@ class AssetControllerTest extends TestCase
         $type = AssetType::factory()->create();
         $this->actingAs($this->actor())->post('/app/assets', [
             'state' => 'in-use', 'asset_type_id' => $type->id,
-            'owner_id' => '', 'place_id' => '', 'model_id' => '',
+            'owner_id' => '', 'location_id' => '', 'model_id' => '',
             'serial_number' => 'SN-1', 'buy_price' => '199.99',
             'buy_date' => '2024-01-10', 'guarantee_end' => '2026-01-10',
             'buy_type' => 'once', 'invoice' => 'INV-1',
@@ -167,7 +167,7 @@ class AssetControllerTest extends TestCase
 
         $this->actingAs($this->actor())->put("/app/assets/{$asset->id}", [
             'state' => 'storage', 'asset_type_id' => $asset->asset_type_id,
-            'owner_id' => '', 'place_id' => '', 'model_id' => '',
+            'owner_id' => '', 'location_id' => '', 'model_id' => '',
             'serial_number' => 'SN-2', 'buy_price' => '', 'buy_date' => '', 'guarantee_end' => '',
             'buy_type' => '', 'invoice' => '', 'tags' => ['new-tag'],
         ])->assertRedirect('/app/assets');

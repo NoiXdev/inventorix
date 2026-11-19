@@ -4,7 +4,7 @@ namespace Tests\Feature\ActivityLog;
 
 use App\Enums\AssetState;
 use App\Models\Asset;
-use App\Models\Place;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
@@ -93,17 +93,17 @@ class AssetActivityLogTest extends TestCase
         $this->assertSame($newOwner->id, $activity->properties['to']);
     }
 
-    public function test_place_change_writes_a_place_changed_activity(): void
+    public function test_location_change_writes_a_location_changed_activity(): void
     {
         $asset = Asset::factory()->create();
-        $newPlace = Place::factory()->create();
-        $oldPlaceId = $asset->place_id;
+        $newPlace = Location::factory()->create();
+        $oldPlaceId = $asset->location_id;
 
-        $asset->update(['place_id' => $newPlace->id]);
+        $asset->update(['location_id' => $newPlace->id]);
 
         $activity = Activity::query()
             ->where('subject_id', $asset->id)
-            ->where('description', 'place_changed')
+            ->where('description', 'location_changed')
             ->first();
 
         $this->assertNotNull($activity);

@@ -13,8 +13,8 @@ use App\Models\AssetType;
 use App\Models\Attachment;
 use App\Models\CustomField;
 use App\Models\Incident;
+use App\Models\Location;
 use App\Models\Manufacturer;
-use App\Models\Place;
 use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
@@ -116,7 +116,7 @@ class AssetController extends Controller
 
     public function show(Asset $asset): Response
     {
-        $asset->load('assetType', 'model.manufacturer', 'owner', 'place', 'tags', 'attachments.uploadedBy', 'incidents')
+        $asset->load('assetType', 'model.manufacturer', 'owner', 'location', 'tags', 'attachments.uploadedBy', 'incidents')
             ->loadCount('incidents');
 
         return Inertia::render('assets/show', [
@@ -167,7 +167,7 @@ class AssetController extends Controller
                 'state' => $asset->state->value,
                 'asset_type_id' => $asset->asset_type_id,
                 'owner_id' => $asset->owner_id,
-                'place_id' => $asset->place_id,
+                'location_id' => $asset->location_id,
                 'model_id' => $asset->model_id,
                 'serial_number' => $asset->serial_number,
                 'buy_date' => optional($asset->buy_date)->format('Y-m-d'),
@@ -212,7 +212,7 @@ class AssetController extends Controller
             'buyTypeOptions' => array_map(fn (BuyType $b) => ['value' => $b->value, 'label' => $b->getLabel()], BuyType::cases()),
             'assetTypeOptions' => $this->options(AssetType::query()),
             'manufacturerOptions' => $this->options(Manufacturer::query()),
-            'placeOptions' => $this->options(Place::query()),
+            'locationOptions' => Location::options(),
             'ownerOptions' => User::query()->orderBy('name')->get()
                 ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
             'userCreateUrl' => route('app.users.quick-store'),
@@ -264,7 +264,7 @@ class AssetController extends Controller
             'manufacturer_name' => optional(optional($asset->model)->manufacturer)->name,
             'model_name' => optional($asset->model)->name,
             'owner_name' => optional($asset->owner)->name,
-            'place_name' => optional($asset->place)->name,
+            'location_name' => $asset->location ? Location::paths(withTrashed: true)->get($asset->location_id) : null,
             'serial_number' => $asset->serial_number,
             'buy_date' => optional($asset->buy_date)->format('Y-m-d'),
             'guarantee_end' => optional($asset->guarantee_end)->format('Y-m-d'),

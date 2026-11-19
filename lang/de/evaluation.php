@@ -59,10 +59,10 @@ return [
             'label' => 'Bestand nach Standort',
             'description' => 'Alle Assets an einem oder mehreren Standorten.',
             'filter' => [
-                'places' => 'Standorte',
+                'locations' => 'Standorte',
             ],
             'columns' => [
-                'place' => 'Standort',
+                'location' => 'Standort',
                 'asset_type' => 'Typ',
                 'model' => 'Modell',
                 'serial_number' => 'Seriennummer',

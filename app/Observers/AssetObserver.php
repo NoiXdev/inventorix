@@ -8,7 +8,7 @@ class AssetObserver
 {
     private const FIELD_EVENT_MAP = [
         'owner_id' => 'owner_changed',
-        'place_id' => 'place_changed',
+        'location_id' => 'location_changed',
         'state' => 'state_changed',
     ];
 

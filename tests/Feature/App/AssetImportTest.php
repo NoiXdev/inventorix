@@ -18,7 +18,7 @@ class AssetImportTest extends TestCase
     {
         return array_merge([
             'id' => '', 'state' => 'in-use', 'asset_type' => 'Laptop', 'manufacturer' => 'Acme',
-            'model' => 'X1', 'place' => 'Office', 'owner' => 'Ada Lovelace', 'serial_number' => 'SN-1',
+            'model' => 'X1', 'location' => 'Office', 'owner' => 'Ada Lovelace', 'serial_number' => 'SN-1',
             'buy_date' => '2024-01-05', 'guarantee_end' => '', 'buy_price' => '999.50',
             'buy_type' => '', 'tags' => 'portable, audited',
         ], $overrides);
@@ -37,7 +37,7 @@ class AssetImportTest extends TestCase
         $this->assertSame('Laptop', $asset->assetType->name);
         $this->assertSame('Acme', $asset->model->manufacturer->name);
         $this->assertSame('X1', $asset->model->name);
-        $this->assertSame('Office', $asset->place->name);
+        $this->assertSame('Office', $asset->location->name);
         $owner = User::firstWhere('name', 'Ada Lovelace');
         $this->assertNotNull($owner);
         $this->assertSame('Ada', $owner->firstname);

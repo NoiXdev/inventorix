@@ -72,7 +72,7 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.place');
+        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location');
 
         return Inertia::render('users/show', [
             'user' => [
@@ -90,7 +90,7 @@ class UserController extends Controller
                 'serial_number' => $a->serial_number,
                 'state' => $a->state->value,
                 'state_label' => $a->state->getLabel(),
-                'place_name' => optional($a->place)->name,
+                'location_name' => optional($a->location)->name,
             ])->all(),
         ]);
     }

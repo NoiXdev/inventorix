@@ -10,7 +10,7 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AssetType;
 use App\Models\CustomField;
-use App\Models\Place;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Activity;
@@ -23,7 +23,8 @@ class AssetHistory
         'asset_type_id' => 'Asset type',
         'model_id' => 'Model',
         'owner_id' => 'Owner',
-        'place_id' => 'Place',
+        'location_id' => 'Location',
+        'place_id' => 'Location', // entries from before places became locations
         'serial_number' => 'Serial number',
         'buy_date' => 'Buy date',
         'buy_type' => 'Buy type',
@@ -122,7 +123,7 @@ class AssetHistory
             'asset_type_id' => AssetType::find($value)?->name ?? '(removed)',
             'model_id' => AssetModel::withTrashed()->find($value)?->name ?? '(removed)',
             'owner_id' => User::find($value)?->name ?? '(removed)',
-            'place_id' => Place::find($value)?->name ?? '(removed)',
+            'location_id', 'place_id' => Location::withTrashed()->find($value)?->name ?? '(removed)',
             default => (string) $value,
         };
     }

@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/form/text-field';
 import { SelectField } from '@/components/form/select-field';
+import { ComboboxField } from '@/components/form/combobox-field';
 import { UserPicker } from '@/components/form/user-picker';
 import { DateField } from '@/components/form/date-field';
 import { NumberField } from '@/components/form/number-field';
@@ -12,13 +13,13 @@ import { CustomFieldInput, type CustomFieldDefinition, type CustomFieldValue } f
 type Option = { value: string; label: string };
 export interface AssetOptions {
     stateOptions: Option[]; buyTypeOptions: Option[]; assetTypeOptions: Option[];
-    ownerOptions: Option[]; placeOptions: Option[]; modelOptions: Option[];
+    ownerOptions: Option[]; locationOptions: Option[]; modelOptions: Option[];
     userCreateUrl: string;
     /** Model id => the custom fields of its fieldset. */
     customFieldsByModel?: Record<string, CustomFieldDefinition[]>;
 }
 export interface AssetInitial {
-    id: string; state: string; asset_type_id: string; owner_id: string | null; place_id: string | null;
+    id: string; state: string; asset_type_id: string; owner_id: string | null; location_id: string | null;
     model_id: string | null; serial_number: string | null; buy_date: string | null; guarantee_end: string | null;
     buy_type: string | null; buy_price: string; invoice: string | null; tags: string[];
     custom_fields?: Record<string, CustomFieldValue>;
@@ -31,7 +32,7 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
         state: initial?.state ?? '',
         asset_type_id: initial?.asset_type_id ?? '',
         owner_id: initial?.owner_id ?? '',
-        place_id: initial?.place_id ?? '',
+        location_id: initial?.location_id ?? '',
         model_id: initial?.model_id ?? '',
         serial_number: initial?.serial_number ?? '',
         buy_date: initial?.buy_date ?? '',
@@ -87,8 +88,8 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
                 <FormCardContent className="md:grid-cols-2">
                     <UserPicker id="owner_id" label="Owner" options={options.ownerOptions} createUrl={options.userCreateUrl}
                         value={form.data.owner_id} onChange={(v) => form.setData('owner_id', v)} error={form.errors.owner_id} />
-                    <SelectField id="place_id" label="Place" nullable options={options.placeOptions}
-                        value={form.data.place_id} onChange={(v) => form.setData('place_id', v)} error={form.errors.place_id} />
+                    <ComboboxField id="location_id" label="Location" nullable options={options.locationOptions}
+                        value={form.data.location_id} onChange={(v) => form.setData('location_id', v)} error={form.errors.location_id} />
                 </FormCardContent>
             </FormCard>
 

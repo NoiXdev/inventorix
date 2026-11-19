@@ -51,6 +51,8 @@ class AssetImportController extends Controller
     {
         // Trim BOM/whitespace on each cell, then require an exact, order-sensitive match.
         $normalized = array_map(fn ($h) => trim((string) $h, " \t\n\r\0\x0B\u{FEFF}"), $header);
+        // Files exported before places became locations still say "place".
+        $normalized = array_map(fn (string $h) => $h === 'place' ? 'location' : $h, $normalized);
 
         return $normalized === AssetCsv::HEADERS;
     }

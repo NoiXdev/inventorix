@@ -13,7 +13,7 @@ import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-histo
 interface AssetDetail {
     id: string; state: string; state_label: string | null;
     asset_type_name: string | null; manufacturer_name: string | null; model_name: string | null;
-    owner_name: string | null; place_name: string | null; serial_number: string | null;
+    owner_name: string | null; location_name: string | null; serial_number: string | null;
     buy_date: string | null; guarantee_end: string | null; buy_type_label: string | null;
     buy_price: number | null; invoice: string | null; tags: string[];
     incidentsCount: number; created_at: string | null; updated_at: string | null;
@@ -63,7 +63,7 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                             <Field label="Manufacturer">{asset.manufacturer_name ?? '—'}</Field>
                             <Field label="Model">{asset.model_name ?? '—'}</Field>
                             <Field label="Owner">{asset.owner_name ?? '—'}</Field>
-                            <Field label="Place">{asset.place_name ?? '—'}</Field>
+                            <Field label="Location">{asset.location_name ?? '—'}</Field>
                             <Field label="Serial number">{asset.serial_number ?? '—'}</Field>
                             <Field label="Buy date">{asset.buy_date ?? '—'}</Field>
                             <Field label="Guarantee end">{asset.guarantee_end ?? '—'}</Field>

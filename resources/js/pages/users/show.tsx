@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StateBadge } from '@/components/assets/state-badge';
 
-interface AssetRow { id: string; model_name: string | null; serial_number: string | null; state: string; state_label: string | null; place_name: string | null }
+interface AssetRow { id: string; model_name: string | null; serial_number: string | null; state: string; state_label: string | null; location_name: string | null }
 interface Props {
     user: { id: string; name: string | null; firstname: string; lastname: string; email: string | null; login_enabled: boolean; assets_count: number };
     assets: AssetRow[];
@@ -36,14 +36,14 @@ export default function UserShow({ user, assets }: Props) {
                         <p className="text-sm text-muted-foreground">This user owns no assets.</p>
                     ) : (
                         <Table>
-                            <TableHeader><TableRow><TableHead>Model</TableHead><TableHead>Serial</TableHead><TableHead>State</TableHead><TableHead>Place</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Model</TableHead><TableHead>Serial</TableHead><TableHead>State</TableHead><TableHead>Location</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {assets.map((a) => (
                                     <TableRow key={a.id} className="cursor-pointer" onClick={() => router.visit(`/app/assets/${a.id}`)}>
                                         <TableCell>{a.model_name ?? '—'}</TableCell>
                                         <TableCell>{a.serial_number ?? '—'}</TableCell>
                                         <TableCell><StateBadge state={a.state} label={a.state_label} /></TableCell>
-                                        <TableCell>{a.place_name ?? '—'}</TableCell>
+                                        <TableCell>{a.location_name ?? '—'}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

@@ -20,7 +20,7 @@ class AssetRequest extends FormRequest
     /** Normalize empty-string selects/inputs to null before validation. */
     protected function prepareForValidation(): void
     {
-        $nullable = ['id', 'owner_id', 'place_id', 'model_id', 'buy_type', 'buy_date', 'guarantee_end', 'buy_price', 'serial_number', 'invoice'];
+        $nullable = ['id', 'owner_id', 'location_id', 'model_id', 'buy_type', 'buy_date', 'guarantee_end', 'buy_price', 'serial_number', 'invoice'];
         $this->merge(collect($this->only($nullable))
             ->map(fn ($v) => $v === '' ? null : $v)
             ->all());
@@ -33,7 +33,7 @@ class AssetRequest extends FormRequest
             'state' => ['required', Rule::enum(AssetState::class)],
             'asset_type_id' => ['required', 'uuid', 'exists:asset_types,id'],
             'owner_id' => ['nullable', 'uuid', 'exists:users,id'],
-            'place_id' => ['nullable', 'uuid', 'exists:places,id'],
+            'location_id' => ['nullable', 'uuid', Rule::exists('locations', 'id')->whereNull('deleted_at')],
             'model_id' => ['nullable', 'uuid', 'exists:asset_models,id'],
             'serial_number' => ['nullable', 'string', 'max:255'],
             'buy_date' => ['nullable', 'date'],

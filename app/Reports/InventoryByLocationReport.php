@@ -3,7 +3,7 @@
 namespace App\Reports;
 
 use App\Models\Asset;
-use App\Models\Place;
+use App\Models\Location;
 use Illuminate\Database\Eloquent\Builder;
 
 class InventoryByLocationReport extends AbstractReport
@@ -32,11 +32,10 @@ class InventoryByLocationReport extends AbstractReport
     {
         return [
             [
-                'key' => 'places',
+                'key' => 'locations',
                 'type' => 'multiselect',
-                'label' => __('evaluation.reports.inventory_by_location.filter.places'),
-                'options' => Place::query()->orderBy('name')->get()
-                    ->map(fn (Place $p): array => ['value' => (string) $p->id, 'label' => $p->name])->all(),
+                'label' => __('evaluation.reports.inventory_by_location.filter.locations'),
+                'options' => Location::options(),
             ],
         ];
     }
@@ -44,10 +43,10 @@ class InventoryByLocationReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Asset::query()
-            ->with(['place', 'owner', 'model', 'assetType'])
+            ->with(['location', 'owner', 'model', 'assetType'])
             ->when(
-                ! empty($this->filters['places']),
-                fn (Builder $query): Builder => $query->whereIn('place_id', $this->filters['places']),
+                ! empty($this->filters['locations']),
+                fn (Builder $query): Builder => $query->whereIn('location_id', $this->filters['locations']),
             );
     }
 
@@ -56,7 +55,7 @@ class InventoryByLocationReport extends AbstractReport
         $t = 'evaluation.reports.inventory_by_location.columns';
 
         return [
-            ReportColumn::make('place', __("{$t}.place"), fn (Asset $a): ?string => $a->place?->name),
+            ReportColumn::make('location', __("{$t}.location"), fn (Asset $a): ?string => $a->location?->name),
             ReportColumn::make('asset_type', __("{$t}.asset_type"), fn (Asset $a): ?string => $a->assetType?->name),
             ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
             ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),

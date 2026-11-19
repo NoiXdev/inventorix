@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, LayoutList, ListPlus, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Users } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, LayoutList, ListPlus, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Tag, Truck, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -26,7 +26,8 @@ export const navGroups: NavGroup[] = [
         items: [
             { label: 'Assets', href: '/app/assets', icon: Package, match: (p) => p.startsWith('/app/assets') },
             { label: 'Manufacturers', href: '/app/manufacturers', icon: Factory, match: (p) => p.startsWith('/app/manufacturers') },
-            { label: 'Places', href: '/app/places', icon: MapPin, match: (p) => p.startsWith('/app/places') },
+            { label: 'Suppliers', href: '/app/suppliers', icon: Truck, match: (p) => p.startsWith('/app/suppliers') },
+            { label: 'Locations', href: '/app/locations', icon: MapPin, match: (p) => p.startsWith('/app/locations') },
             { label: 'Asset types', href: '/app/asset-types', icon: Tag, match: (p) => p.startsWith('/app/asset-types') },
             { label: 'Categories', href: '/app/categories', icon: Shapes, match: (p) => p.startsWith('/app/categories') },
             { label: 'Asset models', href: '/app/asset-models', icon: Boxes, match: (p) => p.startsWith('/app/asset-models') },

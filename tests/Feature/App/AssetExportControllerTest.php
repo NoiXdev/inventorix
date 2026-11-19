@@ -38,7 +38,7 @@ class AssetExportControllerTest extends TestCase
         $csv = $res->streamedContent();
 
         $lines = array_filter(explode("\n", trim($csv)));
-        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,place,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $lines[0]);
+        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,location,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $lines[0]);
         $this->assertStringContainsString('Laptop', $csv);
         $this->assertStringContainsString('Acme', $csv);
         $this->assertStringContainsString('X1', $csv);
@@ -75,6 +75,6 @@ class AssetExportControllerTest extends TestCase
         $res->assertOk();
         $res->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $csv = $res->streamedContent();
-        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,place,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $csv);
+        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,location,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $csv);
     }
 }

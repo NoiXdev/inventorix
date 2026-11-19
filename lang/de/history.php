@@ -16,6 +16,7 @@ return [
         'deleted' => 'Gelöscht',
         'note' => 'Notiz',
         'owner_changed' => 'Besitzer geändert',
+        'location_changed' => 'Standort geändert',
         'place_changed' => 'Standort geändert',
         'state_changed' => 'Status geändert',
     ],

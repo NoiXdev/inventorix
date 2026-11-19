@@ -5,7 +5,7 @@ namespace App\Support\History;
 use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Models\Incident;
-use App\Models\Place;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
@@ -36,7 +36,8 @@ class SummaryBuilder
                 'count' => count($activity->attribute_changes['attributes'] ?? []),
             ]),
             'owner_changed' => $this->ownerArrow($activity),
-            'place_changed' => $this->placeArrow($activity),
+            // place_changed: entries written before places became locations (same ids).
+            'location_changed', 'place_changed' => $this->locationArrow($activity),
             'state_changed' => $this->stateArrow($activity),
             'note' => trans('history.event.note').': '.Str::limit(
                 (string) ($activity->properties['body'] ?? ''),
@@ -60,12 +61,12 @@ class SummaryBuilder
         );
     }
 
-    private function placeArrow(Activity $activity): string
+    private function locationArrow(Activity $activity): string
     {
         return $this->arrow(
             $activity->properties['from'] ?? null,
             $activity->properties['to'] ?? null,
-            fn ($id) => Place::find($id)?->name,
+            fn ($id) => Location::withTrashed()->find($id)?->name,
         );
     }
 

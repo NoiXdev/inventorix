@@ -15,12 +15,13 @@ use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
 use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
+use App\Http\Controllers\App\LocationController;
 use App\Http\Controllers\App\ManufacturerController;
 use App\Http\Controllers\App\PasswordResetController;
-use App\Http\Controllers\App\PlaceController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ScanController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\App\SupplierController;
 use App\Http\Controllers\App\UserController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
@@ -47,7 +48,11 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('manufacturers/{manufacturer}/image', [ManufacturerController::class, 'image'])
             ->name('manufacturers.image');
         Route::resource('manufacturers', ManufacturerController::class)->except('show');
-        Route::resource('places', PlaceController::class)->except('show');
+        Route::get('locations/{location}/image', [LocationController::class, 'image'])
+            ->name('locations.image');
+        Route::resource('locations', LocationController::class)->except('show');
+        // Places were replaced by locations.
+        Route::permanentRedirect('places', '/app/locations');
         Route::resource('asset-types', AssetTypeController::class)->except('show');
         Route::get('asset-models/{asset_model}/image', [AssetModelController::class, 'image'])
             ->name('asset-models.image');
@@ -56,6 +61,9 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('categories/{category}/image', [CategoryController::class, 'image'])
             ->name('categories.image');
         Route::resource('categories', CategoryController::class)->except('show');
+        Route::get('suppliers/{supplier}/image', [SupplierController::class, 'image'])
+            ->name('suppliers.image');
+        Route::resource('suppliers', SupplierController::class)->except('show');
         Route::resource('custom-fields', CustomFieldController::class)->except('show');
         Route::resource('custom-fieldsets', CustomFieldsetController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');

@@ -3,7 +3,7 @@
 namespace Tests\Feature\App;
 
 use App\Models\Asset;
-use App\Models\Place;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -44,15 +44,15 @@ class ReportControllerTest extends TestCase
                 ->etc());
     }
 
-    public function test_show_places_filter(): void
+    public function test_show_locations_filter(): void
     {
-        $keep = Place::factory()->create();
-        $other = Place::factory()->create();
-        Asset::factory()->create(['place_id' => $keep->id]);
-        Asset::factory()->create(['place_id' => $other->id]);
+        $keep = Location::factory()->create();
+        $other = Location::factory()->create();
+        Asset::factory()->create(['location_id' => $keep->id]);
+        Asset::factory()->create(['location_id' => $other->id]);
 
         $this->actingAs($this->actor())
-            ->get('/app/reports/inventory_by_location?filters[places][]='.$keep->id)
+            ->get('/app/reports/inventory_by_location?filters[locations][]='.$keep->id)
             ->assertInertia(fn (Assert $p) => $p->has('rows', 1)->etc());
     }
 

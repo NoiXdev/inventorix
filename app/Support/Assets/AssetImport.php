@@ -7,8 +7,8 @@ use App\Enums\BuyType;
 use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\AssetType;
+use App\Models\Location;
 use App\Models\Manufacturer;
-use App\Models\Place;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -76,8 +76,8 @@ class AssetImport
             $asset->model_id = $model->getKey();
         }
 
-        if (($place = $get('place')) !== '') {
-            $asset->place_id = $this->firstOrCreateByName(Place::class, $place)->getKey();
+        if (($location = $get('location')) !== '') {
+            $asset->location_id = $this->firstOrCreateByName(Location::class, $location)->getKey();
         }
         if (($owner = $get('owner')) !== '') {
             $asset->owner_id = $this->resolveOwner($owner)->getKey();
