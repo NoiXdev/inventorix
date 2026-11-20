@@ -7,6 +7,8 @@ use App\Exceptions\HandoverStateConflictException;
 use App\Jobs\GenerateHandoverPdf;
 use App\Models\Asset;
 use App\Models\Handover;
+use App\Models\StatusLabel;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -23,15 +25,12 @@ class HandoverService
                 ->get()
                 ->keyBy('id');
 
-            $allowedFrom = array_map(
-                fn ($s) => $s->value,
-                $data->type->allowedStateFrom(),
-            );
+            $allowedFrom = StatusLabel::systemIds($data->type->allowedStateFrom());
 
             $conflicting = [];
             foreach ($data->assetIds as $assetId) {
                 $asset = $assets[$assetId] ?? null;
-                if ($asset === null || ! in_array($asset->state->value, $allowedFrom, true)) {
+                if ($asset === null || ! in_array($asset->status_id, $allowedFrom, true)) {
                     $conflicting[] = $assetId;
                 }
             }
@@ -65,26 +64,37 @@ class HandoverService
                     'created_by' => $data->createdById,
                 ]);
 
-                $stateTo = $data->type->stateTo()->value;
+                $stateTo = StatusLabel::system($data->type->stateTo())->id;
                 $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientUserId : null;
 
                 foreach ($data->assetIds as $assetId) {
                     $asset = $assets[$assetId];
-                    $stateFrom = $asset->state->value;
-                    $ownerFrom = $asset->owner_id;
+                    $stateFrom = $asset->status_id;
+                    // The pivot records users only: an asset assigned to a
+                    // location or another asset had no owning user.
+                    $ownerFrom = $asset->assignedUserId();
 
                     $handover->assets()->attach($assetId, [
                         'id' => (string) Str::uuid(),
-                        'state_from' => $stateFrom,
-                        'state_to' => $stateTo,
+                        'status_from_id' => $stateFrom,
+                        'status_to_id' => $stateTo,
                         'owner_from_id' => $ownerFrom,
                         'owner_to_id' => $ownerTo,
                     ]);
 
-                    $asset->update([
-                        'state' => $stateTo,
-                        'owner_id' => $ownerTo,
-                    ]);
+                    $asset->status_id = $stateTo;
+                    $asset->assignee_type = $ownerTo ? User::class : null;
+                    $asset->assignee_id = $ownerTo;
+                    // Issuing or lending checks the asset out, a return checks it in.
+                    if ($data->type->assignsRecipientAsOwner()) {
+                        $asset->last_checkout = now();
+                        $asset->checkout_counter++;
+                    } else {
+                        $asset->last_checkin = now();
+                        $asset->checkin_counter++;
+                        $asset->expected_checkin = null;
+                    }
+                    $asset->save();
 
                     activity('asset')
                         ->performedOn($asset->fresh())

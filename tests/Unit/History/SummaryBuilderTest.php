@@ -2,10 +2,11 @@
 
 namespace Tests\Unit\History;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
 use App\Models\Incident;
 use App\Models\Location;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Support\History\SummaryBuilder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -53,6 +54,27 @@ class SummaryBuilderTest extends TestCase
         );
     }
 
+    public function test_assignee_changed_summary_resolves_any_kind(): void
+    {
+        $user = User::factory()->withoutLogin()->create(['name' => 'Anna']);
+        $location = Location::factory()->create(['name' => 'Lager']);
+        $location->delete(); // deleted locations still resolve
+        $activity = $this->buildActivity([
+            'description' => 'assignee_changed',
+            'properties' => [
+                'from' => ['type' => User::class, 'id' => $user->id],
+                'to' => ['type' => Location::class, 'id' => $location->id],
+            ],
+        ]);
+        $this->assertSame('Anna → Lager', (new SummaryBuilder)->forActivity($activity));
+
+        $unassigned = $this->buildActivity([
+            'description' => 'assignee_changed',
+            'properties' => ['from' => ['type' => User::class, 'id' => $user->id], 'to' => null],
+        ]);
+        $this->assertSame('Anna → —', (new SummaryBuilder)->forActivity($unassigned));
+    }
+
     public function test_owner_changed_summary_resolves_names(): void
     {
         $old = User::factory()->withoutLogin()->create(['name' => 'Anna']);
@@ -97,14 +119,14 @@ class SummaryBuilderTest extends TestCase
         $this->assertSame('Lager A → Lager B', (new SummaryBuilder)->forActivity($activity));
     }
 
-    public function test_state_changed_summary_uses_enum_labels(): void
+    public function test_legacy_state_changed_summary_uses_the_status_label_names(): void
     {
         $activity = $this->buildActivity([
             'description' => 'state_changed',
-            'properties' => ['from' => AssetState::NEW->value, 'to' => AssetState::IN_USE->value],
+            'properties' => ['from' => 'new', 'to' => 'in-use'],
         ]);
         $this->assertSame(
-            AssetState::NEW->getLabel().' → '.AssetState::IN_USE->getLabel(),
+            StatusLabel::system(SystemStatus::NEW)->name.' → '.StatusLabel::system(SystemStatus::IN_USE)->name,
             (new SummaryBuilder)->forActivity($activity),
         );
     }

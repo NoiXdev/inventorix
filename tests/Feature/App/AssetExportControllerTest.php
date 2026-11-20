@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\App;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
 use App\Models\AssetModel;
-use App\Models\AssetType;
+use App\Models\Category;
 use App\Models\Incident;
 use App\Models\Manufacturer;
+use App\Models\StatusLabel;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -24,11 +26,13 @@ class AssetExportControllerTest extends TestCase
     public function test_export_streams_csv_with_header_and_resolved_row(): void
     {
         $mfr = Manufacturer::factory()->create(['name' => 'Acme']);
-        $model = AssetModel::factory()->create(['name' => 'X1', 'manufacturer_id' => $mfr->id]);
-        $type = AssetType::factory()->create(['name' => 'Laptop']);
+        $type = Category::factory()->create(['name' => 'Laptop']);
+        $model = AssetModel::factory()->create(['name' => 'X1', 'manufacturer_id' => $mfr->id, 'category_id' => $type->id]);
         $asset = Asset::factory()->create([
-            'asset_type_id' => $type->id, 'model_id' => $model->id, 'owner_id' => null,
-            'state' => AssetState::IN_USE->value, 'serial_number' => 'SN-9', 'buy_date' => '2024-01-05',
+            'model_id' => $model->id, 'assignee_type' => null, 'assignee_id' => null,
+            'status_id' => StatusLabel::system(SystemStatus::IN_USE)->id, 'serial' => 'SN-9', 'purchase_date' => '2024-01-05',
+            'name' => 'Ada laptop', 'asset_tag' => 'IT-42', 'warranty_months' => 36, 'order_number' => 'PO-7',
+            'supplier_id' => Supplier::factory()->create(['name' => 'Bechtle'])->id,
         ]);
         $asset->syncTags(['a', 'b']);
 
@@ -38,21 +42,23 @@ class AssetExportControllerTest extends TestCase
         $csv = $res->streamedContent();
 
         $lines = array_filter(explode("\n", trim($csv)));
-        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,location,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $lines[0]);
+        $this->assertStringContainsString('id,name,asset_tag,status,category,manufacturer,model,serial,location,assigned_user,purchase_date,purchase_cost,supplier,order_number,warranty_months,notes,tags', $lines[0]);
         $this->assertStringContainsString('Laptop', $csv);
         $this->assertStringContainsString('Acme', $csv);
         $this->assertStringContainsString('X1', $csv);
-        $this->assertStringContainsString(AssetState::IN_USE->getLabel(), $csv);
+        $this->assertStringContainsString(StatusLabel::system(SystemStatus::IN_USE)->name, $csv);
         $this->assertStringContainsString('2024-01-05', $csv);
         $this->assertStringContainsString('"a, b"', $csv); // tags joined, quoted by fputcsv
+        $this->assertStringContainsString('"Ada laptop",IT-42,', $lines[1]);
+        $this->assertStringContainsString(',Bechtle,PO-7,36,', $lines[1]);
     }
 
-    public function test_export_respects_state_filter(): void
+    public function test_export_respects_status_filter(): void
     {
-        Asset::factory()->create(['state' => AssetState::IN_USE->value, 'serial_number' => 'KEEP']);
-        Asset::factory()->create(['state' => AssetState::DEFECT->value, 'serial_number' => 'DROP']);
+        Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id, 'serial' => 'KEEP']);
+        Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::DEFECT)->id, 'serial' => 'DROP']);
 
-        $csv = $this->actingAs($this->actor())->get('/app/assets/export?filter[state]=in-use')->streamedContent();
+        $csv = $this->actingAs($this->actor())->get('/app/assets/export?filter[status_id]='.StatusLabel::system(SystemStatus::IN_USE)->id)->streamedContent();
 
         $this->assertStringContainsString('KEEP', $csv);
         $this->assertStringNotContainsString('DROP', $csv);
@@ -75,6 +81,6 @@ class AssetExportControllerTest extends TestCase
         $res->assertOk();
         $res->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $csv = $res->streamedContent();
-        $this->assertStringContainsString('id,state,asset_type,manufacturer,model,location,owner,serial_number,buy_date,guarantee_end,buy_price,buy_type,tags', $csv);
+        $this->assertStringContainsString('id,name,asset_tag,status,category,manufacturer,model,serial,location,assigned_user,purchase_date,purchase_cost,supplier,order_number,warranty_months,notes,tags', $csv);
     }
 }

@@ -4,14 +4,14 @@ import { HandoverWizard } from '../handover-wizard';
 
 const props = {
     typeOptions: [
-        { value: 'issue', label: 'Issue', allowedStates: ['new', 'storage'], assignsOwner: true },
-        { value: 'return', label: 'Return', allowedStates: ['in-use', 'lend'], assignsOwner: false },
+        { value: 'issue', label: 'Issue', allowedStatusIds: ['s-new', 's-storage'], assignsOwner: true },
+        { value: 'return', label: 'Return', allowedStatusIds: ['s-in-use', 's-lend'], assignsOwner: false },
     ],
     recipientKindOptions: [{ value: 'internal', label: 'Internal' }, { value: 'external', label: 'External' }],
     userOptions: [{ value: 'u1', label: 'Ada', email: 'ada@x.test' }],
     assetOptions: [
-        { value: 'a1', label: '(Acme) X1 — SN1', state: 'new' },
-        { value: 'a2', label: '(Dell) U27 — SN2', state: 'in-use' },
+        { value: 'a1', label: '(Acme) X1 — SN1', status_id: 's-new' },
+        { value: 'a2', label: '(Dell) U27 — SN2', status_id: 's-in-use' },
     ],
     defaultTerms: 'Default terms',
 };

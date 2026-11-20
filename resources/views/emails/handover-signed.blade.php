@@ -4,7 +4,7 @@
 
 <ul>
 @foreach($handover->assets as $asset)
-    <li>{{ optional($asset->model)->name }} — {{ $asset->serial_number }}</li>
+    <li>{{ optional($asset->model)->name }} — {{ $asset->serial }}</li>
 @endforeach
 </ul>
 

@@ -73,6 +73,7 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('accessories', AccessoryController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
+        Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
         Route::resource('assets', AssetController::class);
         Route::post('assets/{asset}/attachments', [AssetAttachmentController::class, 'store'])->name('assets.attachments.store');
         Route::delete('assets/{asset}/attachments/{attachment}', [AssetAttachmentController::class, 'destroy'])->name('assets.attachments.destroy');

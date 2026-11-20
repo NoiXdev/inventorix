@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\App;
 
+use App\Enums\SystemStatus;
 use App\Models\Asset;
 use App\Models\Location;
+use App\Models\StatusLabel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -203,7 +205,7 @@ class LocationControllerTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($this->user)->put("/app/assets/{$asset->id}", [
-            'state' => 'new', 'asset_type_id' => $asset->asset_type_id, 'location_id' => $l->id,
+            'status_id' => StatusLabel::system(SystemStatus::NEW)->id, 'location_id' => $l->id,
         ])->assertSessionHasErrors('location_id');
     }
 }

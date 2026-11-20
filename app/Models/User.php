@@ -6,7 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Models\Concerns\CausesActivity;
@@ -29,8 +29,9 @@ class User extends Authenticatable
         ];
     }
 
-    public function assets(): HasMany
+    /** Assets assigned to this user. */
+    public function assets(): MorphMany
     {
-        return $this->hasMany(Asset::class, 'owner_id');
+        return $this->morphMany(Asset::class, 'assignee');
     }
 }

@@ -14,7 +14,7 @@ class UserModelTest extends TestCase
     public function test_a_user_owns_assets(): void
     {
         $user = User::factory()->create();
-        Asset::factory()->count(2)->create(['owner_id' => $user->id]);
+        Asset::factory()->count(2)->create(['assignee_type' => User::class, 'assignee_id' => $user->id]);
 
         $this->assertCount(2, $user->assets);
     }
@@ -22,10 +22,10 @@ class UserModelTest extends TestCase
     public function test_an_asset_owner_is_a_user(): void
     {
         $user = User::factory()->create(['firstname' => 'Ada', 'lastname' => 'Lovelace', 'name' => 'Ada Lovelace']);
-        $asset = Asset::factory()->create(['owner_id' => $user->id]);
+        $asset = Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $user->id]);
 
-        $this->assertInstanceOf(User::class, $asset->owner);
-        $this->assertSame('Ada Lovelace', $asset->owner->name);
+        $this->assertInstanceOf(User::class, $asset->assignee);
+        $this->assertSame('Ada Lovelace', $asset->assignee->name);
     }
 
     public function test_without_login_state_creates_an_account_less_user(): void

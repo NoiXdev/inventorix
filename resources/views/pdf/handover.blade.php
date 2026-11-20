@@ -44,15 +44,16 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($handover->assets as $i => $asset)
+            @php($statusNames = \App\Models\StatusLabel::names())
+    @foreach($handover->assets as $i => $asset)
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td>{{ optional($asset->model)->name }}</td>
-                    <td>{{ $asset->serial_number }}</td>
+                    <td>{{ $asset->serial }}</td>
                     <td>
                         {{ trans('handover.pdf.state_transition', [
-                            'from' => \App\Enums\AssetState::from($asset->pivot->state_from)->getLabel(),
-                            'to'   => \App\Enums\AssetState::from($asset->pivot->state_to)->getLabel(),
+                            'from' => $statusNames->get($asset->pivot->status_from_id),
+                            'to'   => $statusNames->get($asset->pivot->status_to_id),
                         ]) }}
                     </td>
                 </tr>

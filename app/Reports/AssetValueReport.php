@@ -3,6 +3,7 @@
 namespace App\Reports;
 
 use App\Models\Asset;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
 class AssetValueReport extends AbstractReport
@@ -42,7 +43,7 @@ class AssetValueReport extends AbstractReport
                 'label' => __('evaluation.reports.asset_value.filter.group_by'),
                 'options' => [
                     ['value' => 'employee', 'label' => __("{$g}.employee")],
-                    ['value' => 'asset_type', 'label' => __("{$g}.asset_type")],
+                    ['value' => 'category', 'label' => __("{$g}.category")],
                     ['value' => 'state', 'label' => __("{$g}.state")],
                 ],
             ],
@@ -66,25 +67,38 @@ class AssetValueReport extends AbstractReport
     public function reportQuery(): Builder
     {
         if ($this->isDetailed()) {
-            return Asset::query()->with(['owner', 'model', 'assetType']);
+            return Asset::query()->with(['assignedUser', 'model.category', 'status']);
         }
 
         $query = Asset::query()
             ->selectRaw('count(*) as assets_count')
-            ->selectRaw('coalesce(sum(buy_price), 0) as total_price');
+            ->selectRaw('coalesce(sum(purchase_cost), 0) as total_price');
 
         return match ($this->groupBy()) {
-            'asset_type' => $query
-                ->selectRaw('asset_type_id as id, asset_type_id')
-                ->with('assetType')
-                ->groupBy('asset_type_id'),
+            // The category is the model's; assets without one form their own group.
+            'category' => $query
+                ->leftJoin('asset_models', 'asset_models.id', '=', 'assets.model_id')
+                ->leftJoin('categories', 'categories.id', '=', 'asset_models.category_id')
+                ->selectRaw('asset_models.category_id as id, max(categories.name) as category_name')
+                ->groupBy('asset_models.category_id'),
             'state' => $query
-                ->selectRaw('state as id, state')
-                ->groupBy('state'),
-            default => $query
-                ->selectRaw('owner_id as id, owner_id')
-                ->with('owner')
-                ->groupBy('owner_id'),
+                ->selectRaw('status_id as id, status_id')
+                ->with('status')
+                ->groupBy('status_id'),
+            // Per assigned user; assets assigned to anything else count as
+            // unassigned. The user id is computed in a subquery so the outer
+            // query groups by a plain column (MariaDB's ONLY_FULL_GROUP_BY).
+            default => Asset::query()
+                ->withoutGlobalScopes()
+                ->fromSub(
+                    Asset::query()->selectRaw('case when assignee_type = ? then assignee_id end as assigned_user_id, purchase_cost', [User::class]),
+                    'assets',
+                )
+                ->selectRaw('count(*) as assets_count')
+                ->selectRaw('coalesce(sum(purchase_cost), 0) as total_price')
+                ->selectRaw('assigned_user_id as id, assigned_user_id as assignee_id')
+                ->with('assignedUser')
+                ->groupBy('assigned_user_id'),
         };
     }
 
@@ -94,12 +108,12 @@ class AssetValueReport extends AbstractReport
 
         if ($this->isDetailed()) {
             return [
-                ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->owner?->name),
-                ReportColumn::make('asset_type', __("{$t}.asset_type"), fn (Asset $a): ?string => $a->assetType?->name),
+                ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->assignedUser?->name),
+                ReportColumn::make('category', __("{$t}.category"), fn (Asset $a): ?string => $a->model?->category?->name),
                 ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
-                ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),
-                ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->state?->getLabel()),
-                ReportColumn::make('buy_price', __("{$t}.buy_price"), fn (Asset $a) => $a->buy_price),
+                ReportColumn::make('serial', __("{$t}.serial"), fn (Asset $a): ?string => $a->serial),
+                ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->status?->name),
+                ReportColumn::make('purchase_cost', __("{$t}.purchase_cost"), fn (Asset $a) => $a->purchase_cost),
             ];
         }
 
@@ -113,9 +127,9 @@ class AssetValueReport extends AbstractReport
     private function groupLabel(Asset $row): string
     {
         return match ($this->groupBy()) {
-            'asset_type' => $row->assetType?->name ?? '—',
-            'state' => $row->state?->getLabel() ?? '—',
-            default => $row->owner?->name ?? __('evaluation.reports.assets_per_employee.pdf.no_owner'),
+            'category' => $row->category_name ?? '—',
+            'state' => $row->status?->name ?? '—',
+            default => $row->assignedUser?->name ?? __('evaluation.reports.assets_per_employee.pdf.no_owner'),
         };
     }
 
@@ -127,7 +141,7 @@ class AssetValueReport extends AbstractReport
     public function tableSummaries(): array
     {
         // Real DB column only summarizes meaningfully in detailed (per-asset) mode.
-        return $this->isDetailed() ? ['buy_price'] : [];
+        return $this->isDetailed() ? ['purchase_cost'] : [];
     }
 
     public function pdfData(): array

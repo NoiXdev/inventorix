@@ -35,10 +35,11 @@ class StateOverviewReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Asset::query()
-            ->selectRaw('state as id, state')
+            ->selectRaw('status_id as id, status_id')
+            ->with('status')
             ->selectRaw('count(*) as assets_count')
-            ->selectRaw('coalesce(sum(buy_price), 0) as total_price')
-            ->groupBy('state');
+            ->selectRaw('coalesce(sum(purchase_cost), 0) as total_price')
+            ->groupBy('status_id');
     }
 
     public function reportColumns(): array
@@ -46,7 +47,7 @@ class StateOverviewReport extends AbstractReport
         $t = 'evaluation.reports.state_overview.columns';
 
         return [
-            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->state?->getLabel()),
+            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->status?->name),
             ReportColumn::make('assets_count', __("{$t}.assets_count"), fn (Asset $a): int => (int) $a->assets_count),
             ReportColumn::make('total_price', __("{$t}.total_price"), fn (Asset $a) => $a->total_price),
         ];

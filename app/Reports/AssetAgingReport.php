@@ -54,10 +54,10 @@ class AssetAgingReport extends AbstractReport
         $cutoff = now()->startOfDay()->subYears($this->minAgeYears());
 
         return Asset::query()
-            ->with(['owner', 'model'])
-            ->whereNotNull('buy_date')
-            ->whereDate('buy_date', '<=', $cutoff)
-            ->orderBy('buy_date');
+            ->with(['assignee', 'model', 'status'])
+            ->whereNotNull('purchase_date')
+            ->whereDate('purchase_date', '<=', $cutoff)
+            ->orderBy('purchase_date');
     }
 
     public function reportColumns(): array
@@ -66,14 +66,14 @@ class AssetAgingReport extends AbstractReport
 
         return [
             ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
-            ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),
-            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->owner?->name),
-            ReportColumn::make('buy_date', __("{$t}.buy_date"), fn (Asset $a): ?string => $a->buy_date?->format('d.m.Y')),
-            ReportColumn::make('age_years', __("{$t}.age_years"), fn (Asset $a): ?int => $a->buy_date
-                ? (int) floor($a->buy_date->copy()->startOfDay()->diffInYears(now()->startOfDay()))
+            ReportColumn::make('serial', __("{$t}.serial"), fn (Asset $a): ?string => $a->serial),
+            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->assigneeName()),
+            ReportColumn::make('purchase_date', __("{$t}.purchase_date"), fn (Asset $a): ?string => $a->purchase_date?->format('d.m.Y')),
+            ReportColumn::make('age_years', __("{$t}.age_years"), fn (Asset $a): ?int => $a->purchase_date
+                ? (int) floor($a->purchase_date->copy()->startOfDay()->diffInYears(now()->startOfDay()))
                 : null),
-            ReportColumn::make('buy_price', __("{$t}.buy_price"), fn (Asset $a) => $a->buy_price),
-            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->state?->getLabel()),
+            ReportColumn::make('purchase_cost', __("{$t}.purchase_cost"), fn (Asset $a) => $a->purchase_cost),
+            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->status?->name),
         ];
     }
 }

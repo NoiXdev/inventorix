@@ -4,12 +4,15 @@
 
 namespace Tests\Feature\App;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
+use App\Models\Category;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class AssetHistoryTest extends TestCase
@@ -23,8 +26,8 @@ class AssetHistoryTest extends TestCase
         $newOwner = User::factory()->withoutLogin()->create(['name' => 'Nate New']);
 
         $this->actingAs($actor);
-        $asset = Asset::factory()->create(['owner_id' => $oldOwner->id, 'state' => AssetState::NEW->value]);
-        $asset->update(['owner_id' => $newOwner->id]);
+        $asset = Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $oldOwner->id, 'status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
+        $asset->assignTo($newOwner)->save();
 
         $history = AssetHistory::for($asset->fresh());
 
@@ -32,22 +35,37 @@ class AssetHistoryTest extends TestCase
         $updated = $history[0];
         $this->assertSame('updated', $updated['event']);
         $this->assertSame('Cara Causer', $updated['causer_name']);
-        $ownerChange = collect($updated['changes'])->firstWhere('field', 'owner_id');
+        $ownerChange = collect($updated['changes'])->firstWhere('field', 'assignee_id');
         $this->assertNotNull($ownerChange);
         $this->assertSame('Olive Old', $ownerChange['old']);
         $this->assertSame('Nate New', $ownerChange['new']);
     }
 
-    public function test_resolves_enum_state_labels(): void
+    public function test_resolves_status_label_names(): void
     {
         $actor = User::factory()->create(['login_enabled' => true]);
         $this->actingAs($actor);
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
-        $asset->update(['state' => AssetState::DEFECT->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
+        $asset->update(['status_id' => StatusLabel::system(SystemStatus::DEFECT)->id]);
 
-        $stateChange = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'state');
-        $this->assertSame(AssetState::NEW->getLabel(), $stateChange['old']);   // 'Neu'
-        $this->assertSame(AssetState::DEFECT->getLabel(), $stateChange['new']); // 'Defekt'
+        $stateChange = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'status_id');
+        $this->assertSame(StatusLabel::system(SystemStatus::NEW)->name, $stateChange['old']);   // 'Neu'
+        $this->assertSame(StatusLabel::system(SystemStatus::DEFECT)->name, $stateChange['new']); // 'Defekt'
+    }
+
+    public function test_entries_from_before_categories_resolve_the_old_asset_type_id(): void
+    {
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+        $category = Category::factory()->create(['name' => 'Monitor']);
+        $asset = Asset::factory()->create();
+        // Types were migrated to categories with their ids kept.
+        $activity = Activity::query()->where('subject_id', $asset->id)->sole();
+        $activity->attribute_changes = collect(['attributes' => ['asset_type_id' => $category->id], 'old' => []]);
+        $activity->save();
+
+        $change = collect(AssetHistory::for($asset)[0]['changes'])->firstWhere('field', 'asset_type_id');
+        $this->assertSame('Category', $change['label']);
+        $this->assertSame('Monitor', $change['new']);
     }
 
     public function test_missing_referenced_record_resolves_to_removed(): void
@@ -55,11 +73,11 @@ class AssetHistoryTest extends TestCase
         $actor = User::factory()->create(['login_enabled' => true]);
         $gone = User::factory()->withoutLogin()->create();
         $this->actingAs($actor);
-        $asset = Asset::factory()->create(['owner_id' => null]);
-        $asset->update(['owner_id' => $gone->id]);
+        $asset = Asset::factory()->create(['assignee_type' => null, 'assignee_id' => null]);
+        $asset->assignTo($gone)->save();
         $gone->delete();
 
-        $ownerChange = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'owner_id');
+        $ownerChange = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'assignee_id');
         $this->assertSame('(removed)', $ownerChange['new']);
     }
 
@@ -67,7 +85,7 @@ class AssetHistoryTest extends TestCase
     {
         // No actingAs -> no auth user -> null causer.
         $asset = Asset::factory()->create();
-        $asset->update(['state' => AssetState::STORAGE->value]);
+        $asset->update(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $entry = AssetHistory::for($asset->fresh())[0];
         $this->assertSame('System', $entry['causer_name']);
@@ -80,7 +98,7 @@ class AssetHistoryTest extends TestCase
 
         $this->actingAs($actor);
         $asset = Asset::factory()->create();
-        $asset->update(['owner_id' => $newOwner->id]);
+        $asset->assignTo($newOwner)->save();
 
         $history = AssetHistory::for($asset->fresh());
 
@@ -95,7 +113,7 @@ class AssetHistoryTest extends TestCase
 
         $updatedEntries = collect($history)->where('event', 'updated');
         $this->assertCount(1, $updatedEntries);
-        $ownerChange = collect($updatedEntries->first()['changes'])->firstWhere('field', 'owner_id');
+        $ownerChange = collect($updatedEntries->first()['changes'])->firstWhere('field', 'assignee_id');
         $this->assertNotNull($ownerChange);
         $this->assertSame($newOwner->name, $ownerChange['new']);
     }
@@ -109,7 +127,7 @@ class AssetHistoryTest extends TestCase
         $asset = Asset::factory()->create();
 
         $this->actingAs($second);
-        $asset->update(['state' => AssetState::DEFECT->value]);
+        $asset->update(['status_id' => StatusLabel::system(SystemStatus::DEFECT)->id]);
 
         $second->delete();
 
@@ -144,18 +162,17 @@ class AssetHistoryTest extends TestCase
         $this->assertNull(collect($history)->firstWhere('event', 'attachment_removed'));
     }
 
-    public function test_invoice_change_shows_invoice_label(): void
+    public function test_order_number_change_shows_order_number_label(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
-        $this->actingAs($actor);
-        $asset = Asset::factory()->create(['invoice' => 'INV-OLD']);
-        $asset->update(['invoice' => 'INV-NEW']);
+        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+        $asset = Asset::factory()->create(['order_number' => 'PO-OLD']);
+        $asset->update(['order_number' => 'PO-NEW']);
 
-        $invoiceChange = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'invoice');
-        $this->assertNotNull($invoiceChange);
-        $this->assertSame('Invoice', $invoiceChange['label']);
-        $this->assertSame('INV-OLD', $invoiceChange['old']);
-        $this->assertSame('INV-NEW', $invoiceChange['new']);
+        $change = collect(AssetHistory::for($asset->fresh())[0]['changes'])->firstWhere('field', 'order_number');
+        $this->assertNotNull($change);
+        $this->assertSame('Order number', $change['label']);
+        $this->assertSame('PO-OLD', $change['old']);
+        $this->assertSame('PO-NEW', $change['new']);
     }
 
     public function test_show_returns_history_prop(): void
@@ -163,7 +180,7 @@ class AssetHistoryTest extends TestCase
         $actor = User::factory()->create(['login_enabled' => true]);
         $this->actingAs($actor);
         $asset = Asset::factory()->create();
-        $asset->update(['state' => AssetState::LEND->value]);
+        $asset->update(['status_id' => StatusLabel::system(SystemStatus::LEND)->id]);
 
         $this->get("/app/assets/{$asset->id}")
             ->assertInertia(fn (AssertableInertia $p) => $p

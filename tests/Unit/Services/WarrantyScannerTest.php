@@ -19,9 +19,7 @@ class WarrantyScannerTest extends TestCase
 
     private function assetEndingInDays(int $days): Asset
     {
-        return Asset::factory()->create([
-            'guarantee_end' => now()->startOfDay()->addDays($days)->toDateString(),
-        ]);
+        return Asset::factory()->warrantyEndingOn(now()->startOfDay()->addDays($days))->create();
     }
 
     public function test_no_milestone_when_further_out_than_largest_lead(): void
@@ -57,9 +55,9 @@ class WarrantyScannerTest extends TestCase
         $this->assertSame(-1, $results->first()->daysLeft);
     }
 
-    public function test_null_guarantee_end_is_ignored(): void
+    public function test_asset_without_warranty_is_ignored(): void
     {
-        Asset::factory()->create(['guarantee_end' => null]);
+        Asset::factory()->withoutWarranty()->create();
 
         $this->assertCount(0, $this->scanner()->scan());
     }
@@ -69,7 +67,7 @@ class WarrantyScannerTest extends TestCase
         $asset = $this->assetEndingInDays(30);
         WarrantyNotification::create([
             'asset_id' => $asset->id,
-            'guarantee_end' => $asset->guarantee_end->toDateString(),
+            'guarantee_end' => $asset->warrantyEnd()->toDateString(),
             'milestone' => '30',
             'sent_at' => now(),
         ]);
@@ -77,10 +75,10 @@ class WarrantyScannerTest extends TestCase
         $this->assertCount(0, $this->scanner()->scan());
     }
 
-    public function test_changed_guarantee_end_is_a_fresh_slate(): void
+    public function test_changed_warranty_end_is_a_fresh_slate(): void
     {
         $asset = $this->assetEndingInDays(30);
-        // Ledger row for a DIFFERENT (older) guarantee_end must not suppress the new date.
+        // Ledger row for a DIFFERENT (older) warranty end must not suppress the new date.
         WarrantyNotification::create([
             'asset_id' => $asset->id,
             'guarantee_end' => now()->startOfDay()->subYear()->toDateString(),

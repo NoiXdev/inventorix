@@ -98,7 +98,7 @@ class CustomFieldColumnsTest extends TestCase
 
     public function test_db_column_cannot_be_mass_assigned(): void
     {
-        $field = CustomField::factory()->create(['name' => 'Safe', 'db_column' => 'serial_number']);
+        $field = CustomField::factory()->create(['name' => 'Safe', 'db_column' => 'serial']);
 
         $this->assertSame('cf_safe', $field->db_column);
     }

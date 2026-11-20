@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { StateBadge } from '@/components/assets/state-badge';
+import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge';
 
-interface AssetRow { id: string; model_name: string | null; serial_number: string | null; state: string; state_label: string | null; location_name: string | null }
+interface AssetRow { id: string; name: string | null; asset_tag: string | null; model_name: string | null; serial: string | null; status: AssetStatus | null; location_name: string | null }
 interface Props {
     user: { id: string; name: string | null; firstname: string; lastname: string; email: string | null; login_enabled: boolean; assets_count: number };
     assets: AssetRow[];
@@ -30,19 +30,20 @@ export default function UserShow({ user, assets }: Props) {
             </div>
 
             <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-base">Owned assets ({user.assets_count})</CardTitle></CardHeader>
+                <CardHeader className="pb-2"><CardTitle className="text-base">Assigned assets ({user.assets_count})</CardTitle></CardHeader>
                 <CardContent>
                     {assets.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">This user owns no assets.</p>
+                        <p className="text-sm text-muted-foreground">No assets are assigned to this user.</p>
                     ) : (
                         <Table>
-                            <TableHeader><TableRow><TableHead>Model</TableHead><TableHead>Serial</TableHead><TableHead>State</TableHead><TableHead>Location</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Model</TableHead><TableHead>Serial</TableHead><TableHead>Status</TableHead><TableHead>Location</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {assets.map((a) => (
                                     <TableRow key={a.id} className="cursor-pointer" onClick={() => router.visit(`/app/assets/${a.id}`)}>
+                                        <TableCell>{a.name ?? a.asset_tag ?? '—'}</TableCell>
                                         <TableCell>{a.model_name ?? '—'}</TableCell>
-                                        <TableCell>{a.serial_number ?? '—'}</TableCell>
-                                        <TableCell><StateBadge state={a.state} label={a.state_label} /></TableCell>
+                                        <TableCell>{a.serial ?? '—'}</TableCell>
+                                        <TableCell><StatusBadge status={a.status} /></TableCell>
                                         <TableCell>{a.location_name ?? '—'}</TableCell>
                                     </TableRow>
                                 ))}

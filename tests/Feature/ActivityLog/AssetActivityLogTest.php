@@ -2,9 +2,10 @@
 
 namespace Tests\Feature\ActivityLog;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
 use App\Models\Location;
+use App\Models\StatusLabel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Activitylog\Models\Activity;
@@ -30,18 +31,18 @@ class AssetActivityLogTest extends TestCase
 
     public function test_updating_non_semantic_fields_writes_only_dirty_fields(): void
     {
-        $asset = Asset::factory()->create(['serial_number' => 'SN-OLD']);
+        $asset = Asset::factory()->create(['serial' => 'SN-OLD']);
 
-        $asset->update(['serial_number' => 'SN-NEW', 'invoice' => 'INV-99']);
+        $asset->update(['serial' => 'SN-NEW', 'order_number' => 'PO-99']);
 
         $activity = Activity::query()
             ->where('subject_id', $asset->id)
             ->where('description', 'updated')
             ->latest('id')->first();
 
-        $this->assertSame('SN-NEW', $activity->attribute_changes['attributes']['serial_number']);
-        $this->assertSame('SN-OLD', $activity->attribute_changes['old']['serial_number']);
-        $this->assertArrayHasKey('invoice', $activity->attribute_changes['attributes']);
+        $this->assertSame('SN-NEW', $activity->attribute_changes['attributes']['serial']);
+        $this->assertSame('SN-OLD', $activity->attribute_changes['old']['serial']);
+        $this->assertArrayHasKey('order_number', $activity->attribute_changes['attributes']);
         $this->assertArrayNotHasKey('id', $activity->attribute_changes['attributes']);
     }
 
@@ -75,22 +76,26 @@ class AssetActivityLogTest extends TestCase
         $this->assertSame((string) $user->id, (string) $activity->causer_id);
     }
 
-    public function test_owner_change_writes_an_owner_changed_activity(): void
+    public function test_assignee_change_writes_an_assignee_changed_activity(): void
     {
         $asset = Asset::factory()->create();
         $newOwner = User::factory()->withoutLogin()->create();
-        $oldOwnerId = $asset->owner_id;
+        $oldOwnerId = $asset->assignee_id;
+        $location = Location::factory()->create();
 
-        $asset->update(['owner_id' => $newOwner->id]);
+        $asset->assignTo($newOwner)->save();
+        $asset->assignTo($location)->save();
 
-        $activity = Activity::query()
+        $activities = Activity::query()
             ->where('subject_id', $asset->id)
-            ->where('description', 'owner_changed')
-            ->first();
+            ->where('description', 'assignee_changed')
+            ->orderBy('id')
+            ->get();
 
-        $this->assertNotNull($activity);
-        $this->assertSame($oldOwnerId, $activity->properties['from']);
-        $this->assertSame($newOwner->id, $activity->properties['to']);
+        $this->assertCount(2, $activities);
+        $this->assertSame(['type' => User::class, 'id' => $oldOwnerId], $activities[0]->properties['from']);
+        $this->assertSame(['type' => User::class, 'id' => $newOwner->id], $activities[0]->properties['to']);
+        $this->assertSame(['type' => Location::class, 'id' => $location->id], $activities[1]->properties['to']);
     }
 
     public function test_location_change_writes_a_location_changed_activity(): void
@@ -111,20 +116,20 @@ class AssetActivityLogTest extends TestCase
         $this->assertSame($newPlace->id, $activity->properties['to']);
     }
 
-    public function test_state_change_writes_a_state_changed_activity(): void
+    public function test_status_change_writes_a_status_changed_activity(): void
     {
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
 
-        $asset->update(['state' => AssetState::IN_USE->value]);
+        $asset->update(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id]);
 
         $activity = Activity::query()
             ->where('subject_id', $asset->id)
-            ->where('description', 'state_changed')
+            ->where('description', 'status_changed')
             ->first();
 
         $this->assertNotNull($activity);
-        $this->assertSame(AssetState::NEW->value, $activity->properties['from']);
-        $this->assertSame(AssetState::IN_USE->value, $activity->properties['to']);
+        $this->assertSame(StatusLabel::system(SystemStatus::NEW)->id, $activity->properties['from']);
+        $this->assertSame(StatusLabel::system(SystemStatus::IN_USE)->id, $activity->properties['to']);
     }
 
     public function test_a_semantic_change_also_keeps_the_generic_updated_row(): void
@@ -132,7 +137,7 @@ class AssetActivityLogTest extends TestCase
         $asset = Asset::factory()->create();
         $newOwner = User::factory()->withoutLogin()->create();
 
-        $asset->update(['owner_id' => $newOwner->id]);
+        $asset->assignTo($newOwner)->save();
 
         $this->assertSame(
             1,
@@ -146,7 +151,7 @@ class AssetActivityLogTest extends TestCase
             1,
             Activity::query()
                 ->where('subject_id', $asset->id)
-                ->where('description', 'owner_changed')
+                ->where('description', 'assignee_changed')
                 ->count(),
         );
     }

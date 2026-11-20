@@ -4,13 +4,13 @@
 
 namespace App\Support\Assets;
 
-use App\Enums\AssetState;
-use App\Enums\BuyType;
 use App\Models\Asset;
 use App\Models\AssetModel;
-use App\Models\AssetType;
+use App\Models\Category;
 use App\Models\CustomField;
 use App\Models\Location;
+use App\Models\StatusLabel;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Activity;
@@ -19,16 +19,39 @@ class AssetHistory
 {
     /** @var array<string, string> */
     private const LABELS = [
-        'state' => 'State',
-        'asset_type_id' => 'Asset type',
+        'name' => 'Name',
+        'asset_tag' => 'Asset tag',
+        'status_id' => 'Status',
+        'state' => 'Status', // entries from before status labels replaced the fixed states
+        'asset_type_id' => 'Category', // entries from before assets took their category from the model
         'model_id' => 'Model',
-        'owner_id' => 'Owner',
+        'assignee_id' => 'Assigned to',
+        'owner_id' => 'Assigned to', // entries from before the owner became the assignee
         'location_id' => 'Location',
         'place_id' => 'Location', // entries from before places became locations
-        'serial_number' => 'Serial number',
-        'buy_date' => 'Buy date',
+        'rtd_location_id' => 'Default location',
+        'supplier_id' => 'Supplier',
+        'serial' => 'Serial',
+        'serial_number' => 'Serial', // entries from before the renames
+        'purchase_date' => 'Purchase date',
+        'buy_date' => 'Purchase date',
+        'purchase_cost' => 'Purchase cost',
+        'buy_price' => 'Purchase cost',
+        'order_number' => 'Order number',
+        'warranty_months' => 'Warranty (months)',
+        'asset_eol_date' => 'EOL date',
+        'eol_explicit' => 'EOL date set by hand',
+        'depreciate' => 'Depreciate',
+        'physical' => 'Physical',
+        'requestable' => 'Requestable',
+        'byod' => 'BYOD',
+        'archived' => 'Archived',
+        'notes' => 'Notes',
+        'expected_checkin' => 'Expected check-in',
+        'last_audit_date' => 'Last audit',
+        'next_audit_date' => 'Next audit',
+        // Fields that were dropped; older entries still show them.
         'buy_type' => 'Buy type',
-        'buy_price' => 'Buy price',
         'guarantee_end' => 'Guarantee end',
         'invoice' => 'Invoice',
     ];
@@ -118,9 +141,18 @@ class AssetHistory
         }
 
         return match ($field) {
-            'state' => AssetState::tryFrom((string) $value)?->getLabel() ?? (string) $value,
-            'buy_type' => BuyType::tryFrom((string) $value)?->getLabel() ?? (string) $value,
-            'asset_type_id' => AssetType::find($value)?->name ?? '(removed)',
+            'status_id' => StatusLabel::withTrashed()->find($value)?->name ?? '(removed)',
+            'state' => StatusLabel::withTrashed()->where('system_key', $value)->value('name') ?? (string) $value,
+            'buy_type' => match ((string) $value) {
+                'once' => 'Einmalig (gekauft)',
+                'abo' => 'Abo',
+                default => (string) $value,
+            },
+            'assignee_id' => Asset::assigneeNameFor(null, (string) $value) ?? '(removed)',
+            'supplier_id' => Supplier::withTrashed()->find($value)?->name ?? '(removed)',
+            'rtd_location_id' => Location::withTrashed()->find($value)?->name ?? '(removed)',
+            'eol_explicit', 'depreciate', 'physical', 'requestable', 'byod', 'archived' => $value ? 'Yes' : 'No',
+            'asset_type_id' => Category::withTrashed()->find($value)?->name ?? '(removed)',
             'model_id' => AssetModel::withTrashed()->find($value)?->name ?? '(removed)',
             'owner_id' => User::find($value)?->name ?? '(removed)',
             'location_id', 'place_id' => Location::withTrashed()->find($value)?->name ?? '(removed)',

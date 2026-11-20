@@ -41,10 +41,10 @@ class AssetsPerEmployeeReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Asset::query()
-            ->with(['owner', 'model', 'assetType'])
+            ->with(['assignedUser', 'model.category', 'status'])
             ->when(
                 ! empty($this->filters['employees']),
-                fn (Builder $query): Builder => $query->whereIn('owner_id', $this->filters['employees']),
+                fn (Builder $query): Builder => $query->where('assignee_type', User::class)->whereIn('assignee_id', $this->filters['employees']),
             );
     }
 
@@ -53,13 +53,13 @@ class AssetsPerEmployeeReport extends AbstractReport
         $t = 'evaluation.reports.assets_per_employee.columns';
 
         return [
-            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->owner?->name),
-            ReportColumn::make('asset_type', __("{$t}.asset_type"), fn (Asset $a): ?string => $a->assetType?->name),
+            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->assignedUser?->name),
+            ReportColumn::make('category', __("{$t}.category"), fn (Asset $a): ?string => $a->model?->category?->name),
             ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
-            ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),
-            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->state?->getLabel()),
-            ReportColumn::make('guarantee_end', __("{$t}.guarantee_end"), fn (Asset $a): ?string => $a->guarantee_end?->format('d.m.Y')),
-            ReportColumn::make('buy_price', __("{$t}.buy_price"), fn (Asset $a) => $a->buy_price),
+            ReportColumn::make('serial', __("{$t}.serial"), fn (Asset $a): ?string => $a->serial),
+            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->status?->name),
+            ReportColumn::make('warranty_end', __("{$t}.warranty_end"), fn (Asset $a): ?string => $a->warrantyEnd()?->format('d.m.Y')),
+            ReportColumn::make('purchase_cost', __("{$t}.purchase_cost"), fn (Asset $a) => $a->purchase_cost),
         ];
     }
 
@@ -81,7 +81,7 @@ class AssetsPerEmployeeReport extends AbstractReport
 
     /**
      * Group the assets per employee so each employee starts on its own PDF page.
-     * Assets without an owner are collected into a trailing "no owner" group.
+     * Assets not assigned to a user are collected into a trailing "no owner" group.
      *
      * @return array<string, mixed>
      */
@@ -91,10 +91,10 @@ class AssetsPerEmployeeReport extends AbstractReport
         $noOwnerLabel = __('evaluation.reports.assets_per_employee.pdf.no_owner');
 
         $groups = $this->reportQuery()->get()
-            ->groupBy(fn (Asset $asset): string => $asset->owner_id ?? '')
+            ->groupBy(fn (Asset $asset): string => $asset->assignedUserId() ?? '')
             ->map(fn ($assets): array => [
-                'employee' => $assets->first()->owner?->name ?? $noOwnerLabel,
-                'hasOwner' => $assets->first()->owner !== null,
+                'employee' => $assets->first()->assignedUser?->name ?? $noOwnerLabel,
+                'hasOwner' => $assets->first()->assignedUser !== null,
                 'rows' => $assets->map(fn (Asset $asset): array => array_map(
                     fn (ReportColumn $column) => $column->resolve($asset),
                     $columns,

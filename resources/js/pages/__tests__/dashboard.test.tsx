@@ -10,7 +10,7 @@ const base = {
     warranty: { expired: 3, soon_30: 5, soon_90: 9 },
     latestDocuments: [{ id: 'd1', title: 'Invoice', category_label: 'Rechnung', attached_to: 'Asset', uploaded_by: 'Ada', created_at: '01.01.2025 10:00', url: 'http://x/open/d1' }],
     openIncidents: [{ id: 1, title: 'Broken screen', model: 'X1', serial: 'SN1', open_date: '02.01.2025', days_open: 4, asset_url: '/app/assets/a1' }],
-    warrantyExpiring: [{ id: 'a1', owner: 'Bob', model: 'X1', serial: 'SN1', guarantee_end: '10.02.2025', days_left: 20, asset_url: '/app/assets/a1' }],
+    warrantyExpiring: [{ id: 'a1', assignee: 'Bob', model: 'X1', serial: 'SN1', warranty_end: '10.02.2025', days_left: 20, asset_url: '/app/assets/a1' }],
 };
 
 describe('Dashboard', () => {

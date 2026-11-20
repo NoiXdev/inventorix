@@ -15,7 +15,7 @@ function openRow(href: string, newTab: boolean, e: React.MouseEvent): void {
 
 interface Doc { id: string; title: string; category_label: string | null; attached_to: string; uploaded_by: string | null; created_at: string | null; url: string; }
 interface OpenIncident { id: number; title: string; model: string | null; serial: string | null; open_date: string | null; days_open: number | null; asset_url: string | null; }
-interface Warranty { id: string; owner: string | null; model: string | null; serial: string | null; guarantee_end: string | null; days_left: number | null; asset_url: string; }
+interface Warranty { id: string; assignee: string | null; model: string | null; serial: string | null; warranty_end: string | null; days_left: number | null; asset_url: string; }
 
 interface Props {
     stats: { assets: number };
@@ -95,13 +95,13 @@ export default function Dashboard({ stats, warranty, latestDocuments, openIncide
                 <Panel title="Warranty expiring">
                     {warrantyExpiring.length === 0 ? <p className="text-sm text-muted-foreground">No upcoming expirations.</p> : (
                         <Table>
-                            <TableHeader><TableRow><TableHead>Owner</TableHead><TableHead>Model</TableHead><TableHead>Guarantee end</TableHead><TableHead>Days left</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead>Assigned to</TableHead><TableHead>Model</TableHead><TableHead>Warranty end</TableHead><TableHead>Days left</TableHead></TableRow></TableHeader>
                             <TableBody>
                                 {warrantyExpiring.map((w) => (
                                     <TableRow key={w.id} className="cursor-pointer" onClick={(e) => openRow(w.asset_url, false, e)}>
-                                        <TableCell><a href={w.asset_url} className="hover:underline">{w.owner ?? '—'}</a></TableCell>
+                                        <TableCell><a href={w.asset_url} className="hover:underline">{w.assignee ?? '—'}</a></TableCell>
                                         <TableCell>{w.model ?? '—'}</TableCell>
-                                        <TableCell>{w.guarantee_end ?? '—'}</TableCell>
+                                        <TableCell>{w.warranty_end ?? '—'}</TableCell>
                                         <TableCell className={cn(w.days_left !== null && w.days_left < 0 && 'text-red-600 dark:text-red-400')}>{w.days_left ?? '—'}</TableCell>
                                     </TableRow>
                                 ))}

@@ -15,9 +15,11 @@ return [
         'updated' => 'Geändert',
         'deleted' => 'Gelöscht',
         'note' => 'Notiz',
+        'assignee_changed' => 'Zuweisung geändert',
         'owner_changed' => 'Besitzer geändert',
         'location_changed' => 'Standort geändert',
         'place_changed' => 'Standort geändert',
+        'status_changed' => 'Status geändert',
         'state_changed' => 'Status geändert',
     ],
 

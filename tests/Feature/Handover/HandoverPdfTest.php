@@ -3,10 +3,11 @@
 namespace Tests\Feature\Handover;
 
 use App\DataObjects\HandoverData;
-use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,8 +27,8 @@ class HandoverPdfTest extends TestCase
         $recipient = User::factory()->create();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create([
-            'state' => AssetState::STORAGE->value,
-            'serial_number' => 'SN-TEST-12345',
+            'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
+            'serial' => 'SN-TEST-12345',
         ]);
 
         $data = new HandoverData(

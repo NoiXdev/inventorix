@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\App;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
-use App\Models\AssetType;
+use App\Models\StatusLabel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -22,8 +22,7 @@ class AssetForcedIdTest extends TestCase
     private function payload(array $overrides = []): array
     {
         return array_merge([
-            'state' => AssetState::NEW->value,
-            'asset_type_id' => AssetType::factory()->create()->id,
+            'status_id' => StatusLabel::system(SystemStatus::NEW)->id,
         ], $overrides);
     }
 
@@ -59,11 +58,11 @@ class AssetForcedIdTest extends TestCase
         // The shared AssetForm carries an `id` field; an edit must never change the key.
         $this->actingAs($this->actor())->put('/app/assets/'.$asset->id, $this->payload([
             'id' => (string) Str::uuid(),
-            'serial_number' => 'EDITED',
+            'serial' => 'EDITED',
         ]))->assertRedirect();
 
         $asset->refresh();
         $this->assertSame($originalId, $asset->id);
-        $this->assertSame('EDITED', $asset->serial_number);
+        $this->assertSame('EDITED', $asset->serial);
     }
 }

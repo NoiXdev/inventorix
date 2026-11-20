@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\App;
 
 use App\DataObjects\HandoverData;
-use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Exceptions\HandoverStateConflictException;
@@ -11,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\HandoverRequest;
 use App\Models\Asset;
 use App\Models\Handover;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Services\HandoverService;
 use App\Support\Table\TableQuery;
@@ -58,17 +58,17 @@ class HandoverController extends Controller
         return Inertia::render('handovers/create', [
             'typeOptions' => array_map(fn (HandoverType $t) => [
                 'value' => $t->value, 'label' => $t->getLabel(),
-                'allowedStates' => array_map(fn ($s) => $s->value, $t->allowedStateFrom()),
+                'allowedStatusIds' => StatusLabel::systemIds($t->allowedStateFrom()),
                 'assignsOwner' => $t->assignsRecipientAsOwner(),
             ], HandoverType::cases()),
             'recipientKindOptions' => array_map(fn (RecipientKind $k) => ['value' => $k->value, 'label' => $k->getLabel()], RecipientKind::cases()),
             'userOptions' => User::query()->orderBy('name')->get()
                 ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—', 'email' => $u->email])->all(),
-            'assetOptions' => Asset::query()->with('assetType', 'model.manufacturer')->get()
+            'assetOptions' => Asset::query()->with('model.manufacturer')->get()
                 ->map(fn (Asset $a) => [
                     'value' => $a->id,
-                    'label' => '('.optional(optional($a->model)->manufacturer)->name.') '.optional($a->model)->name.' — '.($a->serial_number ?? '—'),
-                    'state' => $a->state->value,
+                    'label' => '('.optional(optional($a->model)->manufacturer)->name.') '.optional($a->model)->name.' — '.($a->serial ?? '—'),
+                    'status_id' => $a->status_id,
                 ])->all(),
             'defaultTerms' => (string) config('handover.terms'),
         ]);
@@ -108,7 +108,8 @@ class HandoverController extends Controller
 
     public function show(Handover $handover): Response
     {
-        $handover->load('recipientUser', 'createdBy', 'assets.model.manufacturer', 'assets.assetType');
+        $handover->load('recipientUser', 'createdBy', 'assets.model.manufacturer');
+        $names = StatusLabel::names();
 
         return Inertia::render('handovers/show', [
             'handover' => [
@@ -128,8 +129,8 @@ class HandoverController extends Controller
             'assets' => $handover->assets->map(fn (Asset $a) => [
                 'id' => $a->id,
                 'label' => '('.optional(optional($a->model)->manufacturer)->name.') '.optional($a->model)->name,
-                'state_from' => AssetState::tryFrom($a->pivot->state_from)?->getLabel() ?? $a->pivot->state_from,
-                'state_to' => AssetState::tryFrom($a->pivot->state_to)?->getLabel() ?? $a->pivot->state_to,
+                'state_from' => $names->get($a->pivot->status_from_id),
+                'state_to' => $names->get($a->pivot->status_to_id),
             ])->all(),
         ]);
     }

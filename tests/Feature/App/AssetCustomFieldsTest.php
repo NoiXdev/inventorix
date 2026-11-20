@@ -3,11 +3,12 @@
 namespace Tests\Feature\App;
 
 use App\Enums\CustomFieldElement;
+use App\Enums\SystemStatus;
 use App\Models\Asset;
 use App\Models\AssetModel;
-use App\Models\AssetType;
 use App\Models\CustomField;
 use App\Models\CustomFieldset;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Support\Assets\AssetHistory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -45,8 +46,7 @@ class AssetCustomFieldsTest extends TestCase
     private function payload(array $custom = [], array $overrides = []): array
     {
         return [
-            'state' => 'new',
-            'asset_type_id' => AssetType::factory()->create()->id,
+            'status_id' => StatusLabel::system(SystemStatus::NEW)->id,
             'model_id' => $this->model->id,
             'custom_fields' => $custom,
             ...$overrides,

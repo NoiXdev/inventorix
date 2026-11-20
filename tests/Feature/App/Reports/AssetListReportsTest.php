@@ -20,8 +20,8 @@ class AssetListReportsTest extends TestCase
 
     public function test_guarantee_status_filters_by_status(): void
     {
-        Asset::factory()->create(['guarantee_end' => now()->subDay()->format('Y-m-d')]);   // expired
-        Asset::factory()->create(['guarantee_end' => now()->addDays(400)->format('Y-m-d')]); // valid
+        Asset::factory()->warrantyEndingOn(now()->subDay()->format('Y-m-d'))->create();   // expired
+        Asset::factory()->warrantyEndingOn(now()->addDays(400)->format('Y-m-d'))->create(); // valid
 
         $this->actingAs($this->actor())
             ->get('/app/reports/guarantee_status?filters[status][]=expired')
@@ -30,8 +30,8 @@ class AssetListReportsTest extends TestCase
 
     public function test_asset_aging_min_age_cutoff_and_default(): void
     {
-        Asset::factory()->create(['buy_date' => now()->subYears(5)->format('Y-m-d')]); // old
-        Asset::factory()->create(['buy_date' => now()->subMonths(6)->format('Y-m-d')]); // new
+        Asset::factory()->create(['purchase_date' => now()->subYears(5)->format('Y-m-d')]); // old
+        Asset::factory()->create(['purchase_date' => now()->subMonths(6)->format('Y-m-d')]); // new
 
         // default min_age_years = 3 → only the 5y asset
         $this->actingAs($this->actor())->get('/app/reports/asset_aging')
@@ -45,8 +45,8 @@ class AssetListReportsTest extends TestCase
     public function test_assets_per_employee_pdf_groups_by_owner(): void
     {
         $a = User::factory()->withoutLogin()->create(['name' => 'Alice']);
-        Asset::factory()->count(2)->create(['owner_id' => $a->id]);
-        Asset::factory()->create(['owner_id' => null]); // no-owner group
+        Asset::factory()->count(2)->create(['assignee_type' => User::class, 'assignee_id' => $a->id]);
+        Asset::factory()->create(['assignee_type' => null, 'assignee_id' => null]); // no-owner group
 
         $data = app(AssetsPerEmployeeReport::class)->setFilters([])->pdfData();
         $this->assertArrayHasKey('groups', $data);
@@ -58,7 +58,7 @@ class AssetListReportsTest extends TestCase
     public function test_assets_per_employee_filters_employees(): void
     {
         $a = User::factory()->withoutLogin()->create();
-        Asset::factory()->create(['owner_id' => $a->id]);
+        Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $a->id]);
         Asset::factory()->create(); // different owner
 
         $this->actingAs($this->actor())

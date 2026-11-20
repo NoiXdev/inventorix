@@ -10,7 +10,7 @@ return [
             'lead' => 'Garantie endet in :days Tagen',
         ],
         'col' => [
-            'owner' => 'Besitzer',
+            'owner' => 'Zugewiesen an',
             'model' => 'Modell',
             'serial' => 'Seriennummer',
             'guarantee_end' => 'Garantieende',
@@ -26,7 +26,7 @@ return [
         ],
         'table' => [
             'heading' => 'Demnächst ablaufende Garantien',
-            'owner' => 'Besitzer',
+            'owner' => 'Zugewiesen an',
             'model' => 'Modell',
             'serial' => 'Seriennummer',
             'guarantee_end' => 'Garantieende',

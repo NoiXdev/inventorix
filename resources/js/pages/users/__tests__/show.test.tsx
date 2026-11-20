@@ -10,12 +10,12 @@ const user = { id: 'u1', name: 'Ada Lovelace', firstname: 'Ada', lastname: 'Love
 
 describe('UserShow', () => {
     it('lists owned assets', () => {
-        render(<UserShow user={user} assets={[{ id: 'a1', model_name: 'X1', serial_number: 'SN1', state: 'in-use', state_label: 'In Benutzung', location_name: 'HQ' }]} />);
+        render(<UserShow user={user} assets={[{ id: 'a1', name: null, asset_tag: null, model_name: 'X1', serial: 'SN1', status: { id: 's1', name: 'In Benutzung', type: 'deployable' }, location_name: 'HQ' }]} />);
         expect(screen.getByText('X1')).toBeInTheDocument();
     });
     it('shows an empty state', () => {
         render(<UserShow user={{ ...user, assets_count: 0 }} assets={[]} />);
-        expect(screen.getByText(/owns no assets/i)).toBeInTheDocument();
+        expect(screen.getByText(/no assets are assigned/i)).toBeInTheDocument();
     });
     it('shows a login enabled badge', () => {
         render(<UserShow user={user} assets={[]} />);

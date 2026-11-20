@@ -15,8 +15,8 @@ class WarrantyExpiryDigestTest extends TestCase
 
     public function test_it_renders_grouped_sections(): void
     {
-        $expired = Asset::factory()->create(['guarantee_end' => now()->subDay()->toDateString()]);
-        $soon = Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
+        $expired = Asset::factory()->warrantyEndingOn(now()->subDay()->toDateString())->create();
+        $soon = Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
 
         $results = new Collection([
             new WarrantyScanResult($expired, 'expired', -1),
@@ -28,8 +28,8 @@ class WarrantyExpiryDigestTest extends TestCase
 
         $rendered = $mailable->render();
 
-        $this->assertStringContainsString($expired->serial_number, $rendered);
-        $this->assertStringContainsString($soon->serial_number, $rendered);
+        $this->assertStringContainsString($expired->serial, $rendered);
+        $this->assertStringContainsString($soon->serial, $rendered);
         $this->assertStringContainsString(trans('warranty.mail.section.expired'), $rendered);
         $this->assertStringContainsString(trans('warranty.mail.section.lead', ['days' => 7]), $rendered);
     }

@@ -43,7 +43,7 @@ class InventoryByLocationReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Asset::query()
-            ->with(['location', 'owner', 'model', 'assetType'])
+            ->with(['location', 'assignee', 'model.category', 'status'])
             ->when(
                 ! empty($this->filters['locations']),
                 fn (Builder $query): Builder => $query->whereIn('location_id', $this->filters['locations']),
@@ -56,11 +56,11 @@ class InventoryByLocationReport extends AbstractReport
 
         return [
             ReportColumn::make('location', __("{$t}.location"), fn (Asset $a): ?string => $a->location?->name),
-            ReportColumn::make('asset_type', __("{$t}.asset_type"), fn (Asset $a): ?string => $a->assetType?->name),
+            ReportColumn::make('category', __("{$t}.category"), fn (Asset $a): ?string => $a->model?->category?->name),
             ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
-            ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),
-            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->state?->getLabel()),
-            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->owner?->name),
+            ReportColumn::make('serial', __("{$t}.serial"), fn (Asset $a): ?string => $a->serial),
+            ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): ?string => $a->status?->name),
+            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->assigneeName()),
         ];
     }
 }

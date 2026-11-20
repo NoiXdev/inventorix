@@ -24,7 +24,7 @@ class Incident extends Model
 
     public function asset(): BelongsTo
     {
-        return $this->belongsTo(Asset::class, 'asset_id');
+        return $this->belongsTo(Asset::class, 'asset_id')->withTrashed();
     }
 
     public function getActivitylogOptions(): LogOptions

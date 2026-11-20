@@ -21,11 +21,11 @@ class DashboardControllerTest extends TestCase
 
     public function test_stats_and_warranty_buckets(): void
     {
-        Asset::factory()->create(['guarantee_end' => now()->subDay()->format('Y-m-d')]);        // expired
-        Asset::factory()->create(['guarantee_end' => now()->addDays(10)->format('Y-m-d')]);     // soon_30 + soon_90
-        Asset::factory()->create(['guarantee_end' => now()->addDays(60)->format('Y-m-d')]);     // soon_90 only
-        Asset::factory()->create(['guarantee_end' => now()->addDays(200)->format('Y-m-d')]);    // neither
-        Asset::factory()->create(['guarantee_end' => null]);                                     // ignored
+        Asset::factory()->warrantyEndingOn(now()->subDay()->format('Y-m-d'))->create();        // expired
+        Asset::factory()->warrantyEndingOn(now()->addDays(10)->format('Y-m-d'))->create();     // soon_30 + soon_90
+        Asset::factory()->warrantyEndingOn(now()->addDays(60)->format('Y-m-d'))->create();     // soon_90 only
+        Asset::factory()->warrantyEndingOn(now()->addDays(200)->format('Y-m-d'))->create();    // neither
+        Asset::factory()->withoutWarranty()->create();                                     // ignored
 
         $this->actingAs($this->actor())->get('/app')
             ->assertOk()
@@ -64,9 +64,9 @@ class DashboardControllerTest extends TestCase
 
     public function test_warranty_expiring_ordered_soonest_first(): void
     {
-        Asset::factory()->create(['serial_number' => 'LATER', 'guarantee_end' => now()->addDays(50)->format('Y-m-d')]);
-        Asset::factory()->create(['serial_number' => 'SOONER', 'guarantee_end' => now()->addDays(5)->format('Y-m-d')]);
-        Asset::factory()->create(['guarantee_end' => null]); // excluded
+        Asset::factory()->warrantyEndingOn(now()->addDays(50)->format('Y-m-d'))->create(['serial' => 'LATER']);
+        Asset::factory()->warrantyEndingOn(now()->addDays(5)->format('Y-m-d'))->create(['serial' => 'SOONER']);
+        Asset::factory()->withoutWarranty()->create(); // excluded
 
         $this->actingAs($this->actor())->get('/app')
             ->assertInertia(fn (Assert $p) => $p->has('warrantyExpiring', 2)

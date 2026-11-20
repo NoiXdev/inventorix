@@ -21,8 +21,9 @@ export function AssetImportDialog() {
                 <DialogHeader>
                     <DialogTitle>Import assets</DialogTitle>
                     <DialogDescription>
-                        CSV with columns: id, state, asset_type, manufacturer, model, location, owner, serial_number,
-                        buy_date, guarantee_end, buy_price, buy_type, tags. Use Export as a template. To create new assets,
+                        CSV with columns: id, name, asset_tag, status, category, manufacturer, model, serial, location,
+                        assigned_user, purchase_date, purchase_cost, supplier, order_number, warranty_months, notes, tags.
+                        Use Export as a template; files exported before these columns still import. To create new assets,
                         leave the `id` column empty — rows with an `id` that already exists are reported as errors.
                     </DialogDescription>
                 </DialogHeader>

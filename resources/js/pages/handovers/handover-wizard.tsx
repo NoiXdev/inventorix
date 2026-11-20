@@ -11,7 +11,7 @@ import { SignaturePad } from '@/components/handover/signature-pad';
 import { AssetPicker, type AssetOption } from './asset-picker';
 
 type Option = { value: string; label: string };
-type TypeOption = { value: string; label: string; allowedStates: string[]; assignsOwner: boolean };
+type TypeOption = { value: string; label: string; allowedStatusIds: string[]; assignsOwner: boolean };
 type UserOption = { value: string; label: string; email: string | null };
 
 export interface HandoverWizardProps {
@@ -34,7 +34,7 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions,
     });
 
     const selectedType = typeOptions.find((t) => t.value === form.data.type);
-    const eligibleAssets = assetOptions.filter((a) => selectedType?.allowedStates.includes(a.state));
+    const eligibleAssets = assetOptions.filter((a) => selectedType?.allowedStatusIds.includes(a.status_id ?? ''));
     const isInternal = form.data.recipient_kind === 'internal';
 
     const setType = (v: string) => {
@@ -42,7 +42,7 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions,
         // drop now-ineligible picks
         const stillOk = form.data.asset_ids.filter((id) => {
             const a = assetOptions.find((o) => o.value === id);
-            return a && t?.allowedStates.includes(a.state);
+            return a && t?.allowedStatusIds.includes(a.status_id ?? '');
         });
         form.setData((d) => ({ ...d, type: v, asset_ids: stillOk }));
     };
@@ -131,7 +131,7 @@ export function HandoverWizard({ typeOptions, recipientKindOptions, userOptions,
                             <div><strong className="text-foreground">{selectedType?.label}</strong> to <strong className="text-foreground">{form.data.recipient_name || '—'}</strong></div>
                             <div>{form.data.asset_ids.length} asset(s)</div>
                             {selectedType?.assignsOwner && (
-                                <div className="mt-1 text-xs text-muted-foreground">The recipient will be set as the owner of these assets.</div>
+                                <div className="mt-1 text-xs text-muted-foreground">These assets will be assigned to the recipient.</div>
                             )}
                         </div>
                         <div className="space-y-1">

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\Attachment;
 use App\Models\Incident;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,11 +20,9 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', [
             'stats' => ['assets' => Asset::query()->count()],
             'warranty' => [
-                'expired' => Asset::query()->whereNotNull('guarantee_end')->whereDate('guarantee_end', '<', $today)->count(),
-                'soon_30' => Asset::query()->whereNotNull('guarantee_end')
-                    ->whereDate('guarantee_end', '>=', $today)->whereDate('guarantee_end', '<=', $today->copy()->addDays(30))->count(),
-                'soon_90' => Asset::query()->whereNotNull('guarantee_end')
-                    ->whereDate('guarantee_end', '>=', $today)->whereDate('guarantee_end', '<=', $today->copy()->addDays(90))->count(),
+                'expired' => $this->warrantyEndsBetween(null, $today->copy()->subDay())->count(),
+                'soon_30' => $this->warrantyEndsBetween($today, $today->copy()->addDays(30))->count(),
+                'soon_90' => $this->warrantyEndsBetween($today, $today->copy()->addDays(90))->count(),
             ],
             'latestDocuments' => Attachment::query()->where('type', 'document')->with('uploadedBy')->latest()->limit(10)->get()
                 ->map(fn (Attachment $a) => [
@@ -40,21 +39,32 @@ class DashboardController extends Controller
                     'id' => $i->id,
                     'title' => $i->title,
                     'model' => optional(optional($i->asset)->model)->name,
-                    'serial' => optional($i->asset)->serial_number,
+                    'serial' => optional($i->asset)->serial,
                     'open_date' => optional($i->open_date)->format('d.m.Y'),
                     'days_open' => $i->open_date ? (int) $i->open_date->diffInDays(Carbon::now()) : null,
                     'asset_url' => $i->asset_id ? "/app/assets/{$i->asset_id}" : null,
                 ])->all(),
-            'warrantyExpiring' => Asset::query()->whereNotNull('guarantee_end')->with('owner', 'model')->orderBy('guarantee_end')->limit(10)->get()
+            'warrantyExpiring' => Asset::query()->withWarranty()->with('assignee', 'model')
+                ->orderByRaw(Asset::warrantyEndSql())->limit(10)->get()
                 ->map(fn (Asset $a) => [
                     'id' => $a->id,
-                    'owner' => optional($a->owner)->name,
+                    'assignee' => $a->assigneeName(),
                     'model' => optional($a->model)->name,
-                    'serial' => $a->serial_number,
-                    'guarantee_end' => optional($a->guarantee_end)->format('d.m.Y'),
-                    'days_left' => $a->guarantee_end ? (int) Carbon::now()->startOfDay()->diffInDays($a->guarantee_end, false) : null,
+                    'serial' => $a->serial,
+                    'warranty_end' => $a->warrantyEnd()->format('d.m.Y'),
+                    'days_left' => (int) Carbon::now()->startOfDay()->diffInDays($a->warrantyEnd(), false),
                     'asset_url' => "/app/assets/{$a->id}",
                 ])->all(),
         ]);
+    }
+
+    /** Assets whose warranty ends within the given days (inclusive; null = open). */
+    private function warrantyEndsBetween(?Carbon $from, Carbon $to): Builder
+    {
+        $end = Asset::warrantyEndSql();
+
+        return Asset::query()->withWarranty()
+            ->when($from, fn (Builder $q) => $q->whereRaw("{$end} >= ?", [$from->toDateString()]))
+            ->whereRaw("{$end} <= ?", [$to->toDateString()]);
     }
 }

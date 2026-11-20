@@ -14,7 +14,7 @@ class ScanWarrantyExpiries extends Command
 {
     protected $signature = 'warranty:scan-expiries';
 
-    protected $description = 'Scan asset guarantee end dates and email a grouped expiry digest.';
+    protected $description = 'Scan asset warranty end dates (purchase date + warranty months) and email a grouped expiry digest.';
 
     public function handle(WarrantySettings $settings): int
     {
@@ -44,7 +44,7 @@ class ScanWarrantyExpiries extends Command
         foreach ($results as $result) {
             WarrantyNotification::create([
                 'asset_id' => $result->asset->id,
-                'guarantee_end' => $result->asset->guarantee_end->toDateString(),
+                'guarantee_end' => $result->asset->warrantyEnd()->toDateString(),
                 'milestone' => $result->milestone,
                 'sent_at' => now(),
             ]);

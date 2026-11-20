@@ -27,8 +27,8 @@ class ScanWarrantyExpiriesCommandTest extends TestCase
     {
         Mail::fake();
         $this->configure(enabled: true);
-        Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
-        Asset::factory()->create(['guarantee_end' => now()->subDay()->toDateString()]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
+        Asset::factory()->warrantyEndingOn(now()->subDay()->toDateString())->create();
 
         $this->artisan('warranty:scan-expiries')->assertExitCode(0);
 
@@ -40,7 +40,7 @@ class ScanWarrantyExpiriesCommandTest extends TestCase
     {
         Mail::fake();
         $this->configure(enabled: true);
-        Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
 
         $this->artisan('warranty:scan-expiries')->assertExitCode(0);
         Mail::assertSentCount(1);
@@ -54,7 +54,7 @@ class ScanWarrantyExpiriesCommandTest extends TestCase
     {
         Mail::fake();
         $this->configure(enabled: false);
-        Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
 
         $this->artisan('warranty:scan-expiries')->assertExitCode(0);
 
@@ -66,7 +66,7 @@ class ScanWarrantyExpiriesCommandTest extends TestCase
     {
         Mail::fake();
         $this->configure(enabled: true, recipients: []);
-        Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
 
         $this->artisan('warranty:scan-expiries')->assertExitCode(0);
 
@@ -77,7 +77,7 @@ class ScanWarrantyExpiriesCommandTest extends TestCase
     public function test_mail_failure_leaves_ledger_unwritten(): void
     {
         $this->configure(enabled: true);
-        Asset::factory()->create(['guarantee_end' => now()->addDays(7)->toDateString()]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(7)->toDateString())->create();
 
         Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('smtp down'));
 

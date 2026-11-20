@@ -45,9 +45,11 @@ class Handover extends Model
 
     public function assets(): BelongsToMany
     {
+        // Deleted assets included: a signed handover keeps listing what it covered.
         return $this->belongsToMany(Asset::class, 'handover_asset')
             ->using(HandoverAsset::class)
-            ->withPivot(['id', 'state_from', 'state_to', 'owner_from_id', 'owner_to_id'])
-            ->withTimestamps();
+            ->withPivot(['id', 'status_from_id', 'status_to_id', 'owner_from_id', 'owner_to_id'])
+            ->withTimestamps()
+            ->withTrashed();
     }
 }

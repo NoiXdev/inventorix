@@ -48,7 +48,7 @@ class IncidentHistoryReport extends AbstractReport
     public function reportQuery(): Builder
     {
         return Incident::query()
-            ->with(['asset.owner', 'asset.model'])
+            ->with(['asset.assignee', 'asset.model'])
             ->when(
                 ! empty($this->filters['from']),
                 fn (Builder $query): Builder => $query->whereDate('open_date', '>=', $this->filters['from']),
@@ -74,8 +74,8 @@ class IncidentHistoryReport extends AbstractReport
         $s = 'evaluation.reports.incident_history.status';
 
         return [
-            ReportColumn::make('asset', __("{$t}.asset"), fn (Incident $i): ?string => $i->asset?->model?->name ?? $i->asset?->serial_number),
-            ReportColumn::make('owner', __("{$t}.owner"), fn (Incident $i): ?string => $i->asset?->owner?->name),
+            ReportColumn::make('asset', __("{$t}.asset"), fn (Incident $i): ?string => $i->asset?->model?->name ?? $i->asset?->serial),
+            ReportColumn::make('owner', __("{$t}.owner"), fn (Incident $i): ?string => $i->asset?->assigneeName()),
             ReportColumn::make('title', __("{$t}.title"), fn (Incident $i): ?string => $i->title),
             ReportColumn::make('open_date', __("{$t}.open_date"), fn (Incident $i): ?string => $i->open_date?->format('d.m.Y')),
             ReportColumn::make('closed_date', __("{$t}.closed_date"), fn (Incident $i): ?string => $i->closed_date?->format('d.m.Y')),

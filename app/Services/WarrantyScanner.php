@@ -32,8 +32,8 @@ class WarrantyScanner
         $today = ($today ? Carbon::instance($today) : Carbon::now())->startOfDay();
 
         return Asset::query()
-            ->whereNotNull('guarantee_end')
-            ->with(['owner', 'model'])
+            ->withWarranty()
+            ->with(['assignee', 'model'])
             ->get()
             ->map(fn (Asset $asset): ?WarrantyScanResult => $this->resultFor($asset, $today))
             ->filter()
@@ -42,7 +42,7 @@ class WarrantyScanner
 
     private function resultFor(Asset $asset, Carbon $today): ?WarrantyScanResult
     {
-        $end = $asset->guarantee_end->copy()->startOfDay();
+        $end = $asset->warrantyEnd()->copy()->startOfDay();
         $daysLeft = (int) round($today->diffInDays($end, false));
 
         $milestone = $this->milestoneFor($daysLeft);

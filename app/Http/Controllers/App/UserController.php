@@ -72,7 +72,7 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
-        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location');
+        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location', 'assets.status');
 
         return Inertia::render('users/show', [
             'user' => [
@@ -86,10 +86,11 @@ class UserController extends Controller
             ],
             'assets' => $user->assets->map(fn (Asset $a) => [
                 'id' => $a->id,
+                'name' => $a->name,
+                'asset_tag' => $a->asset_tag,
                 'model_name' => optional($a->model)->name,
-                'serial_number' => $a->serial_number,
-                'state' => $a->state->value,
-                'state_label' => $a->state->getLabel(),
+                'serial' => $a->serial,
+                'status' => $a->status ? ['id' => $a->status->id, 'name' => $a->status->name, 'type' => $a->status->type->value] : null,
                 'location_name' => optional($a->location)->name,
             ])->all(),
         ]);

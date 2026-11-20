@@ -3,12 +3,14 @@
 namespace Tests\Feature\Handover;
 
 use App\DataObjects\HandoverData;
-use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
+use App\Enums\SystemStatus;
 use App\Exceptions\HandoverStateConflictException;
 use App\Models\Asset;
 use App\Models\Handover;
+use App\Models\Location;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,8 +35,8 @@ class HandoverServiceTest extends TestCase
         $recipientName = fake()->name();
         $manager = User::factory()->create();
         $asset = Asset::factory()->create([
-            'state' => AssetState::STORAGE->value,
-            'owner_id' => null,
+            'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
+            'assignee_type' => null, 'assignee_id' => null,
         ]);
 
         $data = new HandoverData(
@@ -63,14 +65,14 @@ class HandoverServiceTest extends TestCase
         ]);
 
         $asset->refresh();
-        $this->assertSame(AssetState::IN_USE, $asset->state);
-        $this->assertSame($recipient->id, $asset->owner_id);
+        $this->assertSame(SystemStatus::IN_USE, $asset->status->system_key);
+        $this->assertSame($recipient->id, $asset->assignee_id);
 
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
             'asset_id' => $asset->id,
-            'state_from' => AssetState::STORAGE->value,
-            'state_to' => AssetState::IN_USE->value,
+            'status_from_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
+            'status_to_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
             'owner_to_id' => $recipient->id,
         ]);
 
@@ -80,16 +82,16 @@ class HandoverServiceTest extends TestCase
     public function test_lend_sets_state_lend_and_owner_to_recipient(): void
     {
         $recipient = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
 
         $handover = $this->dispatch(HandoverType::LEND, $recipient, $asset);
 
         $asset->refresh();
-        $this->assertSame(AssetState::LEND, $asset->state);
-        $this->assertSame($recipient->id, $asset->owner_id);
+        $this->assertSame(SystemStatus::LEND, $asset->status->system_key);
+        $this->assertSame($recipient->id, $asset->assignee_id);
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
-            'state_to' => AssetState::LEND->value,
+            'status_to_id' => StatusLabel::system(SystemStatus::LEND)->id,
             'owner_to_id' => $recipient->id,
         ]);
     }
@@ -98,8 +100,8 @@ class HandoverServiceTest extends TestCase
     {
         $previousOwner = User::factory()->withoutLogin()->create();
         $asset = Asset::factory()->create([
-            'state' => AssetState::IN_USE->value,
-            'owner_id' => $previousOwner->id,
+            'status_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
+            'assignee_type' => User::class, 'assignee_id' => $previousOwner->id,
         ]);
 
         // RETURN_ never assigns the recipient as owner, so the recipient here
@@ -107,12 +109,12 @@ class HandoverServiceTest extends TestCase
         $handover = $this->dispatch(HandoverType::RETURN_, User::factory()->create(), $asset);
 
         $asset->refresh();
-        $this->assertSame(AssetState::STORAGE, $asset->state);
-        $this->assertNull($asset->owner_id);
+        $this->assertSame(SystemStatus::STORAGE, $asset->status->system_key);
+        $this->assertNull($asset->assignee_id);
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
-            'state_from' => AssetState::IN_USE->value,
-            'state_to' => AssetState::STORAGE->value,
+            'status_from_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
+            'status_to_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
             'owner_from_id' => $previousOwner->id,
             'owner_to_id' => null,
         ]);
@@ -122,8 +124,8 @@ class HandoverServiceTest extends TestCase
     {
         $previousOwner = User::factory()->withoutLogin()->create();
         $asset = Asset::factory()->create([
-            'state' => AssetState::IN_USE->value,
-            'owner_id' => $previousOwner->id,
+            'status_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
+            'assignee_type' => User::class, 'assignee_id' => $previousOwner->id,
         ]);
 
         // RETURN_DEFECT never assigns the recipient as owner, so the recipient
@@ -131,11 +133,11 @@ class HandoverServiceTest extends TestCase
         $handover = $this->dispatch(HandoverType::RETURN_DEFECT, User::factory()->create(), $asset);
 
         $asset->refresh();
-        $this->assertSame(AssetState::NEED_REPAIR, $asset->state);
-        $this->assertNull($asset->owner_id);
+        $this->assertSame(SystemStatus::NEED_REPAIR, $asset->status->system_key);
+        $this->assertNull($asset->assignee_id);
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
-            'state_to' => AssetState::NEED_REPAIR->value,
+            'status_to_id' => StatusLabel::system(SystemStatus::NEED_REPAIR)->id,
         ]);
     }
 
@@ -144,7 +146,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::IN_USE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,                   // requires NEW or STORAGE
@@ -204,7 +206,7 @@ class HandoverServiceTest extends TestCase
     {
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
 
         // Force the inner Handover insert to fail via a non-existent created_by UUID;
         // SQLite enforces the FK because Laravel enables it on connection open.
@@ -238,7 +240,7 @@ class HandoverServiceTest extends TestCase
     public function test_external_recipient_leaves_owner_null_but_changes_state(): void
     {
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -261,8 +263,8 @@ class HandoverServiceTest extends TestCase
 
         $this->assertNull($handover->recipient_user_id);
         $this->assertSame('Jane External', $handover->recipient_name);
-        $this->assertSame(AssetState::IN_USE, $asset->state);
-        $this->assertNull($asset->owner_id);
+        $this->assertSame(SystemStatus::IN_USE, $asset->status->system_key);
+        $this->assertNull($asset->assignee_id);
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
             'asset_id' => $asset->id,
@@ -277,8 +279,8 @@ class HandoverServiceTest extends TestCase
         $manager = User::factory()->create();
         $previousOwner = User::factory()->withoutLogin()->create();
 
-        $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
-        $b = Asset::factory()->create(['state' => AssetState::NEW->value, 'owner_id' => $previousOwner->id]);
+        $a = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
+        $b = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id, 'assignee_type' => User::class, 'assignee_id' => $previousOwner->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -301,20 +303,20 @@ class HandoverServiceTest extends TestCase
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
             'asset_id' => $a->id,
-            'state_from' => AssetState::STORAGE->value,
+            'status_from_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
             'owner_from_id' => null,
         ]);
         $this->assertDatabaseHas('handover_asset', [
             'handover_id' => $handover->id,
             'asset_id' => $b->id,
-            'state_from' => AssetState::NEW->value,
+            'status_from_id' => StatusLabel::system(SystemStatus::NEW)->id,
             'owner_from_id' => $previousOwner->id,
         ]);
 
         $a->refresh();
         $b->refresh();
-        $this->assertSame(AssetState::IN_USE, $a->state);
-        $this->assertSame(AssetState::IN_USE, $b->state);
+        $this->assertSame(SystemStatus::IN_USE, $a->status->system_key);
+        $this->assertSame(SystemStatus::IN_USE, $b->status->system_key);
     }
 
     public function test_bulk_with_one_invalid_state_rolls_everything_back(): void
@@ -322,8 +324,8 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $valid = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
-        $invalid = Asset::factory()->create(['state' => AssetState::IN_USE->value]);  // not allowed for ISSUE
+        $valid = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $invalid = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id]);  // not allowed for ISSUE
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -349,7 +351,7 @@ class HandoverServiceTest extends TestCase
         }
 
         $valid->refresh();
-        $this->assertSame(AssetState::STORAGE, $valid->state, 'Valid asset must not be partially handed over.');
+        $this->assertSame(SystemStatus::STORAGE, $valid->status->system_key, 'Valid asset must not be partially handed over.');
         $this->assertDatabaseCount('handovers', 0);
     }
 
@@ -359,8 +361,8 @@ class HandoverServiceTest extends TestCase
         $recipientName = fake()->name();
         $manager = User::factory()->create();
         $this->actingAs($manager);
-        $a = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
-        $b = Asset::factory()->create(['state' => AssetState::STORAGE->value, 'owner_id' => null]);
+        $a = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
+        $b = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -400,7 +402,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -427,7 +429,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -454,7 +456,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $tooBig = "\x89PNG\r\n\x1a\n".str_repeat('x', config('handover.signature.max_bytes') + 1);
 
@@ -476,6 +478,39 @@ class HandoverServiceTest extends TestCase
 
         $this->expectException(\InvalidArgumentException::class);
         app(HandoverService::class)->commit($data);
+    }
+
+    public function test_issue_checks_out_and_return_checks_in(): void
+    {
+        $recipient = User::factory()->create();
+        $asset = Asset::factory()->unassigned()->create([
+            'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
+            'expected_checkin' => now()->addWeek(),
+        ]);
+
+        $this->dispatch(HandoverType::ISSUE, $recipient, $asset);
+        $asset->refresh();
+        $this->assertSame(1, $asset->checkout_counter);
+        $this->assertNotNull($asset->last_checkout);
+        $this->assertSame(User::class, $asset->assignee_type);
+
+        $this->dispatch(HandoverType::RETURN_, $recipient, $asset);
+        $asset->refresh();
+        $this->assertSame(1, $asset->checkin_counter);
+        $this->assertNotNull($asset->last_checkin);
+        $this->assertNull($asset->expected_checkin);
+        $this->assertNull($asset->assignee_type);
+    }
+
+    public function test_an_asset_assigned_to_a_location_has_no_previous_owner(): void
+    {
+        $asset = Asset::factory()->assignedTo(Location::factory()->create())->create([
+            'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
+        ]);
+
+        $handover = $this->dispatch(HandoverType::ISSUE, User::factory()->create(), $asset);
+
+        $this->assertNull($handover->assets()->sole()->pivot->owner_from_id);
     }
 
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): Handover

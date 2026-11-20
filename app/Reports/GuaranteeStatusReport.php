@@ -60,10 +60,10 @@ class GuaranteeStatusReport extends AbstractReport
         $soonLimit = now()->startOfDay()->addDays(self::EXPIRING_SOON_DAYS);
 
         return Asset::query()
-            ->with(['owner', 'model'])
+            ->with(['assignee', 'model'])
             ->when(
                 ! empty($this->filters['employees']),
-                fn (Builder $query): Builder => $query->whereIn('owner_id', $this->filters['employees']),
+                fn (Builder $query): Builder => $query->where('assignee_type', User::class)->whereIn('assignee_id', $this->filters['employees']),
             )
             ->when(
                 ! empty($this->filters['status']),
@@ -73,13 +73,14 @@ class GuaranteeStatusReport extends AbstractReport
                     return $query->where(function (Builder $outer) use ($statuses, $today, $soonLimit): void {
                         foreach ($statuses as $status) {
                             $outer->orWhere(function (Builder $inner) use ($status, $today, $soonLimit): void {
+                                $end = Asset::warrantyEndSql();
                                 match ($status) {
-                                    'expired' => $inner->whereNotNull('guarantee_end')->whereDate('guarantee_end', '<', $today),
-                                    'expiring_soon' => $inner->whereNotNull('guarantee_end')
-                                        ->whereDate('guarantee_end', '>=', $today)
-                                        ->whereDate('guarantee_end', '<=', $soonLimit),
-                                    'valid' => $inner->whereNotNull('guarantee_end')->whereDate('guarantee_end', '>', $soonLimit),
-                                    'none' => $inner->whereNull('guarantee_end'),
+                                    'expired' => $inner->withWarranty()->whereRaw("{$end} < ?", [$today->toDateString()]),
+                                    'expiring_soon' => $inner->withWarranty()
+                                        ->whereRaw("{$end} >= ?", [$today->toDateString()])
+                                        ->whereRaw("{$end} <= ?", [$soonLimit->toDateString()]),
+                                    'valid' => $inner->withWarranty()->whereRaw("{$end} > ?", [$soonLimit->toDateString()]),
+                                    'none' => $inner->where(fn (Builder $q) => $q->whereNull('assets.purchase_date')->orWhereNull('assets.warranty_months')),
                                     default => $inner,
                                 };
                             });
@@ -94,13 +95,13 @@ class GuaranteeStatusReport extends AbstractReport
         $t = 'evaluation.reports.guarantee_status.columns';
 
         return [
-            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->owner?->name),
+            ReportColumn::make('owner', __("{$t}.owner"), fn (Asset $a): ?string => $a->assigneeName()),
             ReportColumn::make('model', __("{$t}.model"), fn (Asset $a): ?string => $a->model?->name),
-            ReportColumn::make('serial_number', __("{$t}.serial_number"), fn (Asset $a): ?string => $a->serial_number),
-            ReportColumn::make('guarantee_end', __("{$t}.guarantee_end"), fn (Asset $a): ?string => $a->guarantee_end?->format('d.m.Y')),
+            ReportColumn::make('serial', __("{$t}.serial"), fn (Asset $a): ?string => $a->serial),
+            ReportColumn::make('warranty_end', __("{$t}.warranty_end"), fn (Asset $a): ?string => $a->warrantyEnd()?->format('d.m.Y')),
             ReportColumn::make('state', __("{$t}.state"), fn (Asset $a): string => $this->statusLabel($a)),
-            ReportColumn::make('days_left', __("{$t}.days_left"), fn (Asset $a): ?int => $a->guarantee_end
-                ? (int) round(now()->startOfDay()->diffInDays($a->guarantee_end->copy()->startOfDay(), false))
+            ReportColumn::make('days_left', __("{$t}.days_left"), fn (Asset $a): ?int => $a->warrantyEnd()
+                ? (int) round(now()->startOfDay()->diffInDays($a->warrantyEnd()->copy()->startOfDay(), false))
                 : null),
         ];
     }
@@ -109,11 +110,11 @@ class GuaranteeStatusReport extends AbstractReport
     {
         $s = 'evaluation.reports.guarantee_status.status';
 
-        if ($asset->guarantee_end === null) {
+        if ($asset->warrantyEnd() === null) {
             return __("{$s}.none");
         }
 
-        $end = $asset->guarantee_end->copy()->startOfDay();
+        $end = $asset->warrantyEnd()->copy()->startOfDay();
         $today = now()->startOfDay();
 
         return match (true) {

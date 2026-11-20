@@ -13,7 +13,7 @@ class AssetAttachmentCascadeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_deleting_asset_removes_all_attachment_files_and_rows(): void
+    public function test_force_deleting_asset_removes_all_attachment_files_and_rows(): void
     {
         Storage::fake();
 
@@ -40,10 +40,28 @@ class AssetAttachmentCascadeTest extends TestCase
         Storage::disk()->assertExists($path2);
         $this->assertSame(2, Attachment::count());
 
-        $asset->delete();
+        $asset->forceDelete();
 
         Storage::disk()->assertMissing($path1);
         Storage::disk()->assertMissing($path2);
         $this->assertSame(0, Attachment::count());
+    }
+
+    public function test_soft_deleting_asset_keeps_its_attachments(): void
+    {
+        Storage::fake();
+        $asset = Asset::factory()->create();
+        $path = UploadedFile::fake()->create('invoice.pdf', 10)->store('attachments');
+        Attachment::factory()->create([
+            'attachable_type' => Asset::class,
+            'attachable_id' => $asset->getKey(),
+            'path' => $path,
+            'original_name' => 'invoice.pdf',
+        ]);
+
+        $asset->delete();
+
+        Storage::disk()->assertExists($path);
+        $this->assertSame(1, Attachment::count());
     }
 }

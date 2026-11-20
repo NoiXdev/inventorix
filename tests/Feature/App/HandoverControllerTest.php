@@ -2,10 +2,11 @@
 
 namespace Tests\Feature\App;
 
-use App\Enums\AssetState;
+use App\Enums\SystemStatus;
 use App\Jobs\GenerateHandoverPdf;
 use App\Models\Asset;
 use App\Models\Handover;
+use App\Models\StatusLabel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -29,7 +30,7 @@ class HandoverControllerTest extends TestCase
         Queue::fake();
         $actor = $this->actor();
         $recipient = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value, 'owner_id' => null]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id, 'assignee_type' => null, 'assignee_id' => null]);
 
         $this->actingAs($actor)->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_user_id' => $recipient->id,
@@ -42,19 +43,19 @@ class HandoverControllerTest extends TestCase
         $this->assertSame($actor->id, $handover->created_by);
         $this->assertNotNull($handover->signed_at);
         $asset->refresh();
-        $this->assertSame(AssetState::IN_USE, $asset->state);     // issue -> in-use
-        $this->assertSame($recipient->id, $asset->owner_id);      // issue assigns recipient as owner
+        $this->assertSame(SystemStatus::IN_USE, $asset->status->system_key);     // issue -> in-use
+        $this->assertSame($recipient->id, $asset->assignee_id);      // issue assigns recipient as owner
         $this->assertTrue($handover->assets()->where('assets.id', $asset->id)->exists());
         $pivot = $handover->assets()->first()->pivot;
-        $this->assertSame('new', $pivot->state_from);
-        $this->assertSame('in-use', $pivot->state_to);
+        $this->assertSame(StatusLabel::system(SystemStatus::NEW)->id, $pivot->status_from_id);
+        $this->assertSame(StatusLabel::system(SystemStatus::IN_USE)->id, $pivot->status_to_id);
         Queue::assertPushed(GenerateHandoverPdf::class);
     }
 
     public function test_store_return_moves_asset_to_storage(): void
     {
         Queue::fake();
-        $asset = Asset::factory()->create(['state' => AssetState::IN_USE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id]);
 
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'return', 'recipient_kind' => 'external',
@@ -62,12 +63,12 @@ class HandoverControllerTest extends TestCase
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => self::PNG,
         ])->assertRedirect();
 
-        $this->assertSame(AssetState::STORAGE, $asset->fresh()->state);
+        $this->assertSame(SystemStatus::STORAGE, $asset->fresh()->status->system_key);
     }
 
     public function test_store_rejects_asset_not_in_allowed_state(): void
     {
-        $asset = Asset::factory()->create(['state' => AssetState::DEFECT->value]); // not allowed for issue
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::DEFECT)->id]); // not allowed for issue
 
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'external', 'recipient_name' => 'X',
@@ -79,7 +80,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_requires_recipient_user_when_internal(): void
     {
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_name' => 'X',
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => self::PNG,
@@ -95,7 +96,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_requires_signature(): void
     {
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'external', 'recipient_name' => 'X',
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => '',
@@ -104,7 +105,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_rejects_unreadable_signature(): void
     {
-        $asset = Asset::factory()->create(['state' => AssetState::NEW->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
 
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'external', 'recipient_name' => 'X',
@@ -118,7 +119,7 @@ class HandoverControllerTest extends TestCase
     {
         $h = Handover::factory()->create();
         $h->assets()->attach(Asset::factory()->create()->id, [
-            'id' => (string) Str::uuid(), 'state_from' => 'new', 'state_to' => 'in-use',
+            'id' => (string) Str::uuid(), 'status_from_id' => StatusLabel::system(SystemStatus::NEW)->id, 'status_to_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
             'owner_from_id' => null, 'owner_to_id' => null,
         ]);
 

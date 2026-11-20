@@ -19,19 +19,22 @@ class AssetImportController extends Controller
         $handle = fopen($path, 'r');
 
         $header = fgetcsv($handle);
-        if ($header === false || ! $this->headerMatches($header)) {
+        $columns = $header === false ? null : $this->columnsFor($header);
+        if ($columns === null) {
             fclose($handle);
             throw ValidationException::withMessages([
                 'file' => 'The CSV header must be exactly: '.implode(', ', AssetCsv::HEADERS).'.',
             ]);
         }
+        $legacy = $columns === AssetCsv::LEGACY_HEADERS;
 
         $rows = [];
         while (($line = fgetcsv($handle)) !== false) {
             if ($line === [null] || (count($line) === 1 && trim((string) $line[0]) === '')) {
                 continue; // skip blank lines
             }
-            $rows[] = array_combine(AssetCsv::HEADERS, array_pad(array_slice($line, 0, count(AssetCsv::HEADERS)), count(AssetCsv::HEADERS), ''));
+            $row = array_combine($columns, array_pad(array_slice($line, 0, count($columns)), count($columns), ''));
+            $rows[] = $legacy ? AssetCsv::fromLegacy($row) : $row;
             if (count($rows) > self::ROW_CAP) {
                 fclose($handle);
                 throw ValidationException::withMessages([
@@ -46,14 +49,27 @@ class AssetImportController extends Controller
         return to_route('app.assets.index')->with('importResult', $result);
     }
 
-    /** @param array<int, string|null> $header */
-    private function headerMatches(array $header): bool
+    /**
+     * The columns the header stands for: the current ones, or the legacy ones
+     * of older exports. Null when it matches neither.
+     *
+     * @param  array<int, string|null>  $header
+     * @return list<string>|null
+     */
+    private function columnsFor(array $header): ?array
     {
         // Trim BOM/whitespace on each cell, then require an exact, order-sensitive match.
         $normalized = array_map(fn ($h) => trim((string) $h, " \t\n\r\0\x0B\u{FEFF}"), $header);
-        // Files exported before places became locations still say "place".
-        $normalized = array_map(fn (string $h) => $h === 'place' ? 'location' : $h, $normalized);
+        if ($normalized === AssetCsv::HEADERS) {
+            return AssetCsv::HEADERS;
+        }
 
-        return $normalized === AssetCsv::HEADERS;
+        // Older files say "place", "state" and "asset_type" where later ones
+        // say "location", "status" and "category".
+        $normalized = array_map(fn (string $h) => match ($h) {
+            'place' => 'location', 'state' => 'status', 'asset_type' => 'category', default => $h
+        }, $normalized);
+
+        return $normalized === AssetCsv::LEGACY_HEADERS ? AssetCsv::LEGACY_HEADERS : null;
     }
 }

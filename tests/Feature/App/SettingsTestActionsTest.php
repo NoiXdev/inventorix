@@ -73,7 +73,7 @@ class SettingsTestActionsTest extends TestCase
     {
         Mail::fake();
         // an asset whose guarantee ends in ~30 days -> due for the 30-day lead
-        Asset::factory()->create(['guarantee_end' => now()->addDays(30)->format('Y-m-d')]);
+        Asset::factory()->warrantyEndingOn(now()->addDays(30)->format('Y-m-d'))->create();
 
         $this->actingAs($this->actor())->post('/app/settings/warranty/test', [
             'enabled' => true, 'recipients' => ['ops@x.de'], 'lead_days' => [30],

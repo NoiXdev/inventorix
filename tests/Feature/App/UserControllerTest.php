@@ -29,7 +29,7 @@ class UserControllerTest extends TestCase
     public function test_index_lists_users_with_asset_counts(): void
     {
         $u = User::factory()->withoutLogin()->create();
-        Asset::factory()->count(2)->create(['owner_id' => $u->id]);
+        Asset::factory()->count(2)->create(['assignee_type' => User::class, 'assignee_id' => $u->id]);
 
         $this->actingAs($this->actor())->get('/app/users')
             ->assertOk()
@@ -66,7 +66,7 @@ class UserControllerTest extends TestCase
     public function test_destroy_blocked_when_owns_assets(): void
     {
         $u = User::factory()->withoutLogin()->create();
-        Asset::factory()->create(['owner_id' => $u->id]);
+        Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $u->id]);
 
         $this->actingAs($this->actor())->delete('/app/users/'.$u->id)
             ->assertSessionHasErrors('user');
@@ -83,7 +83,7 @@ class UserControllerTest extends TestCase
     public function test_show_lists_owned_assets(): void
     {
         $u = User::factory()->withoutLogin()->create();
-        Asset::factory()->count(3)->create(['owner_id' => $u->id]);
+        Asset::factory()->count(3)->create(['assignee_type' => User::class, 'assignee_id' => $u->id]);
 
         $this->actingAs($this->actor())->get('/app/users/'.$u->id)
             ->assertInertia(fn (Assert $a) => $a->component('users/show')
@@ -151,7 +151,7 @@ class UserControllerTest extends TestCase
         $u = User::where('name', 'No Mail')->firstOrFail();
         $this->assertNull($u->email);
         Notification::assertNothingSent();
-        Asset::factory()->create(['owner_id' => $u->id]);
+        Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $u->id]);
         $this->assertCount(1, $u->refresh()->assets);
     }
 

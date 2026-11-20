@@ -2,10 +2,11 @@
 
 namespace App\Support\History;
 
-use App\Enums\AssetState;
 use App\Enums\HandoverType;
+use App\Models\Asset;
 use App\Models\Incident;
 use App\Models\Location;
+use App\Models\StatusLabel;
 use App\Models\User;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
@@ -35,9 +36,22 @@ class SummaryBuilder
             'updated' => trans('history.summary.fields_changed', [
                 'count' => count($activity->attribute_changes['attributes'] ?? []),
             ]),
+            'assignee_changed' => $this->arrow(
+                $activity->properties['from'] ?? null,
+                $activity->properties['to'] ?? null,
+                fn (array $a) => Asset::assigneeNameFor($a['type'] ?? null, $a['id'] ?? null),
+            ),
+            // owner_changed: entries from before the owner became the assignee.
             'owner_changed' => $this->ownerArrow($activity),
             // place_changed: entries written before places became locations (same ids).
             'location_changed', 'place_changed' => $this->locationArrow($activity),
+            'status_changed' => $this->arrow(
+                $activity->properties['from'] ?? null,
+                $activity->properties['to'] ?? null,
+                fn ($id) => StatusLabel::withTrashed()->find($id)?->name,
+            ),
+            // Entries from before status labels replaced the fixed states hold
+            // the old state value, which is the label's system_key.
             'state_changed' => $this->stateArrow($activity),
             'note' => trans('history.event.note').': '.Str::limit(
                 (string) ($activity->properties['body'] ?? ''),
@@ -53,7 +67,7 @@ class SummaryBuilder
 
     private function ownerArrow(Activity $activity): string
     {
-        // Asset ownership is tracked on User (owner_id).
+        // Holds user ids: the owner was always a user.
         return $this->arrow(
             $activity->properties['from'] ?? null,
             $activity->properties['to'] ?? null,
@@ -75,7 +89,7 @@ class SummaryBuilder
         return $this->arrow(
             $activity->properties['from'] ?? null,
             $activity->properties['to'] ?? null,
-            fn ($value) => $value === null ? null : AssetState::from($value)->getLabel(),
+            fn ($value) => StatusLabel::withTrashed()->where('system_key', $value)->value('name') ?? $value,
         );
     }
 

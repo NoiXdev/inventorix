@@ -10,7 +10,7 @@
 | {{ trans('warranty.mail.col.owner') }} | {{ trans('warranty.mail.col.model') }} | {{ trans('warranty.mail.col.serial') }} | {{ trans('warranty.mail.col.guarantee_end') }} | {{ trans('warranty.mail.col.days_left') }} |
 | :--- | :--- | :--- | :--- | ---: |
 @foreach ($section['rows'] as $row)
-| {{ $row->asset->owner?->name ?? '—' }} | {{ $row->asset->model?->name ?? '—' }} | {{ $row->asset->serial_number ?? '—' }} | {{ $row->asset->guarantee_end?->format('d.m.Y') }} | {{ $row->daysLeft }} |
+| {{ $row->asset->assigneeName() ?? '—' }} | {{ $row->asset->model?->name ?? '—' }} | {{ $row->asset->serial ?? '—' }} | {{ $row->asset->warrantyEnd()?->format('d.m.Y') }} | {{ $row->daysLeft }} |
 @endforeach
 </x-mail::table>
 

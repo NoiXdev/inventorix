@@ -2,13 +2,14 @@
 
 namespace App\Support\Assets;
 
-use App\Enums\AssetState;
-use App\Enums\BuyType;
+use App\Enums\CategoryType;
 use App\Models\Asset;
 use App\Models\AssetModel;
-use App\Models\AssetType;
+use App\Models\Category;
 use App\Models\Location;
 use App\Models\Manufacturer;
+use App\Models\StatusLabel;
+use App\Models\Supplier;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -48,17 +49,13 @@ class AssetImport
         $id = $get('id');
         $asset = new Asset;
         if ($id !== '') {
-            if (Asset::whereKey($id)->exists()) {
+            if (Asset::withTrashed()->whereKey($id)->exists()) {
                 throw new RowImportException("An asset with id [{$id}] already exists.");
             }
             $asset->{$asset->getKeyName()} = $id;
         }
 
-        // required state
-        $asset->state = $this->resolveEnum(AssetState::class, $get('state'), required: true);
-
-        // required asset type
-        $asset->asset_type_id = $this->firstOrCreateByName(AssetType::class, $get('asset_type'), required: true)->getKey();
+        $asset->status_id = $this->resolveStatus($get('status'))->getKey();
 
         // manufacturer + model (model requires manufacturer)
         $modelName = $get('model');
@@ -74,22 +71,41 @@ class AssetImport
                 ->first()
                 ?? AssetModel::query()->create(['name' => $modelName, 'manufacturer_id' => $manufacturer->getKey()]);
             $asset->model_id = $model->getKey();
+
+            // The category belongs to the model: it is set only on a model that
+            // has none yet, never changed, so one file can't reshuffle others.
+            if ($model->category_id === null && ($category = $get('category')) !== '') {
+                $model->forceFill(['category_id' => $this->resolveCategory($category)->getKey()])->save();
+            }
         }
 
         if (($location = $get('location')) !== '') {
             $asset->location_id = $this->firstOrCreateByName(Location::class, $location)->getKey();
         }
-        if (($owner = $get('owner')) !== '') {
-            $asset->owner_id = $this->resolveOwner($owner)->getKey();
+        if (($user = $get('assigned_user')) !== '') {
+            $asset->assignTo($this->resolveOwner($user));
+        }
+        if (($supplier = $get('supplier')) !== '') {
+            $asset->supplier_id = $this->firstOrCreateByName(Supplier::class, $supplier)->getKey();
         }
 
-        $asset->serial_number = $get('serial_number') ?: null;
-        $asset->buy_date = $this->parseDate($get('buy_date'));
-        $asset->guarantee_end = $this->parseDate($get('guarantee_end'));
-        $asset->buy_price = $get('buy_price') !== '' ? $get('buy_price') : null;
-        if (($bt = $get('buy_type')) !== '') {
-            $asset->buy_type = $this->resolveEnum(BuyType::class, $bt, required: false);
+        $asset->name = $get('name') ?: null;
+        if (($tag = $get('asset_tag')) !== '') {
+            if (Asset::query()->where('asset_tag', $tag)->exists()) {
+                throw new RowImportException("An asset with tag [{$tag}] already exists.");
+            }
+            $asset->asset_tag = $tag;
         }
+        $asset->serial = $get('serial') ?: null;
+        $asset->purchase_date = $this->parseDate($get('purchase_date'));
+        $asset->purchase_cost = $this->parseNumber($get('purchase_cost'), 'purchase cost');
+        $asset->order_number = $get('order_number') ?: null;
+        $months = $this->parseNumber($get('warranty_months'), 'warranty months');
+        if ($months !== null && (string) (int) $months !== $get('warranty_months')) {
+            throw new RowImportException("Invalid warranty months [{$get('warranty_months')}].");
+        }
+        $asset->warranty_months = $months === null ? null : (int) $months;
+        $asset->notes = $get('notes') ?: null;
 
         $asset->save();
 
@@ -99,25 +115,16 @@ class AssetImport
         }
     }
 
-    /** @param class-string $enumClass */
-    private function resolveEnum(string $enumClass, string $value, bool $required): ?string
+    private function parseNumber(string $value, string $label): ?string
     {
         if ($value === '') {
-            if ($required) {
-                throw new RowImportException('Missing required value.');
-            }
-
             return null;
         }
-        if ($case = $enumClass::tryFrom($value)) {
-            return $case->value;
+        if (! is_numeric($value) || (float) $value < 0) {
+            throw new RowImportException("Invalid {$label} [{$value}].");
         }
-        foreach ($enumClass::cases() as $candidate) {
-            if (mb_strtolower((string) $candidate->getLabel()) === mb_strtolower($value)) {
-                return $candidate->value;
-            }
-        }
-        throw new RowImportException("Unknown value [{$value}].");
+
+        return $value;
     }
 
     private function parseDate(string $value): ?string
@@ -133,6 +140,22 @@ class AssetImport
     }
 
     /** @param class-string<Model> $modelClass */
+    /**
+     * A status label by name, or by its former state value ("in-use"), so
+     * files exported before status labels existed still import. Unknown
+     * statuses are an error rather than created: a status's type matters.
+     */
+    private function resolveStatus(string $value): StatusLabel
+    {
+        if ($value === '') {
+            throw new RowImportException('Missing required value.');
+        }
+
+        return StatusLabel::query()->whereRaw('LOWER(name) = ?', [mb_strtolower($value)])->first()
+            ?? StatusLabel::query()->where('system_key', $value)->first()
+            ?? throw new RowImportException("Unknown status [{$value}].");
+    }
+
     private function firstOrCreateByName(string $modelClass, string $name, bool $required = false): Model
     {
         if ($name === '') {
@@ -143,6 +166,18 @@ class AssetImport
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
             ->first()
             ?? $modelClass::query()->create(['name' => $name]);
+    }
+
+    /**
+     * Matches a live asset category by name, or creates one.
+     */
+    private function resolveCategory(string $name): Category
+    {
+        return Category::query()
+            ->where('category_type', CategoryType::ASSET)
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+            ->first()
+            ?? Category::query()->create(['name' => $name, 'category_type' => CategoryType::ASSET]);
     }
 
     private function resolveOwner(string $name): User

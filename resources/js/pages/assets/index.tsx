@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
-import { StateBadge } from '@/components/assets/state-badge';
+import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge';
 import { AssetImportDialog } from '@/components/assets/asset-import-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { QrPrintModal } from '@/components/qr-print/qr-print-modal';
 import type { LabelItem } from '@/plugins/qr-print/types';
 
 interface Row {
-    id: string; state: string; state_label: string | null;
-    asset_type_name: string | null; manufacturer_name: string | null; model_name: string | null;
-    owner_name: string | null; serial_number: string | null; buy_price: number | null;
+    id: string; name: string | null; asset_tag: string | null; status: AssetStatus | null;
+    category_name: string | null; manufacturer_name: string | null; model_name: string | null;
+    assignee_name: string | null; serial: string | null; purchase_cost: string | null; archived: boolean;
     created_at: string | null; incidents_count: number;
     custom: Record<string, string | null>;
 }
@@ -28,7 +28,7 @@ const itemFor = (r: Row): LabelItem => ({
         ? {
               metadata: {
                   modelName: r.model_name,
-                  ...(r.serial_number ? { serial: r.serial_number } : {}),
+                  ...(r.serial ? { serial: r.serial } : {}),
                   ...(r.manufacturer_name ? { manufacturer: r.manufacturer_name } : {}),
                   ...(r.created_at ? { createdAt: r.created_at } : {}),
               },
@@ -38,23 +38,33 @@ const itemFor = (r: Row): LabelItem => ({
 
 interface Props {
     assets: { data: Row[]; meta: PaginationMeta };
-    stateOptions: Option[]; assetTypeOptions: Option[]; manufacturerOptions: Option[];
+    statusOptions: Option[]; categoryOptions: Option[]; manufacturerOptions: Option[]; locationOptions: Option[];
     /** Custom fields flagged show_in_listview. */
     customColumns?: { key: string; label: string }[];
     importResult?: { imported: number; failed: { row: number; message: string }[] } | null;
 }
 
-export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, manufacturerOptions, customColumns = [], importResult }: Props) {
+export default function AssetsIndex({ assets, statusOptions, categoryOptions, manufacturerOptions, locationOptions, customColumns = [], importResult }: Props) {
     const [printItems, setPrintItems] = useState<LabelItem[] | null>(null);
 
     const columns: ColumnDef<Row>[] = [
-        { id: 'assets.state', accessorFn: (r) => r.state, header: 'State', cell: ({ row }) => <StateBadge state={row.original.state} label={row.original.state_label} /> },
-        { id: 'asset_type_name', accessorFn: (r) => r.asset_type_name, header: 'Type', cell: ({ row }) => row.original.asset_type_name ?? '—' },
+        {
+            id: 'assets.name', accessorFn: (r) => r.name, header: 'Name',
+            cell: ({ row }) => (
+                <span className="flex items-center gap-2">
+                    {row.original.name ?? '—'}
+                    {row.original.archived && <Badge variant="outline">Archived</Badge>}
+                </span>
+            ),
+        },
+        { id: 'assets.asset_tag', accessorFn: (r) => r.asset_tag, header: 'Asset tag', cell: ({ row }) => row.original.asset_tag ?? '—' },
+        { id: 'status_name', accessorFn: (r) => r.status?.name, header: 'Status', cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+        { id: 'category_name', accessorFn: (r) => r.category_name, header: 'Category', cell: ({ row }) => row.original.category_name ?? '—' },
         { id: 'manufacturer_name', accessorFn: (r) => r.manufacturer_name, header: 'Manufacturer', cell: ({ row }) => row.original.manufacturer_name ?? '—' },
         { id: 'model_name', accessorFn: (r) => r.model_name, header: 'Model', cell: ({ row }) => row.original.model_name ?? '—' },
-        { id: 'owner_name', accessorFn: (r) => r.owner_name, header: 'Owner', cell: ({ row }) => row.original.owner_name ?? '—' },
-        { id: 'assets.serial_number', accessorFn: (r) => r.serial_number, header: 'Serial', cell: ({ row }) => row.original.serial_number ?? '—' },
-        { id: 'assets.buy_price', accessorFn: (r) => r.buy_price, header: 'Buy price', cell: ({ row }) => row.original.buy_price ?? '—' },
+        { id: 'assignee_name', accessorFn: (r) => r.assignee_name, header: 'Assigned to', cell: ({ row }) => row.original.assignee_name ?? '—' },
+        { id: 'assets.serial', accessorFn: (r) => r.serial, header: 'Serial', cell: ({ row }) => row.original.serial ?? '—' },
+        { id: 'assets.purchase_cost', accessorFn: (r) => r.purchase_cost, header: 'Purchase cost', cell: ({ row }) => row.original.purchase_cost ?? '—' },
         { id: 'incidents_count', accessorFn: (r) => r.incidents_count, header: 'Incidents', cell: ({ row }) => <Badge variant="secondary">{row.original.incidents_count}</Badge> },
         ...customColumns.map((c): ColumnDef<Row> => ({
             id: `assets.${c.key}`, accessorFn: (r) => r.custom?.[c.key], header: c.label,
@@ -103,11 +113,13 @@ export default function AssetsIndex({ assets, stateOptions, assetTypeOptions, ma
                 pagination={assets.meta}
                 baseUrl="/app/assets"
                 rowHref={(r) => `/app/assets/${r.id}`}
-                sortable={['assets.state', 'asset_type_name', 'manufacturer_name', 'model_name', 'owner_name', 'assets.serial_number', 'assets.buy_price', 'incidents_count', ...customColumns.map((c) => `assets.${c.key}`)]}
+                sortable={['assets.name', 'assets.asset_tag', 'status_name', 'category_name', 'manufacturer_name', 'model_name', 'assignee_name', 'assets.serial', 'assets.purchase_cost', 'incidents_count', ...customColumns.map((c) => `assets.${c.key}`)]}
                 filters={[
-                    { key: 'state', label: 'State', options: stateOptions },
-                    { key: 'asset_type_id', label: 'Type', options: assetTypeOptions },
+                    { key: 'status_id', label: 'Status', options: statusOptions },
+                    { key: 'category_id', label: 'Category', options: categoryOptions },
                     { key: 'manufacturer_id', label: 'Manufacturer', options: manufacturerOptions },
+                    { key: 'location_id', label: 'Location', options: locationOptions },
+                    { key: 'archived', label: 'Archived', options: [{ value: '0', label: 'Active' }, { value: '1', label: 'Archived' }] },
                 ]}
                 enableSelection
                 getRowId={(r) => r.id}

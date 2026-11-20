@@ -5,19 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { StateBadge } from '@/components/assets/state-badge';
+import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge';
 import { AssetAttachments, type AttachmentItem } from '@/components/assets/asset-attachments';
 import { AssetIncidents, type IncidentItem } from '@/components/assets/asset-incidents';
 import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-history';
 
 interface AssetDetail {
-    id: string; state: string; state_label: string | null;
-    asset_type_name: string | null; manufacturer_name: string | null; model_name: string | null;
-    owner_name: string | null; location_name: string | null; serial_number: string | null;
-    buy_date: string | null; guarantee_end: string | null; buy_type_label: string | null;
-    buy_price: number | null; invoice: string | null; tags: string[];
-    incidentsCount: number; created_at: string | null; updated_at: string | null;
+    id: string; name: string | null; asset_tag: string | null; status: AssetStatus | null;
+    category_name: string | null; manufacturer_name: string | null; model_name: string | null;
+    assignee: { type: 'user' | 'location' | 'asset'; name: string; url: string | null } | null;
+    location_name: string | null; rtd_location_name: string | null; supplier_name: string | null; serial: string | null;
+    purchase_date: string | null; purchase_cost: string | null; order_number: string | null;
+    warranty_months: number | null; warranty_end: string | null;
+    asset_eol_date: string | null; eol_explicit: boolean; depreciate: boolean | null;
+    physical: boolean; requestable: boolean; byod: boolean | null; archived: boolean;
+    notes: string | null; image_url: string | null;
+    last_checkout: string | null; last_checkin: string | null; expected_checkin: string | null;
+    last_audit_date: string | null; next_audit_date: string | null;
+    checkout_counter: number; checkin_counter: number; requests_counter: number;
+    tags: string[]; incidentsCount: number; created_at: string | null; updated_at: string | null;
 }
+
+const ASSIGNEE_LABELS = { user: 'User', location: 'Location', asset: 'Asset' } as const;
+const yesNo = (v: boolean | null) => (v ? 'Yes' : 'No');
 
 interface Props {
     asset: AssetDetail;
@@ -39,11 +49,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents, history, customFields = [] }: Props) {
     return (
-        <AppLayout title="Asset" breadcrumbs={[{ label: 'Assets', href: '/app/assets' }, { label: asset.serial_number ?? 'Asset' }]}>
+        <AppLayout title="Asset" breadcrumbs={[{ label: 'Assets', href: '/app/assets' }, { label: asset.name ?? asset.asset_tag ?? asset.serial ?? 'Asset' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-semibold">{asset.model_name ?? 'Asset'}</h1>
-                    <StateBadge state={asset.state} label={asset.state_label} />
+                    <h1 className="text-2xl font-semibold">{asset.name ?? asset.model_name ?? 'Asset'}</h1>
+                    <StatusBadge status={asset.status} />
+                    {asset.archived && <Badge variant="outline">Archived</Badge>}
                 </div>
                 <Button asChild><Link href={`/app/assets/${asset.id}/edit`}>Edit</Link></Button>
             </div>
@@ -59,17 +70,27 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                 <TabsContent value="general" className="mt-4">
                     <Card>
                         <CardContent className="grid grid-cols-2 gap-6 py-6 md:grid-cols-3">
-                            <Field label="Asset type">{asset.asset_type_name ?? '—'}</Field>
+                            {asset.image_url && (
+                                <div className="col-span-2 md:col-span-3">
+                                    <img src={asset.image_url} alt="" className="h-32 w-auto rounded-md border object-contain" />
+                                </div>
+                            )}
+                            <Field label="Asset tag">{asset.asset_tag ?? '—'}</Field>
+                            <Field label="Serial">{asset.serial ?? '—'}</Field>
+                            <Field label="Category">{asset.category_name ?? '—'}</Field>
                             <Field label="Manufacturer">{asset.manufacturer_name ?? '—'}</Field>
                             <Field label="Model">{asset.model_name ?? '—'}</Field>
-                            <Field label="Owner">{asset.owner_name ?? '—'}</Field>
+                            <Field label="Assigned to">
+                                {asset.assignee ? (
+                                    <span>
+                                        <span className="text-muted-foreground">{ASSIGNEE_LABELS[asset.assignee.type]}: </span>
+                                        {asset.assignee.url ? <Link href={asset.assignee.url} className="hover:underline">{asset.assignee.name}</Link> : asset.assignee.name}
+                                    </span>
+                                ) : '—'}
+                            </Field>
                             <Field label="Location">{asset.location_name ?? '—'}</Field>
-                            <Field label="Serial number">{asset.serial_number ?? '—'}</Field>
-                            <Field label="Buy date">{asset.buy_date ?? '—'}</Field>
-                            <Field label="Guarantee end">{asset.guarantee_end ?? '—'}</Field>
-                            <Field label="Buy type">{asset.buy_type_label ?? '—'}</Field>
-                            <Field label="Buy price">{asset.buy_price ?? '—'}</Field>
-                            <Field label="Invoice">{asset.invoice ?? '—'}</Field>
+                            <Field label="Default location">{asset.rtd_location_name ?? '—'}</Field>
+                            <Field label="Requestable">{yesNo(asset.requestable)}</Field>
                             <Field label="Tags">
                                 {asset.tags.length ? <div className="flex flex-wrap gap-1">{asset.tags.map((t) => <Badge key={t} variant="secondary">{t}</Badge>)}</div> : '—'}
                             </Field>
@@ -77,6 +98,40 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                             <Field label="Updated">{asset.updated_at ?? '—'}</Field>
                         </CardContent>
                     </Card>
+                    <Card className="mt-4">
+                        <CardContent className="grid grid-cols-2 gap-6 py-6 md:grid-cols-3">
+                            <Field label="Supplier">{asset.supplier_name ?? '—'}</Field>
+                            <Field label="Order number">{asset.order_number ?? '—'}</Field>
+                            <Field label="Purchase date">{asset.purchase_date ?? '—'}</Field>
+                            <Field label="Purchase cost">{asset.purchase_cost ?? '—'}</Field>
+                            <Field label="Warranty">
+                                {asset.warranty_months != null ? `${asset.warranty_months} months${asset.warranty_end ? ` (until ${asset.warranty_end})` : ''}` : '—'}
+                            </Field>
+                            <Field label="Depreciate">{yesNo(asset.depreciate)}</Field>
+                            <Field label="EOL date">{asset.asset_eol_date ? `${asset.asset_eol_date}${asset.eol_explicit ? ' (set by hand)' : ''}` : '—'}</Field>
+                            <Field label="Last audit">{asset.last_audit_date ?? '—'}</Field>
+                            <Field label="Next audit">{asset.next_audit_date ?? '—'}</Field>
+                            <Field label="Physical">{yesNo(asset.physical)}</Field>
+                            <Field label="BYOD">{yesNo(asset.byod)}</Field>
+                        </CardContent>
+                    </Card>
+                    <Card className="mt-4">
+                        <CardContent className="grid grid-cols-2 gap-6 py-6 md:grid-cols-3">
+                            <Field label="Last checkout">{asset.last_checkout ?? '—'}</Field>
+                            <Field label="Last check-in">{asset.last_checkin ?? '—'}</Field>
+                            <Field label="Expected check-in">{asset.expected_checkin ?? '—'}</Field>
+                            <Field label="Checkouts">{asset.checkout_counter}</Field>
+                            <Field label="Check-ins">{asset.checkin_counter}</Field>
+                            <Field label="Requests">{asset.requests_counter}</Field>
+                        </CardContent>
+                    </Card>
+                    {asset.notes && (
+                        <Card className="mt-4">
+                            <CardContent className="py-6">
+                                <Field label="Notes"><span className="whitespace-pre-line">{asset.notes}</span></Field>
+                            </CardContent>
+                        </Card>
+                    )}
                     {customFields.length > 0 && (
                         <Card className="mt-4">
                             <CardContent className="grid grid-cols-2 gap-6 py-6 md:grid-cols-3">
