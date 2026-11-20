@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\AssetState;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('state')->default(AssetState::NEW->value);
+            $table->string('state')->default('new');
             $table->foreignUuid('asset_type_id')->constrained('asset_types')->cascadeOnDelete();
             $table->foreignUuid('manufacturer_id')->constrained('manufacturers')->cascadeOnDelete();
             $table->foreignUuid('owner_id')->nullable()->constrained('users')->nullOnDelete();

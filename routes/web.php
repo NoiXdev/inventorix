@@ -22,6 +22,7 @@ use App\Http\Controllers\App\PasswordResetController;
 use App\Http\Controllers\App\ReportController;
 use App\Http\Controllers\App\ScanController;
 use App\Http\Controllers\App\SettingsController;
+use App\Http\Controllers\App\StatusLabelController;
 use App\Http\Controllers\App\SupplierController;
 use App\Http\Controllers\App\UserController;
 use App\Http\Controllers\AttachmentController;
@@ -65,6 +66,7 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('suppliers/{supplier}/image', [SupplierController::class, 'image'])
             ->name('suppliers.image');
         Route::resource('suppliers', SupplierController::class)->except('show');
+        Route::resource('status-labels', StatusLabelController::class)->except('show');
         Route::resource('custom-fields', CustomFieldController::class)->except('show');
         Route::resource('custom-fieldsets', CustomFieldsetController::class)->except('show');
         Route::get('accessories/{accessory}/image', [AccessoryController::class, 'image'])

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\StatusLabel;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -18,6 +19,11 @@ class HandleInertiaRequests extends Middleware
                     ? ['id' => $u->id, 'name' => $u->name ?? $u->email, 'email' => $u->email]
                     : null,
             ],
+            // Status labels marked "show in nav", listed under Assets in the sidebar.
+            'statusNav' => fn () => $request->user()
+                ? StatusLabel::query()->where('show_in_nav', true)->withCount('assets')->orderBy('name')->get()
+                    ->map(fn (StatusLabel $l) => ['id' => $l->id, 'name' => $l->name, 'count' => $l->assets_count])->all()
+                : [],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

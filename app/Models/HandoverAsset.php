@@ -19,7 +19,7 @@ class HandoverAsset extends Pivot
 
     protected $fillable = [
         'handover_id', 'asset_id',
-        'state_from', 'state_to',
+        'status_from_id', 'status_to_id',
         'owner_from_id', 'owner_to_id',
     ];
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 
-export interface AssetOption { value: string; label: string; state: string; }
+export interface AssetOption { value: string; label: string; status_id: string | null; }
 
 interface Props { options: AssetOption[]; selected: string[]; onChange: (ids: string[]) => void; }
 

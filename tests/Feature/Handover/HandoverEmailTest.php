@@ -3,11 +3,12 @@
 namespace Tests\Feature\Handover;
 
 use App\DataObjects\HandoverData;
-use App\Enums\AssetState;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
+use App\Enums\SystemStatus;
 use App\Mail\HandoverSigned;
 use App\Models\Asset;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Services\HandoverService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,7 +27,7 @@ class HandoverEmailTest extends TestCase
 
         $recipient = User::factory()->create(['email' => 'alice@example.com']);
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,
@@ -55,7 +56,7 @@ class HandoverEmailTest extends TestCase
         Mail::fake();
 
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['state' => AssetState::STORAGE->value]);
+        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,

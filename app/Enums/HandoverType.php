@@ -14,22 +14,22 @@ enum HandoverType: string
         return trans('handover.type.'.$this->value);
     }
 
-    /** @return array<int, AssetState> */
+    /** @return array<int, SystemStatus> the statuses an asset may be in for this handover */
     public function allowedStateFrom(): array
     {
         return match ($this) {
-            self::ISSUE, self::LEND => [AssetState::NEW, AssetState::STORAGE],
-            self::RETURN_, self::RETURN_DEFECT => [AssetState::IN_USE, AssetState::LEND],
+            self::ISSUE, self::LEND => [SystemStatus::NEW, SystemStatus::STORAGE],
+            self::RETURN_, self::RETURN_DEFECT => [SystemStatus::IN_USE, SystemStatus::LEND],
         };
     }
 
-    public function stateTo(): AssetState
+    public function stateTo(): SystemStatus
     {
         return match ($this) {
-            self::ISSUE => AssetState::IN_USE,
-            self::LEND => AssetState::LEND,
-            self::RETURN_ => AssetState::STORAGE,
-            self::RETURN_DEFECT => AssetState::NEED_REPAIR,
+            self::ISSUE => SystemStatus::IN_USE,
+            self::LEND => SystemStatus::LEND,
+            self::RETURN_ => SystemStatus::STORAGE,
+            self::RETURN_DEFECT => SystemStatus::NEED_REPAIR,
         };
     }
 

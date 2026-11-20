@@ -1,9 +1,21 @@
 import { Link, usePage } from '@inertiajs/react';
 import { cn } from '@/lib/utils';
 import { navGroups } from '@/config/nav';
+import type { PageProps } from '@/types';
+
+const linkClass = (active: boolean) => cn(
+    'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm',
+    active
+        ? 'bg-primary text-primary-foreground'
+        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+);
 
 export function AppSidebar() {
-    const path = usePage().url.split('?')[0];
+    const { url, props } = usePage<PageProps>();
+    const [path, query = ''] = url.split('?');
+    const statusFilter = new URLSearchParams(query).get('filter[status_id]');
+    const statusNav = props.statusNav ?? [];
+
     return (
         <aside className="hidden w-60 shrink-0 border-r bg-card md:flex md:flex-col">
             <div className="flex h-14 items-center border-b px-4 font-semibold">Inventorix</div>
@@ -15,21 +27,28 @@ export function AppSidebar() {
                         </div>
                         <ul className="space-y-1">
                             {group.items.map((item) => {
-                                const active = item.match(path);
+                                const isAssets = item.href === '/app/assets';
+                                // A status entry below Assets is highlighted instead of Assets itself.
+                                const active = item.match(path) && !(isAssets && path === '/app/assets' && statusNav.some((s) => s.id === statusFilter));
                                 const Icon = item.icon;
                                 return (
                                     <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm',
-                                                active
-                                                    ? 'bg-primary text-primary-foreground'
-                                                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                                            )}
-                                        >
+                                        <Link href={item.href} className={linkClass(active)}>
                                             <Icon className="h-4 w-4" /> {item.label}
                                         </Link>
+                                        {isAssets && statusNav.length > 0 && (
+                                            <ul className="mt-1 space-y-1 pl-6">
+                                                {statusNav.map((s) => (
+                                                    <li key={s.id}>
+                                                        <Link href={`/app/assets?filter[status_id]=${s.id}`}
+                                                            className={linkClass(path === '/app/assets' && statusFilter === s.id)}>
+                                                            <span className="flex-1 truncate">{s.name}</span>
+                                                            <span className="text-xs tabular-nums opacity-70">{s.count}</span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                     </li>
                                 );
                             })}

@@ -5,6 +5,7 @@ namespace App\Http\Requests\App;
 use App\Enums\HandoverType;
 use App\Enums\RecipientKind;
 use App\Models\Asset;
+use App\Models\StatusLabel;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -41,9 +42,9 @@ class HandoverRequest extends FormRequest
             if ($type === null || $ids === []) {
                 return; // base rules already flagged these
             }
-            $allowed = array_map(fn ($s) => $s->value, $type->allowedStateFrom());
+            $allowed = StatusLabel::systemIds($type->allowedStateFrom());
             $bad = Asset::query()->whereIn('id', $ids)->get()
-                ->filter(fn (Asset $a) => ! in_array($a->state->value, $allowed, true));
+                ->filter(fn (Asset $a) => ! in_array($a->status_id, $allowed, true));
             if ($bad->isNotEmpty()) {
                 $validator->errors()->add('asset_ids', 'One or more selected assets are not in an allowed state for this handover type.');
             }
