@@ -33,4 +33,9 @@ class Category extends Model
     {
         return $this->hasMany(AssetModel::class, 'category_id');
     }
+
+    public function accessories(): HasMany
+    {
+        return $this->hasMany(Accessory::class, 'category_id');
+    }
 }

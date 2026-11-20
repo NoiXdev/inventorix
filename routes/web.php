@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\AssetExportController;
@@ -66,6 +67,9 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('suppliers', SupplierController::class)->except('show');
         Route::resource('custom-fields', CustomFieldController::class)->except('show');
         Route::resource('custom-fieldsets', CustomFieldsetController::class)->except('show');
+        Route::get('accessories/{accessory}/image', [AccessoryController::class, 'image'])
+            ->name('accessories.image');
+        Route::resource('accessories', AccessoryController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
         Route::resource('assets', AssetController::class);

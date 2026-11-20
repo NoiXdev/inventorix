@@ -32,4 +32,9 @@ class Manufacturer extends Model
     {
         return $this->hasManyThrough(Asset::class, AssetModel::class, 'manufacturer_id', 'model_id');
     }
+
+    public function accessories(): HasMany
+    {
+        return $this->hasMany(Accessory::class, 'manufacturer_id');
+    }
 }

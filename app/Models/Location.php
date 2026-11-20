@@ -93,4 +93,9 @@ class Location extends Model
             ->values()
             ->all();
     }
+
+    public function accessories(): HasMany
+    {
+        return $this->hasMany(Accessory::class, 'location_id');
+    }
 }
