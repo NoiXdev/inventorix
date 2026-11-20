@@ -80,7 +80,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_requires_recipient_user_when_internal(): void
     {
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'internal', 'recipient_name' => 'X',
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => self::PNG,
@@ -96,7 +96,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_requires_signature(): void
     {
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'external', 'recipient_name' => 'X',
             'asset_ids' => [$asset->id], 'terms_text' => 'T', 'signature_png' => '',
@@ -105,7 +105,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_store_rejects_unreadable_signature(): void
     {
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
 
         $this->actingAs($this->actor())->post('/app/handovers', [
             'type' => 'issue', 'recipient_kind' => 'external', 'recipient_name' => 'X',

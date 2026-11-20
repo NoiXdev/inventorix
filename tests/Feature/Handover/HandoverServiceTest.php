@@ -277,10 +277,8 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $previousOwner = User::factory()->withoutLogin()->create();
-
         $a = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id, 'assignee_type' => null, 'assignee_id' => null]);
-        $b = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id, 'assignee_type' => User::class, 'assignee_id' => $previousOwner->id]);
+        $b = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -310,7 +308,7 @@ class HandoverServiceTest extends TestCase
             'handover_id' => $handover->id,
             'asset_id' => $b->id,
             'status_from_id' => StatusLabel::system(SystemStatus::NEW)->id,
-            'owner_from_id' => $previousOwner->id,
+            'owner_to_id' => $recipient->id,
         ]);
 
         $a->refresh();
@@ -324,7 +322,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $valid = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $valid = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
         $invalid = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::IN_USE)->id]);  // not allowed for ISSUE
 
         $data = new HandoverData(
@@ -402,7 +400,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -429,7 +427,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $data = new HandoverData(
             type: HandoverType::ISSUE,
@@ -456,7 +454,7 @@ class HandoverServiceTest extends TestCase
         $recipient = User::factory()->create();
         $recipientName = fake()->name();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         $tooBig = "\x89PNG\r\n\x1a\n".str_repeat('x', config('handover.signature.max_bytes') + 1);
 
@@ -505,12 +503,54 @@ class HandoverServiceTest extends TestCase
     public function test_an_asset_assigned_to_a_location_has_no_previous_owner(): void
     {
         $asset = Asset::factory()->assignedTo(Location::factory()->create())->create([
+            'status_id' => StatusLabel::system(SystemStatus::IN_USE)->id,
+        ]);
+
+        $handover = $this->dispatch(HandoverType::RETURN_, User::factory()->create(), $asset);
+
+        $this->assertNull($handover->assets()->sole()->pivot->owner_from_id);
+        $this->assertNull($asset->fresh()->assignee_id);
+    }
+
+    public function test_issuing_an_asset_that_is_checked_out_is_a_conflict(): void
+    {
+        $asset = Asset::factory()->assignedTo(Location::factory()->create())->create([
             'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
         ]);
 
-        $handover = $this->dispatch(HandoverType::ISSUE, User::factory()->create(), $asset);
+        try {
+            $this->dispatch(HandoverType::ISSUE, User::factory()->create(), $asset);
+            $this->fail('Expected conflict');
+        } catch (HandoverStateConflictException $e) {
+            $this->assertSame([$asset->id], $e->assetIds);
+        }
+    }
 
-        $this->assertNull($handover->assets()->sole()->pivot->owner_from_id);
+    public function test_external_issue_counts_a_checkout_without_assignee(): void
+    {
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+
+        app(HandoverService::class)->commit(new HandoverData(
+            type: HandoverType::LEND,
+            recipientKind: RecipientKind::EXTERNAL,
+            recipientUserId: null,
+            recipientName: 'External Person',
+            recipientEmail: null,
+            assetIds: [$asset->id],
+            accessories: null,
+            conditionNotes: null,
+            termsText: 'Terms snapshot',
+            signaturePngBase64: $this->onePixelPng(),
+            signatureIp: null,
+            signatureUserAgent: null,
+            createdById: User::factory()->create()->id,
+        ));
+
+        $asset->refresh();
+        $this->assertSame(SystemStatus::LEND, $asset->status->system_key);
+        $this->assertNull($asset->assignee_id);
+        $this->assertSame(1, $asset->checkout_counter);
+        $this->assertNotNull($asset->last_checkout);
     }
 
     private function dispatch(HandoverType $type, User $recipient, Asset $asset): Handover

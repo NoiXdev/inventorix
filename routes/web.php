@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
+use App\Http\Controllers\App\AssetCheckoutController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\AssetExportController;
 use App\Http\Controllers\App\AssetImportController;
@@ -74,6 +75,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
         Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
+        Route::post('assets/{asset}/checkout', [AssetCheckoutController::class, 'checkout'])->name('assets.checkout');
+        Route::post('assets/{asset}/checkin', [AssetCheckoutController::class, 'checkin'])->name('assets.checkin');
         Route::resource('assets', AssetController::class);
         Route::post('assets/{asset}/attachments', [AssetAttachmentController::class, 'store'])->name('assets.attachments.store');
         Route::delete('assets/{asset}/attachments/{attachment}', [AssetAttachmentController::class, 'destroy'])->name('assets.attachments.destroy');

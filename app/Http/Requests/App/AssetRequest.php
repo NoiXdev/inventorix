@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\App;
 
+use App\Enums\StatusLabelType;
 use App\Models\Asset;
 use App\Models\CustomField;
+use App\Models\StatusLabel;
 use App\Support\CustomFields\AssetCustomFields;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Collection;
@@ -43,8 +45,12 @@ class AssetRequest extends FormRequest
             'model_id' => ['nullable', 'uuid', 'exists:asset_models,id'],
             'serial' => ['nullable', 'string', 'max:191'],
 
-            'assignee_type' => ['nullable', Rule::in(array_keys(Asset::ASSIGNEE_TYPES))],
-            'assignee_id' => ['nullable', 'required_with:assignee_type', 'uuid', ...$this->assigneeRules()],
+            // A new asset can be checked out right away; after that the
+            // assignee only changes through check-out and check-in.
+            ...($asset instanceof Asset ? [] : [
+                'assignee_type' => ['nullable', Rule::in(array_keys(Asset::ASSIGNEE_TYPES))],
+                'assignee_id' => ['nullable', 'required_with:assignee_type', 'uuid', ...$this->assigneeRules()],
+            ]),
             'location_id' => ['nullable', 'uuid', $this->liveOrUnchanged('location_id', 'locations')],
             'rtd_location_id' => ['nullable', 'uuid', $this->liveOrUnchanged('rtd_location_id', 'locations')],
 
@@ -79,35 +85,29 @@ class AssetRequest extends FormRequest
     }
 
     /**
-     * The assignee must exist in the table of its type. Users and assets have
-     * no deleted state worth keeping here; a location follows the usual
-     * live-or-unchanged rule. An asset cannot be assigned to itself, nor to
-     * an asset that is (directly) assigned to it.
+     * The assignee must be a user or a live location or asset, and checking
+     * out needs a deployable status.
      *
      * @return list<mixed>
      */
     private function assigneeRules(): array
     {
-        $asset = $this->route('asset');
-
-        return match ($this->input('assignee_type')) {
-            'user' => [Rule::exists('users', 'id')],
-            'location' => [$this->liveOrUnchanged('assignee_id', 'locations')],
-            'asset' => [
-                Rule::exists('assets', 'id')->whereNull('deleted_at'),
-                function (string $attribute, mixed $value, \Closure $fail) use ($asset): void {
-                    if (! $asset instanceof Asset) {
-                        return;
-                    }
-                    $assignedBack = Asset::query()->whereKey($value)
-                        ->where('assignee_type', Asset::class)->where('assignee_id', $asset->id)->exists();
-                    if ($value === $asset->id || $assignedBack) {
-                        $fail('An asset cannot be assigned to itself or to an asset assigned to it.');
-                    }
-                },
-            ],
-            default => [],
+        $deployableStatus = function (string $attribute, mixed $value, \Closure $fail): void {
+            $status = StatusLabel::query()->find($this->input('status_id'));
+            if ($status !== null && $status->type !== StatusLabelType::DEPLOYABLE) {
+                $fail('Only an asset with a deployable status can be checked out.');
+            }
         };
+
+        return [
+            ...match ($this->input('assignee_type')) {
+                'user' => [Rule::exists('users', 'id')],
+                'location' => [Rule::exists('locations', 'id')->whereNull('deleted_at')],
+                'asset' => [Rule::exists('assets', 'id')->whereNull('deleted_at')],
+                default => [],
+            },
+            $deployableStatus,
+        ];
     }
 
     /**

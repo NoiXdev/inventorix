@@ -27,7 +27,7 @@ class HandoverEmailTest extends TestCase
 
         $recipient = User::factory()->create(['email' => 'alice@example.com']);
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,
@@ -56,7 +56,7 @@ class HandoverEmailTest extends TestCase
         Mail::fake();
 
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
+        $asset = Asset::factory()->unassigned()->create(['status_id' => StatusLabel::system(SystemStatus::STORAGE)->id]);
 
         app(HandoverService::class)->commit(new HandoverData(
             type: HandoverType::ISSUE,

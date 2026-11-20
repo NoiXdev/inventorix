@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Enums\AttachmentCategory;
 use App\Enums\CategoryType;
 use App\Enums\StatusLabelType;
+use App\Enums\SystemStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\AssetRequest;
 use App\Models\Asset;
@@ -18,6 +19,7 @@ use App\Models\Manufacturer;
 use App\Models\StatusLabel;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\CheckoutService;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
 use App\Support\CustomFields\AssetCustomFields;
@@ -113,28 +115,36 @@ class AssetController extends Controller
         ]));
     }
 
-    public function store(AssetRequest $request): RedirectResponse
+    public function store(AssetRequest $request, CheckoutService $checkouts): RedirectResponse
     {
         $forcedId = $request->validated('id');
 
-        DB::transaction(function () use ($request, $forcedId): void {
+        DB::transaction(function () use ($request, $forcedId, $checkouts): void {
             $asset = new Asset($this->attributes($request));
             if (! empty($forcedId)) {
                 $asset->id = $forcedId; // HasUuids only auto-generates when the key is empty
             }
-            $this->assign($asset, $request);
             AssetCustomFields::fill($asset, $request->customFields(), $request->validated('custom_fields') ?? []);
             if ($file = $request->file('image')) {
                 $asset->image = $file->store('assets');
             }
             $asset->save();
             $asset->syncTags($request->validated('tags') ?? []);
+
+            // An assignee given on creation is a regular checkout.
+            if ($class = $request->assigneeClass()) {
+                $checkouts->checkOut(
+                    $asset,
+                    $class::query()->findOrFail($request->validated('assignee_id')),
+                    expectedCheckin: $asset->expected_checkin,
+                );
+            }
         });
 
         return to_route('app.assets.index')->with('success', 'Asset created.');
     }
 
-    public function show(Asset $asset): Response
+    public function show(Asset $asset, CheckoutService $checkouts): Response
     {
         $asset->load('model.manufacturer', 'model.category', 'assignee', 'location', 'rtdLocation', 'supplier', 'status', 'tags', 'attachments.uploadedBy', 'incidents')
             ->loadCount('incidents');
@@ -142,6 +152,9 @@ class AssetController extends Controller
         return Inertia::render('assets/show', [
             'asset' => $this->detail($asset),
             'history' => AssetHistory::for($asset),
+            // Loaded when a check-out or check-in dialog opens.
+            'checkoutOptions' => Inertia::optional(fn () => $this->checkoutOptions($asset)),
+            'checkoutBlocker' => $asset->assignee_id === null ? $checkouts->checkoutBlocker($asset) : null,
             'customFields' => AssetCustomFields::forModel($asset->model_id)
                 ->map(fn (CustomField $f) => [
                     'name' => $f->name,
@@ -189,6 +202,7 @@ class AssetController extends Controller
                     'requestable', 'byod', 'archived', 'notes',
                 ]),
                 'assignee_type' => $asset->assigneeKey(),
+                'assignee_name' => $asset->assigneeName(),
                 'purchase_date' => $asset->purchase_date?->format('Y-m-d'),
                 'purchase_cost' => $asset->purchase_cost !== null ? (string) $asset->purchase_cost : '',
                 'asset_eol_date' => $asset->asset_eol_date?->format('Y-m-d'),
@@ -206,8 +220,8 @@ class AssetController extends Controller
     {
         DB::transaction(function () use ($request, $asset): void {
             // A forced id is a create-only concern; attributes() never includes it.
+            // The assignee is not editable here: it changes through check-out/-in.
             $asset->fill($this->attributes($request));
-            $this->assign($asset, $request);
             AssetCustomFields::fill($asset, $request->customFields(), $request->validated('custom_fields') ?? []);
 
             $file = $request->file('image');
@@ -257,12 +271,6 @@ class AssetController extends Controller
             ->all();
     }
 
-    private function assign(Asset $asset, AssetRequest $request): void
-    {
-        $asset->assignee_type = $request->assigneeClass();
-        $asset->assignee_id = $asset->assignee_type ? $request->validated('assignee_id') : null;
-    }
-
     private function deleteImage(Asset $asset): void
     {
         if ($asset->image) {
@@ -273,6 +281,39 @@ class AssetController extends Controller
     private function imageUrl(Asset $asset): ?string
     {
         return $asset->image ? route('app.assets.image', $asset, absolute: false) : null;
+    }
+
+    /** @return array<string, mixed> */
+    private function checkoutOptions(Asset $asset): array
+    {
+        $statuses = StatusLabel::options();
+
+        return [
+            'assigneeOptions' => $this->assigneeOptions($asset),
+            'userCreateUrl' => route('app.users.quick-store'),
+            'deployableStatusOptions' => array_values(array_filter($statuses, fn (array $s) => $s['type'] === StatusLabelType::DEPLOYABLE->value)),
+            'statusOptions' => $statuses,
+            'locationOptions' => Location::options(),
+            // Preselected: a checkout puts the asset in use, a check-in into
+            // storage, as handovers do.
+            'checkoutStatusId' => StatusLabel::system(SystemStatus::IN_USE)->id,
+            'checkinStatusId' => StatusLabel::system(SystemStatus::STORAGE)->id,
+            'rtdLocationName' => $asset->rtd_location_id ? Location::paths(withTrashed: true)->get($asset->rtd_location_id) : null,
+        ];
+    }
+
+    /** @return array<string, list<array{value: string, label: string}>> */
+    private function assigneeOptions(?Asset $asset, array $locations = []): array
+    {
+        return [
+            'user' => User::query()->orderBy('name')->get()
+                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
+            'location' => $locations ?: Location::options(),
+            // Any other live asset; the service refuses an asset assigned to this one.
+            'asset' => Asset::query()->when($asset, fn ($q) => $q->whereKeyNot($asset->id))->get()
+                ->sortBy(fn (Asset $a) => mb_strtolower($a->displayName()))
+                ->map(fn (Asset $a) => ['value' => $a->id, 'label' => $a->displayName()])->values()->all(),
+        ];
     }
 
     /** @return array<string, mixed> */
@@ -300,10 +341,6 @@ class AssetController extends Controller
         if ($asset?->rtd_location_id && ! collect($rtdLocations)->contains('value', $asset->rtd_location_id)) {
             $rtdLocations[] = ['value' => $asset->rtd_location_id, 'label' => (string) Location::paths(withTrashed: true)->get($asset->rtd_location_id)];
         }
-        $assigneeLocations = $liveLocations;
-        if ($asset?->assignee_type === Location::class && ! collect($assigneeLocations)->contains('value', $asset->assignee_id)) {
-            $assigneeLocations[] = ['value' => $asset->assignee_id, 'label' => (string) Location::paths(withTrashed: true)->get($asset->assignee_id)];
-        }
 
         return [
             'statusOptions' => $statuses,
@@ -311,16 +348,8 @@ class AssetController extends Controller
             'locationOptions' => $locations,
             'rtdLocationOptions' => $rtdLocations,
             'supplierOptions' => $suppliers,
-            'assigneeOptions' => [
-                'user' => User::query()->orderBy('name')->get()
-                    ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
-                'location' => $assigneeLocations,
-                // Any other asset; the request rejects the asset itself and
-                // assets assigned to it.
-                'asset' => Asset::query()->when($asset, fn ($q) => $q->whereKeyNot($asset->id))->get()
-                    ->sortBy(fn (Asset $a) => mb_strtolower($a->displayName()))
-                    ->map(fn (Asset $a) => ['value' => $a->id, 'label' => $a->displayName()])->values()->all(),
-            ],
+            // Only a new asset picks an assignee here.
+            'assigneeOptions' => $asset ? null : $this->assigneeOptions(null, $liveLocations),
             'userCreateUrl' => route('app.users.quick-store'),
             'modelOptions' => AssetModel::query()->with('manufacturer')->orderBy('name')->get()
                 ->map(fn (AssetModel $m) => ['value' => $m->id, 'label' => '('.optional($m->manufacturer)->name.') '.$m->name])->all(),

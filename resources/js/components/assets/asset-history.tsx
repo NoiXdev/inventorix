@@ -4,11 +4,11 @@ import { Card, CardContent } from '@/components/ui/card';
 export interface HistoryChange { field: string; label: string; old: string | null; new: string | null; }
 export interface HistoryEntry {
     id: number; event: string; event_label: string; causer_name: string;
-    created_at: string | null; changes: HistoryChange[];
+    created_at: string | null; changes: HistoryChange[]; note?: string | null;
 }
 
 const EVENT_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    created: 'default', updated: 'secondary', deleted: 'destructive',
+    created: 'default', updated: 'secondary', deleted: 'destructive', checked_out: 'default', checked_in: 'default',
 };
 
 export function AssetHistory({ history }: { history: HistoryEntry[] }) {
@@ -26,6 +26,7 @@ export function AssetHistory({ history }: { history: HistoryEntry[] }) {
                             <span className="font-medium">{e.causer_name}</span>
                             <span className="text-xs text-muted-foreground">{e.created_at ?? ''}</span>
                         </div>
+                        {e.note && <p className="mt-2 whitespace-pre-line text-sm">{e.note}</p>}
                         {e.changes.length > 0 && (
                             <ul className="mt-2 space-y-1 text-sm">
                                 {e.changes.map((c) => (

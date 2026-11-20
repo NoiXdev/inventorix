@@ -25,14 +25,15 @@ export const ASSIGNEE_TYPE_OPTIONS: { value: AssigneeType; label: string }[] = [
 export interface AssetOptions {
     statusOptions: Option[]; defaultStatusId?: string | null;
     locationOptions: Option[]; rtdLocationOptions: Option[]; supplierOptions: Option[]; modelOptions: Option[];
-    assigneeOptions: Record<AssigneeType, Option[]>;
+    /** Only for a new asset; afterwards the assignee changes through check-out/-in. */
+    assigneeOptions: Record<AssigneeType, Option[]> | null;
     userCreateUrl: string;
     /** Model id => the custom fields of its fieldset. */
     customFieldsByModel?: Record<string, CustomFieldDefinition[]>;
 }
 export interface AssetInitial {
     id: string; name: string | null; asset_tag: string | null; status_id: string | null; model_id: string | null;
-    serial: string | null; assignee_type: AssigneeType | null; assignee_id: string | null;
+    serial: string | null; assignee_type: AssigneeType | null; assignee_id: string | null; assignee_name?: string | null;
     location_id: string | null; rtd_location_id: string | null; supplier_id: string | null;
     purchase_date: string | null; purchase_cost: string; order_number: string | null; warranty_months: number | null;
     asset_eol_date: string | null; eol_explicit: boolean; depreciate: boolean | null;
@@ -146,18 +147,32 @@ export function AssetForm({ initial, options, submitUrl, method, forceId }: Prop
             <FormCard>
                 <FormCardHeader title="Assignment" />
                 <FormCardContent className="md:grid-cols-2">
-                    <SelectField id="assignee_type" label="Assigned to" nullable options={ASSIGNEE_TYPE_OPTIONS}
-                        value={form.data.assignee_type} onChange={changeAssigneeType} error={form.errors.assignee_type} />
-                    {form.data.assignee_type === 'user' && (
-                        <UserPicker id="assignee_id" label="User" options={options.assigneeOptions.user} createUrl={options.userCreateUrl}
-                            value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
+                    {options.assigneeOptions ? (
+                        <>
+                        <SelectField id="assignee_type" label="Assigned to" nullable options={ASSIGNEE_TYPE_OPTIONS}
+                            value={form.data.assignee_type} onChange={changeAssigneeType} error={form.errors.assignee_type} />
+                        {form.data.assignee_type === 'user' && (
+                            <UserPicker id="assignee_id" label="User" options={options.assigneeOptions.user} createUrl={options.userCreateUrl}
+                                value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
+                        )}
+                        {(form.data.assignee_type === 'location' || form.data.assignee_type === 'asset') && (
+                            <ComboboxField id="assignee_id" label={form.data.assignee_type === 'location' ? 'Location' : 'Asset'} required
+                                options={options.assigneeOptions![form.data.assignee_type]}
+                                value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
+                        )}
+                        {form.data.assignee_type === '' && <div className="hidden md:block" />}
+                        </>
+                    ) : (
+                        <div className="space-y-2 md:col-span-2">
+                            <div className="text-sm font-medium">Assigned to</div>
+                            <p className="text-sm">
+                                {initial?.assignee_type
+                                    ? `${ASSIGNEE_TYPE_OPTIONS.find((o) => o.value === initial.assignee_type)?.label}: ${initial.assignee_name ?? '(removed)'}`
+                                    : 'Not checked out'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Use Check out / Check in on the asset page to change this.</p>
+                        </div>
                     )}
-                    {(form.data.assignee_type === 'location' || form.data.assignee_type === 'asset') && (
-                        <ComboboxField id="assignee_id" label={form.data.assignee_type === 'location' ? 'Location' : 'Asset'} required
-                            options={options.assigneeOptions[form.data.assignee_type]}
-                            value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
-                    )}
-                    {form.data.assignee_type === '' && <div className="hidden md:block" />}
                     <ComboboxField id="location_id" label="Location" nullable options={options.locationOptions}
                         value={form.data.location_id} onChange={(v) => form.setData('location_id', v)} error={form.errors.location_id} />
                     <ComboboxField id="rtd_location_id" label="Default location" nullable options={options.rtdLocationOptions}

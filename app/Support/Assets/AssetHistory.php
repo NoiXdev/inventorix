@@ -56,6 +56,11 @@ class AssetHistory
         'invoice' => 'Invoice',
     ];
 
+    private const EVENT_LABELS = [
+        'checked_out' => 'Checked out',
+        'checked_in' => 'Checked in',
+    ];
+
     /** @return array<int, array<string, mixed>> */
     public static function for(Asset $asset): array
     {
@@ -66,7 +71,7 @@ class AssetHistory
         return Activity::query()
             ->where('subject_type', $asset->getMorphClass())
             ->where('subject_id', $asset->id)
-            ->whereIn('event', ['created', 'updated', 'deleted'])
+            ->whereIn('event', ['created', 'updated', 'deleted', 'checked_out', 'checked_in'])
             ->with('causer')
             ->latest()
             ->latest('id')
@@ -106,7 +111,8 @@ class AssetHistory
         return [
             'id' => $a->id,
             'event' => $a->event,
-            'event_label' => $a->event ? ucfirst($a->event) : ($a->description ?: '—'),
+            'event_label' => self::EVENT_LABELS[$a->event] ?? ($a->event ? ucfirst($a->event) : ($a->description ?: '—')),
+            'note' => $a->getProperty('note'),
             'causer_name' => self::causer($a),
             'created_at' => optional($a->created_at)->toDateTimeString(),
             'changes' => $changes,

@@ -30,7 +30,8 @@ class AssetObserver
 
     public function updating(Asset $asset): void
     {
-        if ($asset->isDirty(['assignee_type', 'assignee_id'])) {
+        // A check-out/-in is recorded as such by the asset history.
+        if ($asset->historyEvent === null && $asset->isDirty(['assignee_type', 'assignee_id'])) {
             activity('asset')
                 ->performedOn($asset)
                 ->causedBy(auth()->user())

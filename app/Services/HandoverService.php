@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 
 class HandoverService
 {
+    public function __construct(private readonly CheckoutService $checkouts) {}
+
     public function commit(HandoverData $data): Handover
     {
         return DB::transaction(function () use ($data): Handover {
@@ -30,7 +32,11 @@ class HandoverService
             $conflicting = [];
             foreach ($data->assetIds as $assetId) {
                 $asset = $assets[$assetId] ?? null;
-                if ($asset === null || ! in_array($asset->status_id, $allowedFrom, true)) {
+                // Issuing or lending is a checkout, so the asset must also be
+                // available for one (not assigned, deployable status).
+                $blocked = $asset !== null && $data->type->assignsRecipientAsOwner()
+                    && $this->checkouts->checkoutBlocker($asset) !== null;
+                if ($asset === null || $blocked || ! in_array($asset->status_id, $allowedFrom, true)) {
                     $conflicting[] = $assetId;
                 }
             }
@@ -66,6 +72,9 @@ class HandoverService
 
                 $stateTo = StatusLabel::system($data->type->stateTo())->id;
                 $ownerTo = $data->type->assignsRecipientAsOwner() ? $data->recipientUserId : null;
+                // An external recipient is no user: the asset is checked out
+                // without an assignee.
+                $recipient = $ownerTo ? User::query()->findOrFail($ownerTo) : null;
 
                 foreach ($data->assetIds as $assetId) {
                     $asset = $assets[$assetId];
@@ -82,19 +91,12 @@ class HandoverService
                         'owner_to_id' => $ownerTo,
                     ]);
 
-                    $asset->status_id = $stateTo;
-                    $asset->assignee_type = $ownerTo ? User::class : null;
-                    $asset->assignee_id = $ownerTo;
                     // Issuing or lending checks the asset out, a return checks it in.
                     if ($data->type->assignsRecipientAsOwner()) {
-                        $asset->last_checkout = now();
-                        $asset->checkout_counter++;
+                        $this->checkouts->checkOut($asset, $recipient, statusId: $stateTo);
                     } else {
-                        $asset->last_checkin = now();
-                        $asset->checkin_counter++;
-                        $asset->expected_checkin = null;
+                        $this->checkouts->checkIn($asset, statusId: $stateTo);
                     }
-                    $asset->save();
 
                     activity('asset')
                         ->performedOn($asset->fresh())

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Tags\HasTags;
@@ -42,6 +43,14 @@ class Asset extends Model
         'location' => Location::class,
         'asset' => self::class,
     ];
+
+    /**
+     * Set by CheckoutService while it saves: the history records that save as
+     * a check-out or check-in (with its note) instead of a plain update.
+     *
+     * @var array{event: string, note: ?string}|null
+     */
+    public ?array $historyEvent = null;
 
     public function model(): BelongsTo
     {
@@ -236,6 +245,17 @@ class Asset extends Model
             'checkout_counter' => 'integer',
             'requests_counter' => 'integer',
         ];
+    }
+
+    public function beforeActivityLogged(Activity $activity, string $eventName): void
+    {
+        if ($this->historyEvent !== null && $eventName === 'updated') {
+            $activity->event = $this->historyEvent['event'];
+            $activity->description = $this->historyEvent['event'];
+            if ($this->historyEvent['note'] !== null) {
+                $activity->properties = collect($activity->properties ?? [])->put('note', $this->historyEvent['note']);
+            }
+        }
     }
 
     public function getActivitylogOptions(): LogOptions

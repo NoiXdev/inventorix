@@ -26,7 +26,7 @@ class HandoverPdfTest extends TestCase
 
         $recipient = User::factory()->create();
         $manager = User::factory()->create();
-        $asset = Asset::factory()->create([
+        $asset = Asset::factory()->unassigned()->create([
             'status_id' => StatusLabel::system(SystemStatus::STORAGE)->id,
             'serial' => 'SN-TEST-12345',
         ]);

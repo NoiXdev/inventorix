@@ -321,11 +321,9 @@ class AssetControllerTest extends TestCase
                 ->etc());
     }
 
-    public function test_assignee_must_exist_in_its_type_and_not_loop(): void
+    public function test_assignee_must_exist_in_its_type_and_needs_a_deployable_status(): void
     {
         $user = User::factory()->withoutLogin()->create();
-        $asset = Asset::factory()->create();
-        $child = Asset::factory()->assignedTo($asset)->create();
 
         // A user id is not a location.
         $this->actingAs($this->actor())
@@ -335,13 +333,43 @@ class AssetControllerTest extends TestCase
         $this->actingAs($this->actor())
             ->post('/app/assets', $this->payload(['assignee_type' => 'user']))
             ->assertSessionHasErrors('assignee_id');
-        // Not to itself, and not to an asset assigned to it.
+        // Checking out on creation needs a deployable status.
         $this->actingAs($this->actor())
-            ->put("/app/assets/{$asset->id}", $this->payload(['assignee_type' => 'asset', 'assignee_id' => $asset->id]))
+            ->post('/app/assets', $this->payload([
+                'status_id' => StatusLabel::system(SystemStatus::DEFECT)->id,
+                'assignee_type' => 'user', 'assignee_id' => $user->id,
+            ]))
             ->assertSessionHasErrors('assignee_id');
+    }
+
+    public function test_creating_with_an_assignee_is_a_checkout(): void
+    {
+        $user = User::factory()->withoutLogin()->create();
+
         $this->actingAs($this->actor())
-            ->put("/app/assets/{$asset->id}", $this->payload(['assignee_type' => 'asset', 'assignee_id' => $child->id]))
-            ->assertSessionHasErrors('assignee_id');
+            ->post('/app/assets', $this->payload(['name' => 'Laptop', 'assignee_type' => 'user', 'assignee_id' => $user->id]))
+            ->assertSessionHasNoErrors();
+
+        $asset = Asset::firstWhere('name', 'Laptop');
+        $this->assertTrue($asset->assignee->is($user));
+        $this->assertSame(1, $asset->checkout_counter);
+        $this->assertNotNull($asset->last_checkout);
+    }
+
+    public function test_update_does_not_change_the_assignee(): void
+    {
+        $owner = User::factory()->withoutLogin()->create();
+        $other = User::factory()->withoutLogin()->create();
+        $asset = Asset::factory()->assignedTo($owner)->create();
+
+        $this->actingAs($this->actor())
+            ->put("/app/assets/{$asset->id}", $this->payload(['assignee_type' => 'user', 'assignee_id' => $other->id]))
+            ->assertSessionHasNoErrors();
+        $this->actingAs($this->actor())
+            ->put("/app/assets/{$asset->id}", $this->payload())
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($asset->fresh()->assignee->is($owner));
     }
 
     public function test_asset_tag_is_unique_among_assets_that_are_not_deleted(): void

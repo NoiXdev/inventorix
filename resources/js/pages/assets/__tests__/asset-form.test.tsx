@@ -51,4 +51,11 @@ describe('AssetForm assignee field', () => {
         expect(screen.getByLabelText(/vorname/i)).toBeInTheDocument();
         expect(submit).not.toHaveBeenCalled();
     });
+
+    it('shows the assignee read-only when editing (it changes through check-out/-in)', () => {
+        render(<AssetForm initial={{ ...assignedToUser, assignee_name: 'Ada Lovelace' }} options={{ ...options, assigneeOptions: null }}
+            submitUrl="/app/assets/a1" method="put" />);
+        expect(screen.getByText('User: Ada Lovelace')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Neuen Benutzer anlegen' })).not.toBeInTheDocument();
+    });
 });
