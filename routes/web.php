@@ -6,7 +6,6 @@ use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\AssetExportController;
 use App\Http\Controllers\App\AssetImportController;
 use App\Http\Controllers\App\AssetModelController;
-use App\Http\Controllers\App\AssetTypeController;
 use App\Http\Controllers\App\AuthController;
 use App\Http\Controllers\App\CategoryController;
 use App\Http\Controllers\App\CustomFieldController;
@@ -55,7 +54,7 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('locations', LocationController::class)->except('show');
         // Places were replaced by locations.
         Route::permanentRedirect('places', '/app/locations');
-        Route::resource('asset-types', AssetTypeController::class)->except('show');
+        Route::permanentRedirect('asset-types', '/app/categories?filter[category_type]=asset');
         Route::get('asset-models/{asset_model}/image', [AssetModelController::class, 'image'])
             ->name('asset-models.image');
         Route::resource('asset-models', AssetModelController::class)->except('show');

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 // image is set by the controller from an upload, never mass-assigned:
@@ -32,6 +33,12 @@ class Category extends Model
     public function models(): HasMany
     {
         return $this->hasMany(AssetModel::class, 'category_id');
+    }
+
+    /** Assets get their category from their model. */
+    public function assets(): HasManyThrough
+    {
+        return $this->hasManyThrough(Asset::class, AssetModel::class, 'category_id', 'model_id');
     }
 
     public function accessories(): HasMany
