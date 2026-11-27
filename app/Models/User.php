@@ -82,6 +82,17 @@ class User extends Authenticatable
         return $this->grants(Permission::SUPERUSER);
     }
 
+    /** Whether anyone (optionally ignoring one user) is a superuser who can sign in. */
+    public static function activeSuperuserExists(?User $except = null): bool
+    {
+        return static::query()
+            ->where('login_enabled', true)
+            ->when($except, fn ($q) => $q->whereKeyNot($except->getKey()))
+            ->with('groups')
+            ->lazy()
+            ->contains(fn (User $user) => $user->isSuperuser());
+    }
+
     /** @return array<string, bool> every catalogue permission => whether the user holds it */
     public function effectivePermissions(): array
     {

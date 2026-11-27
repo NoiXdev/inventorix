@@ -14,6 +14,7 @@ use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
+use App\Http\Controllers\App\GroupController;
 use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
 use App\Http\Controllers\App\LocationController;
@@ -124,6 +125,7 @@ Route::prefix('app')->name('app.')->group(function () {
             Route::get('reports/{report}', [ReportController::class, 'show'])->name('reports.show');
         });
         Route::middleware('can:superuser')->group(function () {
+            Route::resource('groups', GroupController::class)->except('show');
             Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
             Route::put('settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general.update');
             Route::put('settings/mail', [SettingsController::class, 'updateMail'])->name('settings.mail.update');

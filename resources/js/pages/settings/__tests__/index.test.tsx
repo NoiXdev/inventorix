@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 const put = vi.fn();
 const post = vi.fn();
 vi.mock('@inertiajs/react', () => ({
+    Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
     useForm: (initial: Record<string, unknown>) => {
         let data = { ...initial };
         return {

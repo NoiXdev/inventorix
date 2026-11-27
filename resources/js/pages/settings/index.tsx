@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GeneralTab } from './tabs/general-tab';
@@ -21,7 +23,10 @@ interface Props {
 export default function Settings({ t, options, settings }: Props) {
     return (
         <AppLayout title="Settings" breadcrumbs={[{ label: 'Settings' }]}>
-            <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
+            <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-2xl font-semibold">Settings</h1>
+                <Button asChild variant="outline"><Link href="/app/groups">Groups</Link></Button>
+            </div>
             <Tabs defaultValue="general">
                 <TabsList>
                     <TabsTrigger value="general">{t.general.title}</TabsTrigger>

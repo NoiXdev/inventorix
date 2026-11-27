@@ -285,12 +285,7 @@ class UserController extends Controller
             return false;
         }
 
-        return ! User::query()
-            ->where('login_enabled', true)
-            ->whereKeyNot($user->getKey())
-            ->with('groups')
-            ->lazy()
-            ->contains(fn (User $other) => $other->isSuperuser());
+        return ! User::activeSuperuserExists($user);
     }
 
     /**
