@@ -52,7 +52,8 @@ return new class extends Migration
             $table->boolean('retired')->default(false);
             $table->text('notes')->nullable();
             $table->timestamps();
-            $table->index(['license_id', 'assigned_user_id', 'assigned_asset_id']);
+            // Named: the generated name is longer than MariaDB's 64 characters.
+            $table->index(['license_id', 'assigned_user_id', 'assigned_asset_id'], 'license_seats_holder_index');
         });
 
         // Existing read-only groups may see licenses too.
