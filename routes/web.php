@@ -3,6 +3,7 @@
 use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
 use App\Http\Controllers\App\AssetAuditController;
+use App\Http\Controllers\App\AssetBulkEditController;
 use App\Http\Controllers\App\AssetCheckoutController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\AssetExportController;
@@ -91,6 +92,10 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCheckout'])->middleware('can:assets.checkout')->name('assets.bulk-checkout');
         Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
         Route::post('assets/{asset}/checkout', [AssetCheckoutController::class, 'checkout'])->middleware('can:assets.checkout')->name('assets.checkout');
+        Route::get('assets/bulk-checkin', [AssetCheckoutController::class, 'bulkCheckinCreate'])->middleware('can:assets.checkin')->name('assets.bulk-checkin.create');
+        Route::post('assets/bulk-checkin', [AssetCheckoutController::class, 'bulkCheckin'])->middleware('can:assets.checkin')->name('assets.bulk-checkin');
+        Route::get('assets/bulk-edit', [AssetBulkEditController::class, 'create'])->middleware('can:assets.edit')->name('assets.bulk-edit.create');
+        Route::put('assets/bulk-edit', [AssetBulkEditController::class, 'update'])->middleware('can:assets.edit')->name('assets.bulk-edit');
         Route::get('assets/audit', [AssetAuditController::class, 'scanPage'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit.scan-page');
         Route::post('assets/audit/scan', [AssetAuditController::class, 'scan'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit.scan');
         Route::post('assets/{asset}/audit', [AssetAuditController::class, 'store'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit');

@@ -153,6 +153,43 @@ class CheckoutService
     }
 
     /**
+     * Check several assets in, all or none: each must be checked out; if one
+     * is not, nothing changes and the exception names every asset that
+     * failed. Each goes to $locationId, else its own default location.
+     *
+     * @param  list<string>  $assetIds
+     * @return int the number of assets checked in
+     *
+     * @throws CheckoutNotAllowedException
+     */
+    public function checkInMany(
+        array $assetIds,
+        ?string $statusId = null,
+        ?string $locationId = null,
+        ?CarbonInterface $checkinAt = null,
+        ?string $note = null,
+    ): int {
+        return DB::transaction(function () use ($assetIds, $statusId, $locationId, $checkinAt, $note): int {
+            $assets = Asset::query()->whereKey($assetIds)->orderBy('id')->lockForUpdate()->get();
+            if ($assets->count() !== count(array_unique($assetIds))) {
+                throw new CheckoutNotAllowedException('Some of the selected assets no longer exist.');
+            }
+
+            $notOut = $assets->filter(fn (Asset $a) => $a->assignee_id === null);
+            if ($notOut->isNotEmpty()) {
+                throw new CheckoutNotAllowedException('Nothing was checked in. '.$notOut
+                    ->map(fn (Asset $a) => $a->displayName().': The asset is not checked out.')->implode(' '));
+            }
+
+            foreach ($assets as $asset) {
+                $this->checkIn($asset, $statusId, $locationId, $checkinAt, $note);
+            }
+
+            return $assets->count();
+        });
+    }
+
+    /**
      * Check the asset in: unassign it, date and count the check-in and move
      * it to $locationId, else its default location, else leave it.
      */

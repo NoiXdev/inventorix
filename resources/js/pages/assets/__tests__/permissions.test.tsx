@@ -44,6 +44,17 @@ describe('AssetsIndex permissions', () => {
         expect(document.querySelector('svg.lucide-trash-2')).not.toBeNull();
     });
 
+    it('shows Bulk check-in and Bulk edit with assets.checkin / assets.edit', () => {
+        const { unmount } = render(<AssetsIndex {...indexProps} />);
+        expect(screen.queryByRole('link', { name: /Bulk check-in/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Bulk edit/ })).not.toBeInTheDocument();
+        unmount();
+        setCan({ 'assets.checkin': true, 'assets.edit': true });
+        render(<AssetsIndex {...indexProps} />);
+        expect(screen.getByRole('link', { name: /Bulk check-in/ })).toHaveAttribute('href', '/app/assets/bulk-checkin');
+        expect(screen.getByRole('link', { name: /Bulk edit/ })).toHaveAttribute('href', '/app/assets/bulk-edit');
+    });
+
     it('needs both import and assets.create for Import', () => {
         setCan({ import: true });
         render(<AssetsIndex {...indexProps} />);

@@ -4,16 +4,17 @@ namespace App\Http\Controllers\App;
 
 use App\Exceptions\CheckoutNotAllowedException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\App\AssetBulkCheckinRequest;
 use App\Http\Requests\App\AssetBulkCheckoutRequest;
 use App\Http\Requests\App\AssetCheckinRequest;
 use App\Http\Requests\App\AssetCheckoutRequest;
 use App\Models\Asset;
 use App\Services\CheckoutService;
+use App\Support\Assets\BulkSelection;
 use App\Support\Assets\CheckoutOptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -45,33 +46,13 @@ class AssetCheckoutController extends Controller
      */
     public function bulkCreate(Request $request): Response
     {
-        $ids = array_values(array_filter(
-            explode(',', (string) $request->query('ids', '')),
-            fn (string $id) => Str::isUuid($id),
-        ));
-        $preselected = $ids ? Asset::query()->with('status')->whereKey($ids)->get() : collect();
-
         return Inertia::render('assets/bulk-checkout', [
-            'availableAssets' => Asset::query()
-                ->whereNull('assignee_id')
-                ->whereHas('status', fn ($q) => $q->where('deployable', true))
-                ->with(['status', 'model'])
-                ->get()
-                ->sortBy(fn (Asset $a) => mb_strtolower($a->displayName()))
-                ->map(fn (Asset $a) => [
-                    'id' => $a->id,
-                    'name' => $a->displayName(),
-                    'asset_tag' => $a->asset_tag,
-                    'serial' => $a->serial,
-                    'model_name' => $a->model?->name,
-                    'status_name' => $a->status?->name,
-                ])->values()->all(),
-            'preselectedIds' => $preselected->filter(fn (Asset $a) => $this->checkouts->checkoutBlocker($a) === null)->pluck('id')->values()->all(),
-            'skipped' => $preselected
-                ->map(fn (Asset $a) => ['name' => $a->displayName(), 'reason' => $this->checkouts->checkoutBlocker($a)])
-                ->filter(fn (array $s) => $s['reason'] !== null)->values()->all(),
+            ...BulkSelection::props(
+                $request,
+                Asset::query()->whereNull('assignee_id')->whereHas('status', fn ($q) => $q->where('deployable', true)),
+                fn (Asset $a) => $this->checkouts->checkoutBlocker($a),
+            ),
             'checkoutOptions' => CheckoutOptions::for(null),
-            'maxAssets' => AssetBulkCheckoutRequest::MAX_ASSETS,
         ]);
     }
 
@@ -93,6 +74,41 @@ class AssetCheckoutController extends Controller
         }
 
         return to_route('app.assets.index')->with('success', $count === 1 ? '1 asset checked out.' : "{$count} assets checked out.");
+    }
+
+    /** The bulk check-in page: the selected checked-out assets come back together. */
+    public function bulkCheckinCreate(Request $request): Response
+    {
+        $options = CheckoutOptions::for(null);
+
+        return Inertia::render('assets/bulk-checkin', [
+            ...BulkSelection::props(
+                $request,
+                Asset::query()->whereNotNull('assignee_id'),
+                fn (Asset $a) => $a->assignee_id === null ? 'The asset is not checked out.' : null,
+            ),
+            'statusOptions' => $options['statusOptions'],
+            'locationOptions' => $options['locationOptions'],
+            'checkinStatusId' => $options['checkinStatusId'],
+        ]);
+    }
+
+    /** Check the selected assets in, all or none. */
+    public function bulkCheckin(AssetBulkCheckinRequest $request): RedirectResponse
+    {
+        try {
+            $count = $this->checkouts->checkInMany(
+                $request->validated('asset_ids'),
+                statusId: $request->validated('status_id'),
+                locationId: $request->validated('location_id'),
+                checkinAt: $this->date($request->validated('checkin_at')),
+                note: $request->validated('note'),
+            );
+        } catch (CheckoutNotAllowedException $e) {
+            return back()->withErrors(['asset_ids' => $e->getMessage()]);
+        }
+
+        return to_route('app.assets.index')->with('success', $count === 1 ? '1 asset checked in.' : "{$count} assets checked in.");
     }
 
     public function checkin(AssetCheckinRequest $request, Asset $asset): RedirectResponse

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Eye, LogOut, Pencil, QrCode, Trash2 } from 'lucide-react';
+import { Eye, LogIn, LogOut, Pencil, PencilLine, QrCode, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -90,9 +90,9 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
 
     return (
         <AppLayout title="Assets" breadcrumbs={[{ label: 'Assets' }]}>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
                 <h1 className="text-2xl font-semibold">Assets</h1>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
                     {can('assets.view') && (
                         <Button variant="outline" asChild>
                             <a href={`/app/assets/export${typeof window !== 'undefined' ? window.location.search : ''}`}>Export</a>
@@ -102,6 +102,16 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
                     {can('assets.checkout') && (
                         <Button variant="outline" asChild>
                             <Link href="/app/assets/bulk-checkout"><LogOut className="h-4 w-4" /> Bulk checkout</Link>
+                        </Button>
+                    )}
+                    {can('assets.checkin') && (
+                        <Button variant="outline" asChild>
+                            <Link href="/app/assets/bulk-checkin"><LogIn className="h-4 w-4" /> Bulk check-in</Link>
+                        </Button>
+                    )}
+                    {can('assets.edit') && (
+                        <Button variant="outline" asChild>
+                            <Link href="/app/assets/bulk-edit"><PencilLine className="h-4 w-4" /> Bulk edit</Link>
                         </Button>
                     )}
                     {can('assets.create') && <Button asChild><Link href="/app/assets/create">New asset</Link></Button>}
@@ -141,6 +151,16 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
                         {can('assets.checkout') && (
                             <Button size="sm" variant="outline" onClick={() => router.get('/app/assets/bulk-checkout', { ids: rows.map((r) => r.id).join(',') })}>
                                 <LogOut className="h-4 w-4" /> Check out ({rows.length})
+                            </Button>
+                        )}
+                        {can('assets.checkin') && (
+                            <Button size="sm" variant="outline" onClick={() => router.get('/app/assets/bulk-checkin', { ids: rows.map((r) => r.id).join(',') })}>
+                                <LogIn className="h-4 w-4" /> Check in ({rows.length})
+                            </Button>
+                        )}
+                        {can('assets.edit') && (
+                            <Button size="sm" variant="outline" onClick={() => router.get('/app/assets/bulk-edit', { ids: rows.map((r) => r.id).join(',') })}>
+                                <PencilLine className="h-4 w-4" /> Edit ({rows.length})
                             </Button>
                         )}
                         <Button size="sm" onClick={() => { setPrintItems(rows.map(itemFor)); clear(); }}>QR drucken ({rows.length})</Button>
