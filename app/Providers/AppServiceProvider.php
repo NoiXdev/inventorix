@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Enums\Permission;
 use App\Listeners\ApplySettingsToJob;
+use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use SocialiteProviders\Azure\Provider;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 );
             },
         );
+
+        // Every catalogue permission is a Gate ability; anything else falls through (null).
+        Gate::before(fn (User $user, string $ability) => Permission::tryFrom($ability) ? $user->hasAccess($ability) : null);
 
         Event::listen(JobProcessing::class, ApplySettingsToJob::class);
 

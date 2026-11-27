@@ -4,8 +4,11 @@ export interface User {
     email: string | null;
 }
 
+/** Effective permissions of the signed-in user, keyed by catalogue value (e.g. `assets.edit`). */
+export type Can = Record<string, boolean>;
+
 export interface PageProps {
-    auth: { user: User | null };
+    auth: { user: User | null; can: Can };
     flash: { success: string | null; error: string | null; warning: string | null };
     /** Status labels shown under Assets in the sidebar. */
     statusNav: { id: string; name: string | null; count: number }[];

@@ -27,8 +27,6 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', function ($user = null) {
-            return $user;
-        });
+        Gate::define('viewHorizon', fn ($user = null) => $user?->isSuperuser() ?? false);
     }
 }

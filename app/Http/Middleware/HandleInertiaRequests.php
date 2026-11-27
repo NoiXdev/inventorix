@@ -18,6 +18,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => ($u = $request->user())
                     ? ['id' => $u->id, 'name' => $u->name ?? $u->email, 'email' => $u->email]
                     : null,
+                // Effective permission map (catalogue value => bool) for UI gating.
+                'can' => fn () => $request->user()?->effectivePermissions() ?? [],
             ],
             // Status labels marked "show in nav", listed under Assets in the sidebar.
             'statusNav' => fn () => $request->user()
