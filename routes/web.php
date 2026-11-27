@@ -180,7 +180,7 @@ Route::middleware(['auth', ApplyRuntimeSettings::class, 'can:assets.view'])
     ->name('attachments.open');
 
 // The acceptance link from the check-out mail: no login, the signature is the access control.
-Route::middleware(['signed', 'throttle:30,1', ApplyRuntimeSettings::class])->group(function () {
+Route::middleware(['signed', 'throttle:30,1'])->group(function () {
     Route::get('/acceptance/{acceptance}', [AcceptanceResponseController::class, 'show'])->name('acceptances.show');
     Route::post('/acceptance/{acceptance}', [AcceptanceResponseController::class, 'respond'])->name('acceptances.respond');
 });

@@ -4,13 +4,17 @@ namespace App\Mail;
 
 use App\Models\User;
 use App\Services\AcceptanceService;
+use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
 
 /** Tells a user an item was checked out to them, with the EULA and, if needed, the link to accept it. */
 class ItemCheckedOut extends Mailable
 {
+    use Queueable, SerializesModels;
+
     public function __construct(
         public User $user,
         public string $itemName,

@@ -87,7 +87,7 @@ class AlertService
 
         // Acceptances still open three days after the link went out.
         $acceptancesPending = CheckoutAcceptance::query()->pending()->with('user')
-            ->where(fn ($q) => $q->whereNull('sent_at')->orWhere('sent_at', '<=', now()->subDays(3)))
+            ->whereRaw('coalesce(reminded_at, sent_at, created_at) <= ?', [now()->subDays(3)])
             ->oldest()->get();
 
         return array_filter([

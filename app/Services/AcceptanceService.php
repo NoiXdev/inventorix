@@ -28,7 +28,8 @@ use InvalidArgumentException;
  *   or decline the item, and the IT team may be told the answer;
  * - a EULA (the category's, or the default one): sent with the check-out;
  * - "email on check-in": the user is told about check-out and check-in.
- * Mails go out after the surrounding transaction commits.
+ * Mails are queued and sent after the surrounding transaction commits, so a
+ * mail server failure never undoes or breaks the check-out itself.
  */
 class AcceptanceService
 {
@@ -64,20 +65,22 @@ class AcceptanceService
         if (filled($user->email) && ($acceptance || $eula !== null || $category->checkin_email)) {
             $url = $acceptance ? $this->link($acceptance) : null;
             $name = $this->name($item);
-            DB::afterCommit(fn () => Mail::to($user->email)->send(new ItemCheckedOut($user, $name, $eula, $url)));
+            Mail::to($user->email)->queue((new ItemCheckedOut($user, $name, $eula, $url))->afterCommit());
         }
 
         return $acceptance;
     }
 
     /** After an item came back from a user: open acceptances lapse; tell the user if the category says so. */
-    public function checkedIn(Asset|Accessory|License $item, ?User $user, ?string $checkoutId = null): void
+    public function checkedIn(Asset|Accessory|License $item, ?User $user, ?string $checkoutId = null, bool $dropPending = true): void
     {
-        $pending = CheckoutAcceptance::query()->pending()
-            ->where('item_type', $this->type($item))->where('item_id', $item->id)
-            ->when($user, fn ($q) => $q->where('user_id', $user->id))
-            ->when($checkoutId, fn ($q) => $q->where('checkout_id', $checkoutId));
-        $pending->delete();
+        if ($dropPending) {
+            CheckoutAcceptance::query()->pending()
+                ->where('item_type', $this->type($item))->where('item_id', $item->id)
+                ->when($user, fn ($q) => $q->where('user_id', $user->id))
+                ->when($checkoutId, fn ($q) => $q->where('checkout_id', $checkoutId))
+                ->delete();
+        }
         if ($item instanceof Asset) {
             Asset::query()->whereKey($item->id)->update(['accepted' => null]);
         }
@@ -85,7 +88,7 @@ class AcceptanceService
         $category = $this->category($item);
         if ($user !== null && filled($user->email) && $category?->checkin_email) {
             $name = $this->name($item);
-            DB::afterCommit(fn () => Mail::to($user->email)->send(new ItemCheckedIn($user, $name)));
+            Mail::to($user->email)->queue((new ItemCheckedIn($user, $name))->afterCommit());
         }
     }
 
@@ -124,7 +127,7 @@ class AcceptanceService
         if (! $acceptance->isPending() || $user === null || blank($user->email)) {
             return false;
         }
-        Mail::to($user->email)->send(new ItemCheckedOut($user, $acceptance->item_name, $acceptance->eula_text, $this->link($acceptance), reminder: true));
+        Mail::to($user->email)->queue(new ItemCheckedOut($user, $acceptance->item_name, $acceptance->eula_text, $this->link($acceptance), reminder: true));
         $acceptance->forceFill(['reminded_at' => now()])->save();
 
         return true;
@@ -133,7 +136,21 @@ class AcceptanceService
     /** @throws InvalidArgumentException for an unreadable signature */
     public function respond(CheckoutAcceptance $acceptance, bool $accept, ?string $signaturePng, ?string $note, ?string $ip, ?string $userAgent): void
     {
-        DB::transaction(function () use ($acceptance, $accept, $signaturePng, $note, $ip, $userAgent): void {
+        $stored = null;
+        try {
+            $this->storeResponse($acceptance, $accept, $signaturePng, $note, $ip, $userAgent, $stored);
+        } catch (\Throwable $e) {
+            // The answer was rolled back: its signature file goes too.
+            if ($stored !== null) {
+                Storage::delete($stored);
+            }
+            throw $e;
+        }
+    }
+
+    private function storeResponse(CheckoutAcceptance $acceptance, bool $accept, ?string $signaturePng, ?string $note, ?string $ip, ?string $userAgent, ?string &$stored): void
+    {
+        DB::transaction(function () use ($acceptance, $accept, $signaturePng, $note, $ip, $userAgent, &$stored): void {
             $locked = CheckoutAcceptance::query()->whereKey($acceptance->id)->lockForUpdate()->firstOrFail();
             if (! $locked->isPending()) {
                 throw new InvalidArgumentException('This has already been answered.');
@@ -143,6 +160,7 @@ class AcceptanceService
             if ($signaturePng !== null && $signaturePng !== '') {
                 $path = "acceptances/{$locked->id}/signature.png";
                 Storage::put($path, $this->decodeSignature($signaturePng));
+                $stored = $path;
             }
 
             $locked->forceFill([
@@ -163,7 +181,7 @@ class AcceptanceService
             $category = $item ? $this->category($item) : null;
             if ($category?->alert_on_response && $this->alerts->recipients !== []) {
                 $recipients = $this->alerts->recipients;
-                DB::afterCommit(fn () => Mail::to($recipients)->send(new AcceptanceResponse($locked->fresh('user'))));
+                Mail::to($recipients)->queue((new AcceptanceResponse($locked->fresh('user')))->afterCommit());
             }
 
             $acceptance->setRawAttributes($locked->getAttributes(), true);

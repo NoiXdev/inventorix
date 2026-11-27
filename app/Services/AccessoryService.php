@@ -81,7 +81,11 @@ class AccessoryService
             $locked->delete();
             $this->log($locked->accessory, 'checked_in', $holder, 1, $note);
             if ($holder instanceof User) {
-                app(AcceptanceService::class)->checkedIn($locked->accessory, $holder, $locked->id);
+                // The acceptance covers all units of one check-out: it lapses
+                // once the user has none of this accessory left.
+                $left = AccessoryCheckout::query()->where('accessory_id', $locked->accessory_id)
+                    ->where('assigned_type', User::class)->where('assigned_id', $holder->id)->exists();
+                app(AcceptanceService::class)->checkedIn($locked->accessory, $holder, null, dropPending: ! $left);
             }
         });
     }

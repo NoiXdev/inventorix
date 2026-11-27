@@ -31,6 +31,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Filament is gone; every unauthenticated request now goes to the
         // Inertia app's own login page.
         $middleware->redirectGuestsTo(fn () => route('app.login'));
+
+        // The acceptance link is signed; the signature is the credential, so
+        // a CSRF token adds nothing and would fail for long-open pages.
+        $middleware->validateCsrfTokens(except: ['acceptance/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Never keep a license's product key in the session after a failed form.

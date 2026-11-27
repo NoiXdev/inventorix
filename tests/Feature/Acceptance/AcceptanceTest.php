@@ -27,6 +27,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
@@ -68,7 +69,7 @@ class AcceptanceTest extends TestCase
         $this->assertSame('ThinkPad 7', $acceptance->item_name);
         $this->assertSame('Handle with care.', $acceptance->eula_text);
         $this->assertSame('pending', $asset->refresh()->accepted);
-        Mail::assertSent(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->hasTo('ada@example.test')
+        Mail::assertQueued(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->hasTo('ada@example.test')
             && str_contains((string) $m->acceptUrl, "/acceptance/{$acceptance->id}") && str_contains((string) $m->acceptUrl, 'signature=')
             && $m->eula === 'Handle with care.');
     }
@@ -77,15 +78,15 @@ class AcceptanceTest extends TestCase
     {
         $plain = $this->asset([]);
         $this->checkOut($plain, User::factory()->create());
-        Mail::assertNothingSent();
+        Mail::assertNothingQueued();
         $this->assertSame(0, CheckoutAcceptance::count());
 
         $notify = $this->asset(['checkin_email' => true]);
         $user = User::factory()->create();
         $this->checkOut($notify, $user);
-        Mail::assertSent(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->acceptUrl === null);
+        Mail::assertQueued(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->acceptUrl === null);
         app(CheckoutService::class)->checkIn($notify->refresh());
-        Mail::assertSent(ItemCheckedIn::class, fn (ItemCheckedIn $m) => $m->hasTo($user->email));
+        Mail::assertQueued(ItemCheckedIn::class, fn (ItemCheckedIn $m) => $m->hasTo($user->email));
     }
 
     public function test_the_default_eula_is_used_when_the_category_says_so(): void
@@ -97,7 +98,7 @@ class AcceptanceTest extends TestCase
 
         $this->checkOut($asset, User::factory()->create());
 
-        Mail::assertSent(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->eula === 'Company rules.');
+        Mail::assertQueued(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->eula === 'Company rules.');
     }
 
     public function test_accepting_through_the_signed_link_without_login(): void
@@ -126,7 +127,7 @@ class AcceptanceTest extends TestCase
         $this->assertSame('accepted', $asset->refresh()->accepted);
         $entry = Activity::query()->where('subject_id', $asset->id)->where('event', 'accepted')->sole();
         $this->assertSame($user->id, $entry->causer_id);
-        Mail::assertSent(AcceptanceResponse::class, fn (AcceptanceResponse $m) => $m->hasTo('it@example.test'));
+        Mail::assertQueued(AcceptanceResponse::class, fn (AcceptanceResponse $m) => $m->hasTo('it@example.test'));
 
         $this->from($link)->post($submitUrl, ['decision' => 'decline'])->assertSessionHasErrors('decision');
         $this->get($link)->assertInertia(fn (Assert $p) => $p->where('acceptance.status', 'accepted'));
@@ -175,7 +176,7 @@ class AcceptanceTest extends TestCase
         $this->assertNotNull($acceptance->accepted_at);
         $this->assertStringStartsWith('Signed handover', $acceptance->note);
         $this->assertSame('accepted', $asset->refresh()->accepted);
-        Mail::assertNotSent(ItemCheckedOut::class);
+        Mail::assertNotQueued(ItemCheckedOut::class);
     }
 
     public function test_licenses_accessories_and_consumables_ask_too(): void
@@ -190,7 +191,7 @@ class AcceptanceTest extends TestCase
         app(ConsumableService::class)->checkOut(Consumable::factory()->create(['qty' => 5, 'category_id' => $consumableCat->id]), $user);
 
         $this->assertEqualsCanonicalizing(['license', 'accessory', 'consumable'], CheckoutAcceptance::query()->pluck('item_type')->all());
-        Mail::assertSent(ItemCheckedOut::class, 3);
+        Mail::assertQueued(ItemCheckedOut::class, 3);
 
         app(LicenseService::class)->checkIn($seat);
         $this->assertSame(0, CheckoutAcceptance::query()->where('item_type', 'license')->count());
@@ -207,7 +208,7 @@ class AcceptanceTest extends TestCase
         $this->actingAs($viewer)->get('/app/acceptances')
             ->assertInertia(fn (Assert $p) => $p->component('acceptances/index')->where('acceptances.data.0.id', $acceptance->id)->where('acceptances.data.0.can_remind', true));
         $this->actingAs($viewer)->post("/app/acceptances/{$acceptance->id}/remind")->assertSessionHas('success');
-        Mail::assertSent(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->reminder);
+        Mail::assertQueued(ItemCheckedOut::class, fn (ItemCheckedOut $m) => $m->reminder);
         $this->assertNotNull($acceptance->refresh()->reminded_at);
 
         $this->actingAs(User::factory()->create())->get('/app/acceptances')->assertForbidden();
@@ -228,5 +229,57 @@ class AcceptanceTest extends TestCase
         $this->artisan('alerts:send')->assertSuccessful();
 
         Mail::assertSent(AlertsDigest::class, fn (AlertsDigest $m) => $m->licenseSections['acceptance_pending']->count() === 1);
+    }
+
+    public function test_an_accessory_acceptance_lapses_only_when_all_units_are_back(): void
+    {
+        $category = Category::factory()->create(['category_type' => CategoryType::ACCESSORY, 'require_acceptance' => true]);
+        $accessory = Accessory::factory()->create(['qty' => 2, 'category_id' => $category->id]);
+        $user = User::factory()->create();
+        app(AccessoryService::class)->checkOut($accessory, $user, 2);
+        [$first, $second] = $accessory->checkouts()->orderBy('id')->get()->all();
+
+        app(AccessoryService::class)->checkIn($second);
+        $this->assertSame(1, CheckoutAcceptance::query()->pending()->count());
+
+        app(AccessoryService::class)->checkIn($first);
+        $this->assertSame(0, CheckoutAcceptance::query()->pending()->count());
+    }
+
+    public function test_pending_rows_offer_a_link_to_hand_over_also_for_users_without_email(): void
+    {
+        $asset = $this->asset(['require_acceptance' => true]);
+        $this->checkOut($asset, User::factory()->withoutLogin()->create(['email' => null]));
+        Mail::assertNothingQueued();
+
+        $this->actingAs(User::factory()->withPermissions(['reports.view' => 1])->create())->get('/app/acceptances')
+            ->assertInertia(fn (Assert $p) => $p->where('acceptances.data.0.can_remind', false)
+                ->where('acceptances.data.0.link', fn (string $link) => str_contains($link, '/acceptance/') && str_contains($link, 'signature=')));
+    }
+
+    public function test_markdown_in_a_note_does_not_become_a_link_in_the_it_mail(): void
+    {
+        $acceptance = CheckoutAcceptance::create(['user_id' => User::factory()->create()->id, 'item_type' => 'asset', 'item_id' => (string) Str::uuid(), 'item_name' => 'X']);
+        $acceptance->forceFill(['declined_at' => now(), 'note' => '[click here](https://evil.example) ![img](https://evil.example/x.png)'])->save();
+
+        $html = (new AcceptanceResponse($acceptance->fresh('user')))->render();
+
+        $this->assertStringNotContainsString('href="https://evil.example"', $html);
+        $this->assertStringNotContainsString('<img', $html);
+    }
+
+    public function test_a_link_signed_for_one_acceptance_does_not_open_another(): void
+    {
+        $a = $this->asset(['require_acceptance' => true]);
+        $b = $this->asset(['require_acceptance' => true]);
+        $this->checkOut($a, User::factory()->create());
+        $this->checkOut($b, User::factory()->create());
+        [$first, $second] = CheckoutAcceptance::query()->orderBy('created_at')->get()->all();
+
+        $link = URL::temporarySignedRoute('acceptances.show', now()->addDay(), ['acceptance' => $first->id]);
+        $this->get(str_replace($first->id, $second->id, $link))->assertForbidden();
+        $post = URL::temporarySignedRoute('acceptances.respond', now()->addDay(), ['acceptance' => $first->id]);
+        $this->post(str_replace($first->id, $second->id, $post), ['decision' => 'accept'])->assertForbidden();
+        $this->assertTrue($second->refresh()->isPending());
     }
 }

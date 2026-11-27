@@ -14,9 +14,10 @@ use Inertia\Response;
 /** Acceptances: pending, accepted and declined (Snipe-IT's unaccepted assets report), with reminders. */
 class AcceptanceController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, AcceptanceService $acceptances): Response
     {
         $status = $request->input('filter.status', 'pending');
+        $status = in_array($status, ['pending', 'accepted', 'declined', 'all'], true) ? $status : 'pending';
         $query = CheckoutAcceptance::query()->with('user')
             ->when($status === 'pending', fn ($q) => $q->pending())
             ->when($status === 'accepted', fn ($q) => $q->whereNotNull('accepted_at'))
@@ -32,6 +33,8 @@ class AcceptanceController extends Controller
             'user_name' => $a->user?->name ?? $a->user?->email,
             'user_url' => $a->user_id ? "/app/users/{$a->user_id}" : null,
             'can_remind' => $a->isPending() && filled($a->user?->email),
+            // For handing the link over in person, e.g. to users without email.
+            'link' => $a->isPending() ? $acceptances->link($a) : null,
             'status' => $a->status(),
             'sent_at' => ($a->reminded_at ?? $a->sent_at)?->format('Y-m-d'),
             'answered_at' => ($a->accepted_at ?? $a->declined_at)?->format('Y-m-d'),
@@ -43,7 +46,7 @@ class AcceptanceController extends Controller
                 'data' => $rows->items(),
                 'meta' => ['current_page' => $rows->currentPage(), 'last_page' => $rows->lastPage(), 'per_page' => $rows->perPage(), 'total' => $rows->total()],
             ],
-            'status' => in_array($status, ['pending', 'accepted', 'declined', 'all'], true) ? $status : 'pending',
+            'status' => $status,
         ]);
     }
 

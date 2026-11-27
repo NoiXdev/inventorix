@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Send } from 'lucide-react';
+import { Copy, Send } from 'lucide-react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import type { PaginationMeta } from '@/components/data-table/types';
 interface Row {
     id: string; item_type: string; item_name: string; item_url: string | null;
     user_name: string | null; user_url: string | null; can_remind: boolean;
+    /** Signed link for pending ones, to hand over in person. */
+    link: string | null;
     status: 'pending' | 'accepted' | 'declined'; sent_at: string | null; answered_at: string | null; note: string | null;
 }
 
@@ -36,14 +39,26 @@ const columns: ColumnDef<Row>[] = [
     { id: 'answered', header: 'Answered', cell: ({ row }) => row.original.answered_at ?? '—' },
     { id: 'note', header: 'Note', cell: ({ row }) => <span className="line-clamp-1 max-w-64">{row.original.note ?? ''}</span> },
     {
-        id: 'actions', header: '', size: 140,
-        cell: ({ row }) => row.original.can_remind ? (
-            <div className="flex justify-end">
-                <Button size="sm" variant="ghost" onClick={() => router.post(`/app/acceptances/${row.original.id}/remind`, {}, { preserveScroll: true })}>
-                    <Send className="h-4 w-4" /> Send again
-                </Button>
+        id: 'actions', header: '', size: 240,
+        cell: ({ row }) => (
+            <div className="flex justify-end gap-1">
+                {row.original.link && (
+                    <Button size="sm" variant="ghost" onClick={() => {
+                        void navigator.clipboard?.writeText(row.original.link!).then(
+                            () => toast.success('Link copied. It is valid for 30 days.'),
+                            () => toast.error('Could not copy the link.'),
+                        );
+                    }}>
+                        <Copy className="h-4 w-4" /> Copy link
+                    </Button>
+                )}
+                {row.original.can_remind && (
+                    <Button size="sm" variant="ghost" onClick={() => router.post(`/app/acceptances/${row.original.id}/remind`, {}, { preserveScroll: true })}>
+                        <Send className="h-4 w-4" /> Send again
+                    </Button>
+                )}
             </div>
-        ) : null,
+        ),
     },
 ];
 
