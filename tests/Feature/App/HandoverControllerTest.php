@@ -22,7 +22,7 @@ class HandoverControllerTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_store_issue_creates_handover_transitions_assets_and_dispatches_pdf(): void
@@ -89,7 +89,7 @@ class HandoverControllerTest extends TestCase
 
     public function test_internal_handover_requires_a_recipient_user(): void
     {
-        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->post('/app/handovers', ['recipient_kind' => 'internal', 'recipient_user_id' => null])
             ->assertSessionHasErrors('recipient_user_id');
     }

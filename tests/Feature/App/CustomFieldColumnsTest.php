@@ -105,7 +105,7 @@ class CustomFieldColumnsTest extends TestCase
 
     public function test_the_request_refuses_date_format_switches_and_encryption_conflicts(): void
     {
-        $user = User::factory()->create(['login_enabled' => true]);
+        $user = User::factory()->superuser()->create(['login_enabled' => true]);
         $field = CustomField::factory()->create(['name' => 'Plain']);
         $base = ['name' => 'Plain', 'element' => 'text', 'format' => 'ANY'];
 

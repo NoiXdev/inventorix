@@ -12,7 +12,7 @@ class PeopleRedirectTest extends TestCase
 
     public function test_people_index_redirects_permanently_to_users(): void
     {
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/people')
             ->assertRedirect('/app/users')
             ->assertStatus(301);
@@ -22,7 +22,7 @@ class PeopleRedirectTest extends TestCase
     {
         $u = User::factory()->withoutLogin()->create();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/people/'.$u->id)
             ->assertRedirect('/app/users/'.$u->id)
             ->assertStatus(301);

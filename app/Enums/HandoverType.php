@@ -33,6 +33,15 @@ enum HandoverType: string
         };
     }
 
+    /** The asset permission a handover of this type implies (check-out or check-in). */
+    public function requiredPermission(): Permission
+    {
+        return match ($this) {
+            self::ISSUE, self::LEND => Permission::ASSETS_CHECKOUT,
+            self::RETURN_, self::RETURN_DEFECT => Permission::ASSETS_CHECKIN,
+        };
+    }
+
     public function assignsRecipientAsOwner(): bool
     {
         return $this === self::ISSUE || $this === self::LEND;

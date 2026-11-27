@@ -7,17 +7,39 @@ use App\Models\Asset;
 use App\Models\Attachment;
 use App\Models\Incident;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    /**
+     * Reachable by every logged-in user; widgets whose data the user may not
+     * view are left out of the props entirely.
+     */
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+        $props = [];
+
+        if ($user->can('assets.view')) {
+            $props += $this->assetWidgets();
+        }
+
+        if ($user->can('incidents.view')) {
+            $props['openIncidents'] = $this->openIncidents();
+        }
+
+        return Inertia::render('dashboard', $props);
+    }
+
+    /** @return array<string, mixed> */
+    private function assetWidgets(): array
     {
         $today = Carbon::now()->startOfDay();
 
-        return Inertia::render('dashboard', [
+        return [
             'stats' => ['assets' => Asset::query()->count()],
             'warranty' => [
                 'expired' => $this->warrantyEndsBetween(null, $today->copy()->subDay())->count(),
@@ -34,16 +56,6 @@ class DashboardController extends Controller
                     'created_at' => optional($a->created_at)->format('d.m.Y H:i'),
                     'url' => route('attachments.open', $a->id),
                 ])->all(),
-            'openIncidents' => Incident::query()->whereNull('closed_date')->with('asset.model')->orderByDesc('open_date')->limit(10)->get()
-                ->map(fn (Incident $i) => [
-                    'id' => $i->id,
-                    'title' => $i->title,
-                    'model' => optional(optional($i->asset)->model)->name,
-                    'serial' => optional($i->asset)->serial,
-                    'open_date' => optional($i->open_date)->format('d.m.Y'),
-                    'days_open' => $i->open_date ? (int) $i->open_date->diffInDays(Carbon::now()) : null,
-                    'asset_url' => $i->asset_id ? "/app/assets/{$i->asset_id}" : null,
-                ])->all(),
             'warrantyExpiring' => Asset::query()->withWarranty()->with('assignee', 'model')
                 ->orderByRaw(Asset::warrantyEndSql())->limit(10)->get()
                 ->map(fn (Asset $a) => [
@@ -55,7 +67,22 @@ class DashboardController extends Controller
                     'days_left' => (int) Carbon::now()->startOfDay()->diffInDays($a->warrantyEnd(), false),
                     'asset_url' => "/app/assets/{$a->id}",
                 ])->all(),
-        ]);
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function openIncidents(): array
+    {
+        return Incident::query()->whereNull('closed_date')->with('asset.model')->orderByDesc('open_date')->limit(10)->get()
+            ->map(fn (Incident $i) => [
+                'id' => $i->id,
+                'title' => $i->title,
+                'model' => optional(optional($i->asset)->model)->name,
+                'serial' => optional($i->asset)->serial,
+                'open_date' => optional($i->open_date)->format('d.m.Y'),
+                'days_open' => $i->open_date ? (int) $i->open_date->diffInDays(Carbon::now()) : null,
+                'asset_url' => $i->asset_id ? "/app/assets/{$i->asset_id}" : null,
+            ])->all();
     }
 
     /** Assets whose warranty ends within the given days (inclusive; null = open). */

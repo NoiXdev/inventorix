@@ -21,7 +21,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_resolves_owner_change_to_names_and_records_causer(): void
     {
-        $actor = User::factory()->create(['name' => 'Cara Causer', 'login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['name' => 'Cara Causer', 'login_enabled' => true]);
         $oldOwner = User::factory()->withoutLogin()->create(['name' => 'Olive Old']);
         $newOwner = User::factory()->withoutLogin()->create(['name' => 'Nate New']);
 
@@ -43,7 +43,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_resolves_status_label_names(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
         $this->actingAs($actor);
         $asset = Asset::factory()->create(['status_id' => StatusLabel::system(SystemStatus::NEW)->id]);
         $asset->update(['status_id' => StatusLabel::system(SystemStatus::DEFECT)->id]);
@@ -55,7 +55,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_entries_from_before_categories_resolve_the_old_asset_type_id(): void
     {
-        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]));
         $category = Category::factory()->create(['name' => 'Monitor']);
         $asset = Asset::factory()->create();
         // Types were migrated to categories with their ids kept.
@@ -70,7 +70,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_missing_referenced_record_resolves_to_removed(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
         $gone = User::factory()->withoutLogin()->create();
         $this->actingAs($actor);
         $asset = Asset::factory()->create(['assignee_type' => null, 'assignee_id' => null]);
@@ -93,7 +93,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_excludes_semantic_observer_entries(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
         $newOwner = User::factory()->withoutLogin()->create();
 
         $this->actingAs($actor);
@@ -120,8 +120,8 @@ class AssetHistoryTest extends TestCase
 
     public function test_former_user_causer(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
-        $second = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
+        $second = User::factory()->superuser()->create(['login_enabled' => true]);
 
         $this->actingAs($actor);
         $asset = Asset::factory()->create();
@@ -137,7 +137,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_excludes_attachment_activity_rows(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
         $this->actingAs($actor);
         $asset = Asset::factory()->create();
 
@@ -164,7 +164,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_order_number_change_shows_order_number_label(): void
     {
-        $this->actingAs(User::factory()->create(['login_enabled' => true]));
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]));
         $asset = Asset::factory()->create(['order_number' => 'PO-OLD']);
         $asset->update(['order_number' => 'PO-NEW']);
 
@@ -177,7 +177,7 @@ class AssetHistoryTest extends TestCase
 
     public function test_show_returns_history_prop(): void
     {
-        $actor = User::factory()->create(['login_enabled' => true]);
+        $actor = User::factory()->superuser()->create(['login_enabled' => true]);
         $this->actingAs($actor);
         $asset = Asset::factory()->create();
         $asset->update(['status_id' => StatusLabel::system(SystemStatus::LEND)->id]);

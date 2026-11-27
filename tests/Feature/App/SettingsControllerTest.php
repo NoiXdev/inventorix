@@ -17,7 +17,7 @@ class SettingsControllerTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_index_never_exposes_secrets(): void

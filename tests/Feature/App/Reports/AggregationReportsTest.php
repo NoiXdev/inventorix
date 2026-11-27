@@ -19,7 +19,7 @@ class AggregationReportsTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_state_overview_is_grouped_and_not_paginated(): void

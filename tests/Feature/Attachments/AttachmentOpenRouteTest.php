@@ -19,7 +19,7 @@ class AttachmentOpenRouteTest extends TestCase
 
         $attachment = Attachment::factory()->create(['path' => 'attachments/doc.pdf']);
 
-        $response = $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $response = $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->get(route('attachments.open', $attachment))
             ->assertOk();
 
@@ -32,7 +32,7 @@ class AttachmentOpenRouteTest extends TestCase
 
         $attachment = Attachment::factory()->create(['path' => 'attachments/missing.pdf']);
 
-        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->get(route('attachments.open', $attachment))
             ->assertNotFound();
     }

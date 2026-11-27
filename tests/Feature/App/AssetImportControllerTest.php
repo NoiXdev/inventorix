@@ -14,7 +14,7 @@ class AssetImportControllerTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     private function csv(string $body): UploadedFile

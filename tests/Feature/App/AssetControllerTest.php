@@ -26,7 +26,7 @@ class AssetControllerTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_index_lists_assets_with_relation_columns_and_incident_count(): void
@@ -210,7 +210,7 @@ class AssetControllerTest extends TestCase
             'size' => 2048, 'type' => 'document', 'category' => 'dokument', 'title' => 'Z',
         ]);
 
-        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->get("/app/assets/{$asset->id}")
             ->assertInertia(fn (Assert $p) => $p
                 ->component('assets/show')
@@ -226,7 +226,7 @@ class AssetControllerTest extends TestCase
         $asset = Asset::factory()->create();
         Incident::factory()->create(['asset_id' => $asset->id, 'title' => 'Boom', 'closed_date' => null]);
 
-        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->get("/app/assets/{$asset->id}")
             ->assertInertia(fn (Assert $p) => $p
                 ->component('assets/show')
@@ -244,7 +244,7 @@ class AssetControllerTest extends TestCase
 
     public function test_index_exposes_flashed_import_result(): void
     {
-        $this->actingAs(User::factory()->create(['login_enabled' => true]))
+        $this->actingAs(User::factory()->superuser()->create(['login_enabled' => true]))
             ->withSession(['importResult' => ['imported' => 3, 'failed' => []]])
             ->get('/app/assets')
             ->assertInertia(fn (Assert $p) => $p

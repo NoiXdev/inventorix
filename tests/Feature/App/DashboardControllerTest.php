@@ -16,7 +16,7 @@ class DashboardControllerTest extends TestCase
 
     private function actor(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_stats_and_warranty_buckets(): void

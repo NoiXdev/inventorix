@@ -19,7 +19,7 @@ class CustomFieldsetControllerTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create(['login_enabled' => true]);
+        $this->user = User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_index_lists_fieldsets_with_their_field_count(): void

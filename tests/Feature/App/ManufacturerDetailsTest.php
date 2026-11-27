@@ -19,7 +19,7 @@ class ManufacturerDetailsTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create(['login_enabled' => true]);
+        $this->user = User::factory()->superuser()->create(['login_enabled' => true]);
         Storage::fake();
     }
 

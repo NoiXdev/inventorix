@@ -16,7 +16,7 @@ class AssetModelControllerTest extends TestCase
 
     private function user(): User
     {
-        return User::factory()->create(['login_enabled' => true]);
+        return User::factory()->superuser()->create(['login_enabled' => true]);
     }
 
     public function test_index_lists_models_with_manufacturer_name_and_assets_count(): void

@@ -12,9 +12,16 @@ use Illuminate\Validation\Rule;
 
 class HandoverRequest extends FormRequest
 {
+    /**
+     * A handover moves assets, so it needs the matching check-out/check-in
+     * permission on top of handovers.create (route middleware). An unknown
+     * type is left to validation.
+     */
     public function authorize(): bool
     {
-        return true;
+        $type = HandoverType::tryFrom((string) $this->input('type'));
+
+        return $type === null || $this->user()->can($type->requiredPermission()->value);
     }
 
     public function rules(): array

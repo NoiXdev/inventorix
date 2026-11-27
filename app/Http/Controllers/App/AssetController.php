@@ -143,12 +143,12 @@ class AssetController extends Controller
         return to_route('app.assets.index')->with('success', 'Asset created.');
     }
 
-    public function show(Asset $asset, CheckoutService $checkouts): Response
+    public function show(Request $request, Asset $asset, CheckoutService $checkouts): Response
     {
         $asset->load('model.manufacturer', 'model.category', 'assignee', 'location', 'rtdLocation', 'supplier', 'status', 'tags', 'attachments.uploadedBy', 'incidents')
             ->loadCount('incidents');
 
-        return Inertia::render('assets/show', [
+        $props = [
             'asset' => $this->detail($asset),
             'history' => AssetHistory::for($asset),
             // Loaded when a check-out or check-in dialog opens.
@@ -160,15 +160,6 @@ class AssetController extends Controller
                     'value' => AssetCustomFields::plain($asset, $f),
                     'encrypted' => $f->field_encrypted,
                 ])->values()->all(),
-            'incidents' => $asset->incidents->map(fn (Incident $i) => [
-                'id' => $i->id,
-                'title' => $i->title,
-                'notes' => $i->notes,
-                'open_date' => optional($i->open_date)->format('Y-m-d'),
-                'closed_date' => optional($i->closed_date)->format('Y-m-d'),
-                'status' => $i->closed_date ? 'closed' : 'open',
-                'created_at' => optional($i->created_at)->toDateTimeString(),
-            ])->all(),
             'attachments' => $asset->attachments->map(fn (Attachment $a) => [
                 'id' => $a->id,
                 'type' => $a->type,
@@ -186,7 +177,22 @@ class AssetController extends Controller
                 fn (AttachmentCategory $c) => ['value' => $c->value, 'label' => $c->getLabel()],
                 AttachmentCategory::cases(),
             ),
-        ]);
+        ];
+
+        // Incidents are a section of their own; only shown with incidents.view.
+        if ($request->user()->can('incidents.view')) {
+            $props['incidents'] = $asset->incidents->map(fn (Incident $i) => [
+                'id' => $i->id,
+                'title' => $i->title,
+                'notes' => $i->notes,
+                'open_date' => optional($i->open_date)->format('Y-m-d'),
+                'closed_date' => optional($i->closed_date)->format('Y-m-d'),
+                'status' => $i->closed_date ? 'closed' : 'open',
+                'created_at' => optional($i->created_at)->toDateTimeString(),
+            ])->all();
+        }
+
+        return Inertia::render('assets/show', $props);
     }
 
     public function edit(Asset $asset): Response

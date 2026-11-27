@@ -53,14 +53,21 @@ class HandoverController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // Only the types whose check-out/check-in the user may perform.
+        $types = array_values(array_filter(
+            HandoverType::cases(),
+            fn (HandoverType $t) => $request->user()->can($t->requiredPermission()->value),
+        ));
+        abort_if($types === [], 403);
+
         return Inertia::render('handovers/create', [
             'typeOptions' => array_map(fn (HandoverType $t) => [
                 'value' => $t->value, 'label' => $t->getLabel(),
                 'allowedStatusIds' => StatusLabel::systemIds($t->allowedStateFrom()),
                 'assignsOwner' => $t->assignsRecipientAsOwner(),
-            ], HandoverType::cases()),
+            ], $types),
             'recipientKindOptions' => array_map(fn (RecipientKind $k) => ['value' => $k->value, 'label' => $k->getLabel()], RecipientKind::cases()),
             'userOptions' => User::query()->orderBy('name')->get()
                 ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—', 'email' => $u->email])->all(),

@@ -17,7 +17,7 @@ class AssetOwnerJoinTest extends TestCase
     {
         $user = User::factory()->withoutLogin()->create(['name' => 'Zelda Nomail']);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/assets/create')
             ->assertOk()
             ->assertInertia(fn (Assert $a) => $a
@@ -34,7 +34,7 @@ class AssetOwnerJoinTest extends TestCase
         // label.toLowerCase() on every option during initial render.
         $user = User::factory()->withoutLogin()->create(['name' => null, 'email' => null]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/assets/create')
             ->assertOk()
             ->assertInertia(fn (Assert $a) => $a
@@ -55,7 +55,7 @@ class AssetOwnerJoinTest extends TestCase
         Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $owner->id]);
         Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => User::factory()->withoutLogin()->create()->id]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/assets?search=Zelda')
             ->assertOk()
             ->assertInertia(fn (Assert $a) => $a->component('assets/index')->has('assets.data', 1)->etc());
@@ -68,7 +68,7 @@ class AssetOwnerJoinTest extends TestCase
         ]);
         Asset::factory()->create(['assignee_type' => User::class, 'assignee_id' => $owner->id]);
 
-        $response = $this->actingAs(User::factory()->create())->get('/app/assets/export');
+        $response = $this->actingAs(User::factory()->superuser()->create())->get('/app/assets/export');
 
         $response->assertOk();
         $this->assertStringContainsString('Zelda Nomail', $response->streamedContent());
@@ -81,7 +81,7 @@ class AssetOwnerJoinTest extends TestCase
         ]);
         $asset = Asset::factory()->create(['assignee_type' => null, 'assignee_id' => null]);
 
-        $this->actingAs(User::factory()->create());
+        $this->actingAs(User::factory()->superuser()->create());
         $asset->assignTo($owner)->save();
 
         $this->get('/app/assets/'.$asset->id)
@@ -96,14 +96,14 @@ class AssetOwnerJoinTest extends TestCase
         Asset::factory()->assignedTo($location)->create(['name' => 'In storage']);
         Asset::factory()->assignedTo($dock)->create(['name' => 'Monitor']);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/assets?search=Lager')
             ->assertInertia(fn (Assert $a) => $a
                 ->has('assets.data', 1)
                 ->where('assets.data.0.assignee_name', 'Lager Nord')
                 ->etc());
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->superuser()->create())
             ->get('/app/assets?sort=assignee_name')
             ->assertInertia(fn (Assert $a) => $a
                 ->where('assets.data', fn ($rows) => collect($rows)->firstWhere('name', 'Monitor')['assignee_name'] === 'Dock 7')
