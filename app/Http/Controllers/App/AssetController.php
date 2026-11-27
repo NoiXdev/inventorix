@@ -21,6 +21,7 @@ use App\Models\StatusLabel;
 use App\Models\Supplier;
 use App\Services\AuditService;
 use App\Services\CheckoutService;
+use App\Services\LicenseService;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
 use App\Support\Assets\CheckoutOptions;
@@ -259,10 +260,14 @@ class AssetController extends Controller
         return to_route('app.assets.index')->with('success', 'Asset updated.');
     }
 
-    public function destroy(Asset $asset): RedirectResponse
+    public function destroy(Asset $asset, LicenseService $licenses): RedirectResponse
     {
-        // Soft delete: the image and attachments stay so the asset can be restored.
-        $asset->delete();
+        DB::transaction(function () use ($asset, $licenses): void {
+            // License seats on the asset come back first, with a history entry each.
+            $licenses->checkInAllFor($asset, 'Asset deleted');
+            // Soft delete: the image and attachments stay so the asset can be restored.
+            $asset->delete();
+        });
 
         return to_route('app.assets.index')->with('success', 'Asset deleted.');
     }

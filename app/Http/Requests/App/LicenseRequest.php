@@ -25,7 +25,7 @@ class LicenseRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:191'],
             // Only someone who may see product keys may set one.
-            'product_key' => [$this->user()->can('licenses.keys') ? 'nullable' : 'prohibited', 'string', 'max:5000'],
+            'product_key' => $this->user()->can('licenses.keys') ? ['nullable', 'string', 'max:5000'] : ['prohibited'],
             'seats' => ['required', 'integer', 'min:1', 'max:10000'],
             'category_id' => ['nullable', 'uuid', Rule::exists('categories', 'id')->where('category_type', CategoryType::LICENSE->value)->whereNull('deleted_at')],
             'manufacturer_id' => ['nullable', 'uuid', Rule::exists('manufacturers', 'id')->whereNull('deleted_at')],
@@ -52,9 +52,17 @@ class LicenseRequest extends FormRequest
         return ['category_id.exists' => 'Choose a license category.'];
     }
 
-    /** @return array<string, mixed> the license attributes (the seat count goes through LicenseService) */
+    /**
+     * The license attributes (the seat count goes through LicenseService).
+     * Without licenses.keys the product key is never among them, so an empty
+     * field (which `prohibited` lets through) cannot wipe it.
+     *
+     * @return array<string, mixed>
+     */
     public function licenseAttributes(): array
     {
-        return collect($this->validated())->except(['seats'])->all();
+        $except = $this->user()->can('licenses.keys') ? ['seats'] : ['seats', 'product_key'];
+
+        return collect($this->validated())->except($except)->all();
     }
 }

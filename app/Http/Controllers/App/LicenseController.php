@@ -92,8 +92,8 @@ class LicenseController extends Controller
         return Inertia::render('licenses/show', [
             'license' => [
                 ...$this->payload($license),
-                'product_key' => $request->user()->can('licenses.keys') ? $license->product_key : null,
-                'has_product_key' => filled($license->product_key),
+                'product_key' => $request->user()->can('licenses.keys') ? $license->readableProductKey() : null,
+                'has_product_key' => $license->getRawOriginal('product_key') !== null,
                 'category_name' => $license->category?->name,
                 'manufacturer_name' => $license->manufacturer?->name,
                 'supplier_name' => $license->supplier?->name,
@@ -114,10 +114,9 @@ class LicenseController extends Controller
             ])->all(),
             'history' => LicenseHistory::for($license),
             // Users and assets for the check-out dialog, loaded when it opens.
-            'checkoutOptions' => Inertia::optional(fn () => $canCheckout ? [
-                'user' => CheckoutOptions::assignees(null)['user'],
-                'asset' => CheckoutOptions::assignees(null)['asset'],
-            ] : null),
+            'checkoutOptions' => Inertia::optional(fn () => $canCheckout
+                ? collect(CheckoutOptions::assignees(null, [['value' => '', 'label' => '']]))->only(['user', 'asset'])->all()
+                : null),
         ]);
     }
 
@@ -127,7 +126,7 @@ class LicenseController extends Controller
             ...$this->formOptions(),
             'license' => [
                 ...$this->payload($license),
-                'product_key' => $request->user()->can('licenses.keys') ? $license->product_key : null,
+                'product_key' => $request->user()->can('licenses.keys') ? $license->readableProductKey() : null,
             ],
         ]);
     }
@@ -148,10 +147,18 @@ class LicenseController extends Controller
 
     public function destroy(License $license): RedirectResponse
     {
-        if ($license->licenseSeats()->where(fn ($q) => $q->whereNotNull('assigned_user_id')->orWhereNotNull('assigned_asset_id'))->exists()) {
+        $deleted = DB::transaction(function () use ($license): bool {
+            // Under the license lock, so no seat is checked out meanwhile.
+            License::query()->whereKey($license->id)->lockForUpdate()->first();
+            if ($license->licenseSeats()->where(fn ($q) => $q->whereNotNull('assigned_user_id')->orWhereNotNull('assigned_asset_id'))->exists()) {
+                return false;
+            }
+
+            return (bool) $license->delete();
+        });
+        if (! $deleted) {
             return back()->with('error', 'Check all seats in before deleting the license.');
         }
-        $license->delete();
 
         return to_route('app.licenses.index')->with('success', 'License deleted.');
     }

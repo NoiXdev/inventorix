@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\Creator;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -74,6 +75,16 @@ class License extends Model
     public function freeSeats(): HasMany
     {
         return $this->licenseSeats()->whereNull('assigned_user_id')->whereNull('assigned_asset_id')->where('retired', false);
+    }
+
+    /** The product key, or null when it cannot be decrypted (e.g. after the app key changed). */
+    public function readableProductKey(): ?string
+    {
+        try {
+            return $this->product_key;
+        } catch (DecryptException) {
+            return null;
+        }
     }
 
     /** Fewer free seats than the minimum the license should keep. */

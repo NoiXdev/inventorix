@@ -33,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('app.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Never keep a license's product key in the session after a failed form.
+        $exceptions->dontFlash(['product_key']);
+
         // Inertia requests that end in 403 get a proper in-app page instead of
         // the bare error response; other requests keep Laravel's default.
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {

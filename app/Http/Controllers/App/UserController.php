@@ -11,6 +11,7 @@ use App\Models\Asset;
 use App\Models\Group;
 use App\Models\LicenseSeat;
 use App\Models\User;
+use App\Services\LicenseService;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -170,7 +171,11 @@ class UserController extends Controller
             throw ValidationException::withMessages(['user' => self::LAST_SUPERUSER]);
         }
 
-        $user->delete();
+        DB::transaction(function () use ($user): void {
+            // License seats come back first, with a history entry each.
+            app(LicenseService::class)->checkInAllFor($user, 'User deleted');
+            $user->delete();
+        });
 
         return to_route('app.users.index')->with('success', 'User deleted.');
     }

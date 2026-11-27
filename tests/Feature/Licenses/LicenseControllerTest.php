@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\LicenseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 class LicenseControllerTest extends TestCase
@@ -129,5 +130,74 @@ class LicenseControllerTest extends TestCase
             ->assertInertia(fn (Assert $p) => $p->where('licenses.0.name', 'CAD Suite'));
         $this->actingAs(User::factory()->withPermissions(['assets.view' => 1])->create())->get("/app/assets/{$asset->id}")
             ->assertInertia(fn (Assert $p) => $p->where('licenses', null));
+    }
+
+    public function test_deleting_a_user_or_an_asset_checks_their_seats_in(): void
+    {
+        $reassignable = License::factory()->seats(1)->create(['reassignable' => true]);
+        $oneWay = License::factory()->seats(1)->create(['reassignable' => false]);
+        $user = User::factory()->withoutLogin()->create();
+        $asset = Asset::factory()->unassigned()->create();
+        app(LicenseService::class)->checkOut($reassignable, $user);
+        app(LicenseService::class)->checkOut($oneWay, $asset);
+
+        $this->actingAs($this->admin())->delete("/app/users/{$user->id}")->assertRedirect('/app/users');
+        $this->actingAs($this->admin())->delete("/app/assets/{$asset->id}")->assertRedirect('/app/assets');
+
+        $this->assertSame(1, $reassignable->freeSeats()->count());
+        $this->assertTrue($oneWay->licenseSeats()->sole()->retired);
+        $this->assertSame('User deleted', Activity::query()
+            ->where('subject_id', $reassignable->id)->where('event', 'checked_in')->sole()->getProperty('note'));
+    }
+
+    public function test_key_edge_cases(): void
+    {
+        $license = License::factory()->create(['product_key' => 'KEEP-ME']);
+        $noKeys = User::factory()->withPermissions(['licenses.view' => 1, 'licenses.edit' => 1])->create();
+
+        // An empty field from someone without licenses.keys never wipes the key ...
+        $this->actingAs($noKeys)->put("/app/licenses/{$license->id}", ['name' => 'X', 'seats' => 1, 'product_key' => ''])
+            ->assertSessionHasNoErrors();
+        $this->assertSame('KEEP-ME', $license->refresh()->product_key);
+        // ... and a value is refused.
+        $this->actingAs($noKeys)->put("/app/licenses/{$license->id}", ['name' => 'X', 'seats' => 1, 'product_key' => 'MINE'])
+            ->assertSessionHasErrors(['product_key' => 'The product key field is prohibited.']);
+        $this->assertSame('KEEP-ME', $license->refresh()->product_key);
+
+        $keys = User::factory()->withPermissions(['licenses.view' => 1, 'licenses.edit' => 1, 'licenses.keys' => 1])->create();
+        $this->actingAs($keys)->put("/app/licenses/{$license->id}", ['name' => 'X', 'seats' => 1, 'product_key' => ''])
+            ->assertSessionHasNoErrors();
+        $this->assertNull($license->refresh()->product_key);
+
+        $license->update(['product_key' => 'SECRET']);
+        $this->assertArrayNotHasKey('product_key', $license->refresh()->toArray());
+        $this->assertStringNotContainsString('SECRET', $license->toJson());
+    }
+
+    public function test_an_undecryptable_key_does_not_break_the_page(): void
+    {
+        $license = License::factory()->create();
+        \DB::table('licenses')->where('id', $license->id)->update(['product_key' => 'not-a-ciphertext']);
+
+        $this->actingAs(User::factory()->superuser()->create())->get("/app/licenses/{$license->id}")
+            ->assertOk()->assertInertia(fn (Assert $p) => $p->where('license.product_key', null)->where('license.has_product_key', true));
+    }
+
+    public function test_check_out_options_and_deleted_targets(): void
+    {
+        $license = License::factory()->seats(1)->create();
+        $viewer = User::factory()->withPermissions(['licenses.view' => 1])->create();
+        $this->actingAs($viewer)->get("/app/licenses/{$license->id}")
+            ->assertInertia(fn (Assert $p) => $p->reloadOnly('checkoutOptions', fn (Assert $r) => $r->where('checkoutOptions', null)));
+
+        $actor = User::factory()->withPermissions(['licenses.view' => 1, 'licenses.checkout' => 1])->create();
+        $this->actingAs($actor)->get("/app/licenses/{$license->id}")
+            ->assertInertia(fn (Assert $p) => $p->reloadOnly('checkoutOptions', fn (Assert $r) => $r->has('checkoutOptions.user')->has('checkoutOptions.asset')->missing('checkoutOptions.location')));
+
+        $gone = Asset::factory()->create();
+        $gone->delete();
+        $this->actingAs($actor)->post("/app/licenses/{$license->id}/checkout", ['assignee_type' => 'asset', 'assignee_id' => $gone->id])
+            ->assertSessionHasErrors('assignee_id');
+        $this->assertSame(1, $license->freeSeats()->count());
     }
 }

@@ -38,7 +38,7 @@ class LicenseService
                 $license->licenseSeats()->createMany(array_fill(0, $seats - $total, []));
             } elseif ($seats < $total) {
                 $remove = $total - $seats;
-                $free = $license->freeSeats()->limit($remove)->pluck('id');
+                $free = $license->freeSeats()->limit($remove)->lockForUpdate()->pluck('id');
                 if ($free->count() < $remove) {
                     $used = $total - $license->freeSeats()->count();
                     throw new LicenseSeatException("{$used} seats are checked out or used up; the license cannot have fewer. Check seats in first.");
@@ -68,6 +68,10 @@ class LicenseService
         }
 
         return DB::transaction(function () use ($license, $target, $note, $at): LicenseSeat {
+            // Lock the license first, as syncSeats and deleting a license do,
+            // so a seat is never removed while it is being checked out.
+            // (SQLite in the tests ignores these locks.)
+            License::query()->whereKey($license->id)->lockForUpdate()->first();
             // Lock a free seat, so two check-outs never take the same one.
             $seat = $license->freeSeats()->orderBy('created_at')->orderBy('id')->lockForUpdate()->first();
             if ($seat === null) {
@@ -115,6 +119,23 @@ class LicenseService
 
             return $seat->setRawAttributes($locked->getAttributes(), true);
         });
+    }
+
+    /**
+     * Check in every seat a user or an asset holds, e.g. before the user or
+     * asset is deleted (as Snipe-IT does), so the history shows it and seats
+     * of licenses that are not reassignable are used up. @return int seats
+     */
+    public function checkInAllFor(User|Asset $holder, ?string $note = null): int
+    {
+        $seats = LicenseSeat::query()
+            ->where($holder instanceof User ? 'assigned_user_id' : 'assigned_asset_id', $holder->id)
+            ->get();
+        foreach ($seats as $seat) {
+            $this->checkIn($seat, $note);
+        }
+
+        return $seats->count();
     }
 
     private function log(License $license, string $event, string $kind, ?string $holder, ?string $note): void
