@@ -8,6 +8,7 @@ use App\Mail\CheckinReminder as CheckinReminderMail;
 use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\CheckinReminder;
+use App\Models\Consumable;
 use App\Models\License;
 use App\Models\User;
 use App\Settings\AlertSettings;
@@ -78,10 +79,16 @@ class AlertService
             ->filter(fn (Accessory $a) => $a->isLowStock())
             ->values();
 
+        $consumablesLow = Consumable::query()->whereNotNull('min_amt')->where('archived', false)
+            ->withSum('assignments as handed_out', 'qty')->orderBy('name')->get()
+            ->filter(fn (Consumable $c) => $c->isLowStock())
+            ->values();
+
         return array_filter([
             'license_expiring' => $expiring,
             'license_low' => $low,
             'accessory_low' => $accessoriesLow,
+            'consumable_low' => $consumablesLow,
         ], fn (Collection $c) => $c->isNotEmpty());
     }
 

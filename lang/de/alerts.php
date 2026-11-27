@@ -25,6 +25,7 @@ return [
             'license_expiring' => 'Lizenz läuft ab oder ist abgelaufen',
             'license_low' => 'Zu wenige freie Lizenzplätze',
             'accessory_low' => 'Zubehör: Bestand niedrig',
+            'consumable_low' => 'Verbrauchsmaterial: Bestand niedrig',
         ],
         'col' => [
             'asset' => 'Asset',
@@ -36,6 +37,7 @@ return [
             'seats' => 'Plätze (frei / gesamt)',
             'expires' => 'Ablauf',
             'accessory' => 'Zubehör',
+            'consumable' => 'Verbrauchsmaterial',
             'remaining' => 'Verfügbar / gesamt',
         ],
         'outro' => 'Diese Nachricht wurde automatisch von Inventorix versendet.',

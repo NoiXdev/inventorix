@@ -12,6 +12,8 @@ use App\Http\Controllers\App\AssetImportController;
 use App\Http\Controllers\App\AssetModelController;
 use App\Http\Controllers\App\AuthController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\ConsumableCheckoutController;
+use App\Http\Controllers\App\ConsumableController;
 use App\Http\Controllers\App\CustomFieldController;
 use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
@@ -94,6 +96,10 @@ Route::prefix('app')->name('app.')->group(function () {
         $guarded('accessories', AccessoryController::class, 'accessories');
         Route::post('accessories/{accessory}/checkout', [AccessoryCheckoutController::class, 'checkout'])->middleware('can:accessories.checkout')->name('accessories.checkout');
         Route::post('accessory-checkouts/{checkout}/checkin', [AccessoryCheckoutController::class, 'checkin'])->middleware('can:accessories.checkin')->name('accessory-checkouts.checkin');
+        Route::get('consumables/{consumable}/image', [ConsumableController::class, 'image'])
+            ->name('consumables.image');
+        $guarded('consumables', ConsumableController::class, 'consumables');
+        Route::post('consumables/{consumable}/checkout', [ConsumableCheckoutController::class, 'checkout'])->middleware('can:consumables.checkout')->name('consumables.checkout');
         Route::get('assets/export', [AssetExportController::class, 'index'])->middleware('can:assets.view')->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->middleware(['can:import', 'can:assets.create'])->name('assets.import');
         Route::get('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCreate'])->middleware('can:assets.checkout')->name('assets.bulk-checkout.create');

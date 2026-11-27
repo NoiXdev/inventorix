@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\UserRequest;
 use App\Models\AccessoryCheckout;
 use App\Models\Asset;
+use App\Models\ConsumableAssignment;
 use App\Models\Group;
 use App\Models\LicenseSeat;
 use App\Models\User;
@@ -103,6 +104,7 @@ class UserController extends Controller
             'effective' => $user->effectivePermissions(),
             'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($user) : null,
             'accessories' => $request->user()->can('accessories.view') ? AccessoryCheckout::heldBy($user) : null,
+            'consumables' => $request->user()->can('consumables.view') ? ConsumableAssignment::handedTo($user) : null,
             // Edit / delete are only offered when the policy would allow them.
             'canManage' => $request->user()->can('manage', $user),
             'assets' => $user->assets->map(fn (Asset $a) => [
