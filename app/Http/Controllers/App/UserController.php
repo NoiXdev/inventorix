@@ -81,7 +81,7 @@ class UserController extends Controller
         return to_route('app.users.index')->with('success', 'User created.');
     }
 
-    public function show(User $user): Response
+    public function show(Request $request, User $user): Response
     {
         $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location', 'assets.status');
 
@@ -97,6 +97,8 @@ class UserController extends Controller
             ],
             'groups' => $user->groups()->orderBy('name')->pluck('name')->all(),
             'effective' => $user->effectivePermissions(),
+            // Edit / delete are only offered when the policy would allow them.
+            'canManage' => $request->user()->can('manage', $user),
             'assets' => $user->assets->map(fn (Asset $a) => [
                 'id' => $a->id,
                 'name' => $a->name,

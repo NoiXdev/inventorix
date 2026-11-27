@@ -53,8 +53,15 @@ describe('UserShow', () => {
         expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
         unmount();
         page.props = { auth: { user: null, can: { 'users.edit': true, 'users.delete': true } } };
-        render(<UserShow user={user} assets={[]} groups={[]} effective={{}} />);
+        render(<UserShow user={user} assets={[]} groups={[]} effective={{}} canManage />);
         expect(screen.getByRole('link', { name: 'Edit' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    });
+
+    it('hides Edit and Delete when this user may not be managed (more permissions than the viewer)', () => {
+        page.props = { auth: { user: null, can: { 'users.edit': true, 'users.delete': true } } };
+        render(<UserShow user={user} assets={[]} groups={[]} effective={{}} canManage={false} />);
+        expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 });

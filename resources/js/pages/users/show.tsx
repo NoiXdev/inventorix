@@ -16,6 +16,8 @@ interface Props {
     groups: string[];
     /** Granted permissions only matter; false entries are skipped. */
     effective: Record<string, boolean>;
+    /** Whether the current user may edit or delete this user (UserPolicy::manage). */
+    canManage?: boolean;
 }
 
 // Group the granted permission keys by section (`assets.view` -> assets); keys without a dot are system flags.
@@ -29,7 +31,7 @@ function bySection(effective: Record<string, boolean>): [string, string[]][] {
     return [...sections.entries()];
 }
 
-export default function UserShow({ user, assets, groups = [], effective = {} }: Props) {
+export default function UserShow({ user, assets, groups = [], effective = {}, canManage = false }: Props) {
     const can = useCan();
     const sections = bySection(effective);
     return (
@@ -43,8 +45,8 @@ export default function UserShow({ user, assets, groups = [], effective = {} }: 
                     </Badge>
                 </div>
                 <div className="flex gap-2">
-                    {can('users.edit') && <Button asChild variant="outline"><Link href={`/app/users/${user.id}/edit`}>Edit</Link></Button>}
-                    {can('users.delete') && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}>Delete</Button>}
+                    {can('users.edit') && canManage && <Button asChild variant="outline"><Link href={`/app/users/${user.id}/edit`}>Edit</Link></Button>}
+                    {can('users.delete') && canManage && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}>Delete</Button>}
                 </div>
             </div>
 

@@ -103,6 +103,56 @@ class UserPermissionAssignmentTest extends TestCase
         $this->assertSame('plain@example.test', $target->refresh()->email);
     }
 
+    public function test_without_admin_only_users_with_a_subset_of_ones_own_permissions_can_be_managed(): void
+    {
+        Notification::fake();
+        $actor = User::factory()->withPermissions(['users.view' => 1, 'users.edit' => 1, 'users.delete' => 1, 'assets.view' => 1])
+            ->create(['login_enabled' => true]);
+        // Holds a permission the actor lacks: taking over this account would escalate.
+        $stronger = User::factory()->withPermissions(['assets.view' => 1, 'assets.delete' => 1])
+            ->create(['login_enabled' => true, 'email' => 'stronger@example.test']);
+        $viaGroup = User::factory()->create(['login_enabled' => true]);
+        $viaGroup->groups()->attach(Group::factory()->withPermissions(['import'])->create());
+        $weaker = User::factory()->withPermissions(['assets.view' => 1])->create(['login_enabled' => true]);
+        $none = User::factory()->withoutLogin()->create();
+
+        foreach ([$stronger, $viaGroup] as $target) {
+            $this->actingAs($actor)->get("/app/users/{$target->id}/edit")->assertForbidden();
+            $this->actingAs($actor)->put("/app/users/{$target->id}", $this->payload($target, ['email' => 'evil@example.test']))
+                ->assertForbidden();
+            $this->actingAs($actor)->post("/app/users/{$target->id}/send-reset")->assertForbidden();
+            $this->actingAs($actor)->delete("/app/users/{$target->id}")->assertForbidden();
+        }
+        $this->assertSame('stronger@example.test', $stronger->refresh()->email);
+        Notification::assertNothingSent();
+
+        $this->actingAs($actor)->put("/app/users/{$weaker->id}", $this->payload($weaker, ['email' => 'weaker@example.test']))
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('weaker@example.test', $weaker->refresh()->email);
+        $this->actingAs($actor)->get("/app/users/{$none->id}/edit")->assertOk();
+        // Oneself is always a subset of oneself.
+        $this->actingAs($actor)->get("/app/users/{$actor->id}/edit")->assertOk();
+    }
+
+    public function test_admin_manages_non_privileged_users_with_any_permissions(): void
+    {
+        $target = User::factory()->withPermissions(['assets.delete' => 1, 'import' => 1])->create(['login_enabled' => true]);
+
+        $this->actingAs($this->admin())->get("/app/users/{$target->id}/edit")->assertOk();
+    }
+
+    public function test_show_page_says_whether_the_user_can_be_managed(): void
+    {
+        $actor = User::factory()->withPermissions(['users.view' => 1, 'users.edit' => 1])->create();
+        $stronger = User::factory()->withPermissions(['assets.delete' => 1])->create();
+        $plain = User::factory()->withoutLogin()->create();
+
+        $this->actingAs($actor)->get("/app/users/{$stronger->id}")
+            ->assertInertia(fn (Assert $p) => $p->where('canManage', false));
+        $this->actingAs($actor)->get("/app/users/{$plain->id}")
+            ->assertInertia(fn (Assert $p) => $p->where('canManage', true));
+    }
+
     // --- Assigning groups and permissions ---
 
     public function test_users_edit_actor_cannot_send_groups_or_permissions(): void
