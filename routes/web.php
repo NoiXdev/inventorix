@@ -19,6 +19,8 @@ use App\Http\Controllers\App\GeneratorController;
 use App\Http\Controllers\App\GroupController;
 use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
+use App\Http\Controllers\App\LicenseController;
+use App\Http\Controllers\App\LicenseSeatController;
 use App\Http\Controllers\App\LocationController;
 use App\Http\Controllers\App\ManufacturerController;
 use App\Http\Controllers\App\PasswordResetController;
@@ -85,6 +87,9 @@ Route::prefix('app')->name('app.')->group(function () {
         $guarded('custom-fieldsets', CustomFieldsetController::class, 'customfields', ['show']);
         Route::get('accessories/{accessory}/image', [AccessoryController::class, 'image'])
             ->name('accessories.image');
+        $guarded('licenses', LicenseController::class, 'licenses');
+        Route::post('licenses/{license}/checkout', [LicenseSeatController::class, 'checkout'])->middleware('can:licenses.checkout')->name('licenses.checkout');
+        Route::post('license-seats/{seat}/checkin', [LicenseSeatController::class, 'checkin'])->middleware('can:licenses.checkin')->name('license-seats.checkin');
         $guarded('accessories', AccessoryController::class, 'accessories', ['show']);
         Route::get('assets/export', [AssetExportController::class, 'index'])->middleware('can:assets.view')->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->middleware(['can:import', 'can:assets.create'])->name('assets.import');

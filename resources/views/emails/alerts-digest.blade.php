@@ -13,5 +13,17 @@
 </x-mail::table>
 
 @endforeach
+@foreach ($licenseSections as $key => $licenses)
+## {{ trans('alerts.digest.section.'.$key) }}
+
+<x-mail::table>
+| {{ trans('alerts.digest.col.license') }} | {{ trans('alerts.digest.col.seats') }} | {{ trans('alerts.digest.col.expires') }} |
+| :--- | :--- | :--- |
+@foreach ($licenses as $license)
+| {{ str_replace('|', '\\|', $license->name) }} | {{ $key === 'license_low' ? $license->free_seats_count.' / '.$license->seats.' (min. '.$license->min_amt.')' : $license->seats }} | {{ $license->expiration_date?->format('d.m.Y') ?? '—' }} |
+@endforeach
+</x-mail::table>
+
+@endforeach
 {{ trans('alerts.digest.outro') }}
 </x-mail::message>

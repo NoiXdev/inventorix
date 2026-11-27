@@ -7,6 +7,7 @@ use App\Mail\AlertsDigest;
 use App\Mail\CheckinReminder as CheckinReminderMail;
 use App\Models\Asset;
 use App\Models\CheckinReminder;
+use App\Models\License;
 use App\Models\User;
 use App\Settings\AlertSettings;
 use Illuminate\Support\Collection;
@@ -47,16 +48,41 @@ class AlertService
         return $sections;
     }
 
-    /** Send the overview to the configured recipients. @return int assets listed (0: nothing sent) */
+    /**
+     * Licenses that expire within the warning window or have expired (not
+     * yet terminated), and licenses with fewer free seats than their minimum.
+     *
+     * @return array<string, Collection<int, License>> 'license_expiring' / 'license_low' => licenses, non-empty only
+     */
+    public function licenseSections(): array
+    {
+        $today = today();
+        $expiring = License::query()
+            ->whereNotNull('expiration_date')
+            ->whereDate('expiration_date', '<=', $today->copy()->addDays($this->settings->license_warning_days))
+            ->where(fn ($q) => $q->whereNull('termination_date')->orWhereDate('termination_date', '>', $today))
+            ->orderBy('expiration_date')
+            ->get();
+        $low = License::query()->whereNotNull('min_amt')
+            ->withCount(['freeSeats as free_seats_count'])
+            ->get()
+            ->filter(fn (License $l) => $l->isLow((int) $l->free_seats_count))
+            ->values();
+
+        return array_filter(['license_expiring' => $expiring, 'license_low' => $low], fn (Collection $c) => $c->isNotEmpty());
+    }
+
+    /** Send the overview to the configured recipients. @return int entries listed (0: nothing sent) */
     public function sendDigest(): int
     {
         $sections = $this->digestSections();
-        if ($sections === [] || $this->settings->recipients === []) {
+        $licenses = $this->licenseSections();
+        if (($sections === [] && $licenses === []) || $this->settings->recipients === []) {
             return 0;
         }
-        Mail::to($this->settings->recipients)->send(new AlertsDigest($sections));
+        Mail::to($this->settings->recipients)->send(new AlertsDigest($sections, $licenses));
 
-        return array_sum(array_map(fn (Collection $c) => $c->count(), $sections));
+        return array_sum(array_map(fn (Collection $c) => $c->count(), [...$sections, ...$licenses]));
     }
 
     /**

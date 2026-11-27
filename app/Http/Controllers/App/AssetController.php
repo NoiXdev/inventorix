@@ -14,6 +14,7 @@ use App\Models\Attachment;
 use App\Models\Category;
 use App\Models\CustomField;
 use App\Models\Incident;
+use App\Models\LicenseSeat;
 use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\StatusLabel;
@@ -159,6 +160,7 @@ class AssetController extends Controller
         $props = [
             'asset' => $this->detail($asset, $request->user()->can('incidents.view')),
             'history' => AssetHistory::for($asset),
+            'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($asset) : null,
             // Loaded when a check-out or check-in dialog opens.
             // Loaded when a dialog opens; the check-out options list users, so
             // only for those who may check out or in.

@@ -92,6 +92,7 @@ return [
             'audit_interval_help' => 'Nach einem Audit und bei neuen Assets wird das nächste Audit so weit in die Zukunft gelegt. 0 = kein Vorschlag.',
             'audit_warning_days' => 'Audit gilt als bald fällig (Tage vorher)',
             'checkin_warning_days' => 'Rückgabe gilt als bald fällig (Tage vorher)',
+            'license_warning_days' => 'Lizenz gilt als bald ablaufend (Tage vorher)',
             'help' => 'Mitarbeiter werden einmal pro Gerät und Rückgabedatum per Mail erinnert, wenn eine Rückgabe bald fällig oder überfällig ist. Die Empfänger oben bekommen täglich eine Übersicht.',
         ],
         'test' => [

@@ -26,6 +26,9 @@ class AlertSettings extends Settings
     /** A check-in counts as due this many days before the expected date. */
     public int $checkin_warning_days;
 
+    /** A license counts as expiring this many days before its expiration date. */
+    public int $license_warning_days;
+
     public static function group(): string
     {
         return 'alerts';

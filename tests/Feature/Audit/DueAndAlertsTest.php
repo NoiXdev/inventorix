@@ -5,8 +5,10 @@ namespace Tests\Feature\Audit;
 use App\Mail\AlertsDigest;
 use App\Mail\CheckinReminder;
 use App\Models\Asset;
+use App\Models\License;
 use App\Models\StatusLabel;
 use App\Models\User;
+use App\Services\LicenseService;
 use App\Settings\AlertSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -134,7 +136,7 @@ class DueAndAlertsTest extends TestCase
     {
         $payload = [
             'enabled' => true, 'recipients' => ['a@example.test'],
-            'audit_interval_months' => 24, 'audit_warning_days' => 30, 'checkin_warning_days' => 3,
+            'audit_interval_months' => 24, 'audit_warning_days' => 30, 'checkin_warning_days' => 3, 'license_warning_days' => 30,
         ];
 
         $this->actingAs(User::factory()->withPermissions(['admin' => 1])->create())
@@ -157,7 +159,7 @@ class DueAndAlertsTest extends TestCase
 
         $this->actingAs(User::factory()->superuser()->create())->post('/app/settings/alerts/test', [
             'enabled' => true, 'recipients' => ['it@example.test'],
-            'audit_interval_months' => 12, 'audit_warning_days' => 14, 'checkin_warning_days' => 7,
+            'audit_interval_months' => 12, 'audit_warning_days' => 14, 'checkin_warning_days' => 7, 'license_warning_days' => 30,
         ])->assertSessionHas('success');
 
         Mail::assertSent(AlertsDigest::class, 1);
@@ -210,5 +212,21 @@ class DueAndAlertsTest extends TestCase
 
         Mail::assertSent(CheckinReminder::class, 1);
         Mail::assertSent(CheckinReminder::class, fn (CheckinReminder $m) => $m->hasTo($newUser->email));
+    }
+
+    public function test_the_overview_lists_expiring_licenses_and_licenses_with_few_free_seats(): void
+    {
+        Mail::fake();
+        $expiring = License::factory()->create(['name' => 'Expiring', 'expiration_date' => '2026-12-20']);
+        $terminated = License::factory()->create(['expiration_date' => '2026-12-01', 'termination_date' => '2026-11-01']);
+        License::factory()->create(['expiration_date' => '2027-06-01']); // outside the 30 days
+        $low = License::factory()->seats(2)->create(['name' => 'Low', 'min_amt' => 2]);
+        app(LicenseService::class)->checkOut($low, User::factory()->create());
+
+        $this->artisan('alerts:send')->assertSuccessful();
+
+        Mail::assertSent(AlertsDigest::class, fn (AlertsDigest $m) => $m->licenseSections['license_expiring']->pluck('id')->all() === [$expiring->id]
+            && $m->licenseSections['license_low']->pluck('id')->all() === [$low->id]
+            && ! in_array($terminated->id, $m->licenseSections['license_expiring']->pluck('id')->all(), true));
     }
 }

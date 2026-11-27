@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCan } from '@/hooks/use-can';
+import { HeldLicenses, type HeldLicense } from '@/components/licenses/held-licenses';
 import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge';
 
 interface AssetRow { id: string; name: string | null; asset_tag: string | null; model_name: string | null; serial: string | null; status: AssetStatus | null; location_name: string | null }
@@ -18,6 +19,8 @@ interface Props {
     effective: Record<string, boolean>;
     /** Whether the current user may edit or delete this user (UserPolicy::manage). */
     canManage?: boolean;
+    /** License seats this user holds; null without licenses.view. */
+    licenses?: HeldLicense[] | null;
 }
 
 // Group the granted permission keys by section (`assets.view` -> assets); keys without a dot are system flags.
@@ -31,7 +34,7 @@ function bySection(effective: Record<string, boolean>): [string, string[]][] {
     return [...sections.entries()];
 }
 
-export default function UserShow({ user, assets, groups = [], effective = {}, canManage = false }: Props) {
+export default function UserShow({ user, assets, groups = [], effective = {}, canManage = false, licenses = null }: Props) {
     const can = useCan();
     const sections = bySection(effective);
     return (
@@ -79,6 +82,8 @@ export default function UserShow({ user, assets, groups = [], effective = {}, ca
                     </CardContent>
                 </Card>
             </div>
+
+            {licenses && <div className="mb-4"><HeldLicenses licenses={licenses} empty="No license seats are checked out to this user." /></div>}
 
             <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-base">Assigned assets ({user.assets_count})</CardTitle></CardHeader>

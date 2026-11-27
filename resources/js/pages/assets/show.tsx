@@ -12,6 +12,7 @@ import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-histo
 import { useCan } from '@/hooks/use-can';
 import { CheckoutDialogs, type CheckoutOptions } from '@/components/assets/checkout-dialogs';
 import { AuditDialog, type AuditOptions } from '@/components/assets/audit-dialog';
+import { HeldLicenses, type HeldLicense } from '@/components/licenses/held-licenses';
 
 interface AssetDetail {
     id: string; name: string | null; asset_tag: string | null; status: AssetStatus | null;
@@ -43,6 +44,8 @@ interface Props {
     checkoutBlocker: string | null;
     checkoutOptions?: CheckoutOptions;
     auditOptions?: AuditOptions | null;
+    /** License seats on this asset; null without licenses.view. */
+    licenses?: HeldLicense[] | null;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -54,7 +57,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents = [], history, customFields = [], checkoutBlocker, checkoutOptions, auditOptions }: Props) {
+export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents = [], history, customFields = [], checkoutBlocker, checkoutOptions, auditOptions, licenses }: Props) {
     const can = useCan();
     const canCheckout = asset.assignee !== null ? can('assets.checkin') : can('assets.checkout');
     const showIncidents = can('incidents.view');
@@ -79,8 +82,15 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="attachments">Attachments</TabsTrigger>
                     {showIncidents && <TabsTrigger value="incidents">Incidents ({asset.incidentsCount ?? incidents.length})</TabsTrigger>}
+                    {licenses && <TabsTrigger value="licenses">Licenses ({licenses.length})</TabsTrigger>}
                     <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
+
+                {licenses && (
+                    <TabsContent value="licenses" className="mt-4">
+                        <HeldLicenses licenses={licenses} empty="No license seats are checked out to this asset." />
+                    </TabsContent>
+                )}
 
                 <TabsContent value="general" className="mt-4">
                     <Card>

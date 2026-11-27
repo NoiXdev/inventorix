@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\UserRequest;
 use App\Models\Asset;
 use App\Models\Group;
+use App\Models\LicenseSeat;
 use App\Models\User;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\JsonResponse;
@@ -97,6 +98,7 @@ class UserController extends Controller
             ],
             'groups' => $user->groups()->orderBy('name')->pluck('name')->all(),
             'effective' => $user->effectivePermissions(),
+            'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($user) : null,
             // Edit / delete are only offered when the policy would allow them.
             'canManage' => $request->user()->can('manage', $user),
             'assets' => $user->assets->map(fn (Asset $a) => [

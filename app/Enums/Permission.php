@@ -27,6 +27,13 @@ enum Permission: string
     case INCIDENTS_DELETE = 'incidents.delete';
     case HANDOVERS_VIEW = 'handovers.view';
     case HANDOVERS_CREATE = 'handovers.create';
+    case LICENSES_VIEW = 'licenses.view';
+    case LICENSES_CREATE = 'licenses.create';
+    case LICENSES_EDIT = 'licenses.edit';
+    case LICENSES_DELETE = 'licenses.delete';
+    case LICENSES_CHECKOUT = 'licenses.checkout';
+    case LICENSES_CHECKIN = 'licenses.checkin';
+    case LICENSES_KEYS = 'licenses.keys';
     case ACCESSORIES_VIEW = 'accessories.view';
     case ACCESSORIES_CREATE = 'accessories.create';
     case ACCESSORIES_EDIT = 'accessories.edit';
@@ -87,6 +94,9 @@ enum Permission: string
             self::ASSETS_CHECKOUT => 'Check out',
             self::ASSETS_CHECKIN => 'Check in',
             self::ASSETS_AUDIT => 'Audit',
+            self::LICENSES_CHECKOUT => 'Check out',
+            self::LICENSES_CHECKIN => 'Check in',
+            self::LICENSES_KEYS => 'View product keys',
             self::ASSETS_FILES => 'Manage files',
             default => ucfirst(explode('.', $this->value)[1]),
         };
@@ -106,6 +116,7 @@ enum Permission: string
             'assets' => 'Assets',
             'incidents' => 'Incidents',
             'handovers' => 'Handovers',
+            'licenses' => 'Licenses',
             'accessories' => 'Accessories',
             'models' => 'Asset models',
             'categories' => 'Categories',
