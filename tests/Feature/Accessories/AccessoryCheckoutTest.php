@@ -171,4 +171,54 @@ class AccessoryCheckoutTest extends TestCase
         Mail::assertSent(AlertsDigest::class, fn (AlertsDigest $m) => $m->licenseSections['accessory_low']->pluck('id')->all() === [$low->id]
             && str_contains($m->render(), 'Mice'));
     }
+
+    public function test_deleting_a_location_checks_its_accessories_in(): void
+    {
+        $accessory = Accessory::factory()->create(['qty' => 2]);
+        $location = Location::factory()->create();
+        $this->service()->checkOut($accessory, $location, 2);
+
+        $this->actingAs(User::factory()->withPermissions(['admin' => 1])->create())
+            ->delete("/app/locations/{$location->id}")->assertRedirect('/app/locations');
+
+        $this->assertSame(2, $accessory->refresh()->remaining());
+        $this->assertSame('Location deleted', Activity::query()->where('subject_id', $accessory->id)->where('event', 'checked_in')->first()->getProperty('note'));
+    }
+
+    public function test_route_edge_cases(): void
+    {
+        $accessory = Accessory::factory()->create(['qty' => 3, 'name' => 'Dock']);
+        $this->service()->checkOut($accessory, User::factory()->create(), 2);
+
+        // Exactly what is checked out is fine.
+        $this->actingAs($this->actor())->put("/app/accessories/{$accessory->id}", ['name' => 'Dock', 'qty' => 2])
+            ->assertSessionHasNoErrors();
+        $this->assertSame(0, $accessory->refresh()->remaining());
+
+        $gone = Location::factory()->create();
+        $gone->delete();
+        $more = Accessory::factory()->create(['qty' => 3]);
+        $this->actingAs($this->actor())->post("/app/accessories/{$more->id}/checkout", [
+            'assignee_type' => 'location', 'assignee_id' => $gone->id, 'qty' => 1,
+        ])->assertSessionHasErrors('assignee_id');
+
+        $more->update(['archived' => true]);
+        $this->actingAs($this->actor())->post("/app/accessories/{$more->id}/checkout", [
+            'assignee_type' => 'user', 'assignee_id' => User::factory()->create()->id, 'qty' => 1,
+        ])->assertSessionHasErrors(['qty' => 'An archived accessory cannot be checked out.']);
+    }
+
+    public function test_the_history_shows_field_changes(): void
+    {
+        $accessory = Accessory::factory()->create(['qty' => 3, 'name' => 'Dock']);
+        $room = Location::factory()->create(['name' => 'Lager']);
+
+        $this->actingAs($this->actor())->put("/app/accessories/{$accessory->id}", ['name' => 'Dock', 'qty' => 5, 'location_id' => $room->id])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->actor())->get("/app/accessories/{$accessory->id}")
+            ->assertInertia(fn (Assert $p) => $p->where('history.0.event', 'updated')
+                ->where('history.0.changes', fn ($changes) => collect($changes)->contains(fn ($c) => $c['field'] === 'qty' && $c['old'] === '3' && $c['new'] === '5')
+                    && collect($changes)->contains(fn ($c) => $c['field'] === 'location_id' && $c['new'] === 'Lager')));
+    }
 }

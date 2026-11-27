@@ -21,9 +21,14 @@ class AccessoryHistory
 
     private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in'];
 
+    /** @var array<string, array<string, ?string>> field => id => name, per for() call */
+    private static array $names = [];
+
     /** @return list<array<string, mixed>> */
     public static function for(Accessory $accessory): array
     {
+        self::$names = [];
+
         return Activity::query()
             ->where('subject_type', $accessory->getMorphClass())
             ->where('subject_id', $accessory->id)
@@ -65,12 +70,16 @@ class AccessoryHistory
             return $value ? 'Yes' : 'No';
         }
 
-        return match ($field) {
-            'category_id' => Category::withTrashed()->find($value)?->name ?? (string) $value,
-            'manufacturer_id' => Manufacturer::withTrashed()->find($value)?->name ?? (string) $value,
-            'default_supplier_id' => Supplier::withTrashed()->find($value)?->name ?? (string) $value,
-            'location_id' => Location::paths(withTrashed: true)->get($value) ?? (string) $value,
-            default => is_scalar($value) ? (string) $value : json_encode($value),
-        };
+        if (in_array($field, ['category_id', 'manufacturer_id', 'default_supplier_id', 'location_id'], true)) {
+            // Each linked name is looked up once per page, not once per entry.
+            return self::$names[$field][$value] ??= match ($field) {
+                'category_id' => Category::withTrashed()->find($value)?->name,
+                'manufacturer_id' => Manufacturer::withTrashed()->find($value)?->name,
+                'default_supplier_id' => Supplier::withTrashed()->find($value)?->name,
+                'location_id' => (self::$names['_paths'] ??= Location::paths(withTrashed: true)->all())[$value] ?? null,
+            } ?? (string) $value;
+        }
+
+        return is_scalar($value) ? (string) $value : json_encode($value);
     }
 }

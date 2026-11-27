@@ -41,7 +41,9 @@ class AccessoryRequest extends FormRequest
 
     public function messages(): array
     {
-        return ['qty.min' => 'The quantity cannot be lower than the :min units that are checked out.'];
+        return $this->checkedOut() > 0
+            ? ['qty.min' => 'The quantity cannot be lower than the :min units that are checked out.']
+            : [];
     }
 
     private function checkedOut(): int

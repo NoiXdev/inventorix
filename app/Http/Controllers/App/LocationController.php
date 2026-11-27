@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\App\LocationRequest;
 use App\Models\Location;
 use App\Models\User;
+use App\Services\AccessoryService;
 use App\Support\Countries;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -105,11 +107,16 @@ class LocationController extends Controller
         return to_route('app.locations.index')->with('success', 'Location updated.');
     }
 
-    public function destroy(Location $location): RedirectResponse
+    public function destroy(Location $location, AccessoryService $accessories): RedirectResponse
     {
-        // Soft delete: assets and sub-locations keep pointing here, so a
-        // restore puts everything back. The image is kept for the same reason.
-        $location->delete();
+        DB::transaction(function () use ($location, $accessories): void {
+            // Accessories checked out to the location come back first (with a
+            // history entry each), as for users and assets.
+            $accessories->checkInAllFor($location, 'Location deleted');
+            // Soft delete: assets and sub-locations keep pointing here, so a
+            // restore puts everything back. The image is kept for the same reason.
+            $location->delete();
+        });
 
         return to_route('app.locations.index')->with('success', 'Location deleted.');
     }

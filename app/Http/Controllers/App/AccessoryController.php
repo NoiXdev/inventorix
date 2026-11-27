@@ -17,7 +17,9 @@ use App\Support\Table\TableQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -97,7 +99,16 @@ class AccessoryController extends Controller
 
     public function update(AccessoryRequest $request, Accessory $accessory): RedirectResponse
     {
-        $accessory->update($this->attributes($request));
+        DB::transaction(function () use ($request, $accessory): void {
+            // Recount under the lock check-outs take: one may have come in
+            // since the request was validated.
+            Accessory::query()->whereKey($accessory->id)->lockForUpdate()->first();
+            $out = $accessory->checkouts()->count();
+            if ((int) $request->validated('qty') < $out) {
+                throw ValidationException::withMessages(['qty' => "The quantity cannot be lower than the {$out} units that are checked out."]);
+            }
+            $accessory->update($this->attributes($request));
+        });
 
         $file = $request->file('image');
         $remove = $request->boolean('remove_image');
@@ -150,13 +161,19 @@ class AccessoryController extends Controller
 
     public function destroy(Accessory $accessory): RedirectResponse
     {
-        if ($accessory->checkouts()->exists()) {
+        $deleted = DB::transaction(function () use ($accessory): bool {
+            Accessory::query()->whereKey($accessory->id)->lockForUpdate()->first();
+            if ($accessory->checkouts()->exists()) {
+                return false;
+            }
+
+            // The image is left in place on purpose: accessories are soft-deleted
+            // and can be restored, so the file must outlive the row.
+            return (bool) $accessory->delete();
+        });
+        if (! $deleted) {
             return back()->with('error', 'Check every unit in before deleting the accessory.');
         }
-
-        // The image is left in place on purpose: accessories are soft-deleted
-        // and can be restored, so the file must outlive the row.
-        $accessory->delete();
 
         return to_route('app.accessories.index')->with('success', 'Accessory deleted.');
     }
