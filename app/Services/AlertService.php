@@ -54,9 +54,9 @@ class AlertService
      * Licenses that expire within the warning window or have expired (not
      * yet terminated), and licenses with fewer free seats than their minimum.
      *
-     * Also accessories with too few units left.
+     * Also accessories and consumables with too few units left.
      *
-     * @return array<string, Collection<int, License|Accessory>> 'license_expiring' / 'license_low' / 'accessory_low', non-empty only
+     * @return array<string, Collection<int, License|Accessory|Consumable>> 'license_expiring' / 'license_low' / 'accessory_low' / 'consumable_low', non-empty only
      */
     public function licenseSections(): array
     {

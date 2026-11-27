@@ -63,10 +63,16 @@ class Consumable extends Model
         return $this->hasMany(ConsumableAssignment::class);
     }
 
-    /** Units handed out; uses a loaded `handed_out` sum when there is one. */
+    /**
+     * Units handed out. Uses a loaded `handed_out` sum when there is one
+     * (withSum('assignments as handed_out', 'qty'), NULL when nothing was
+     * handed out), else sums.
+     */
     public function handedOut(): int
     {
-        return (int) ($this->handed_out ?? $this->assignments()->sum('qty'));
+        return array_key_exists('handed_out', $this->getAttributes())
+            ? (int) $this->handed_out
+            : (int) $this->assignments()->sum('qty');
     }
 
     public function remaining(): int

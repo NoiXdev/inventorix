@@ -9,11 +9,13 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\Attachment;
 use App\Models\Category;
+use App\Models\Consumable;
 use App\Models\CustomField;
 use App\Models\CustomFieldset;
 use App\Models\Depreciation;
 use App\Models\Handover;
 use App\Models\Incident;
+use App\Models\License;
 use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\StatusLabel;
@@ -62,6 +64,17 @@ class PermissionEnforcementTest extends TestCase
             'custom-fieldsets.edit' => ['get', fn () => '/app/custom-fieldsets/'.CustomFieldset::factory()->create()->id.'/edit', ['customfields.edit']],
             'accessories.index' => ['get', fn () => '/app/accessories', ['accessories.view']],
             'accessories.update' => ['put', fn () => '/app/accessories/'.Accessory::factory()->create()->id, ['accessories.edit']],
+            'accessories.show' => ['get', fn () => '/app/accessories/'.Accessory::factory()->create()->id, ['accessories.view']],
+            'accessories.checkout' => ['post', fn () => '/app/accessories/'.Accessory::factory()->create()->id.'/checkout', ['accessories.checkout']],
+            'licenses.index' => ['get', fn () => '/app/licenses', ['licenses.view']],
+            'licenses.create' => ['get', fn () => '/app/licenses/create', ['licenses.create']],
+            'licenses.destroy' => ['delete', fn () => '/app/licenses/'.License::factory()->create()->id, ['licenses.delete']],
+            'licenses.checkout' => ['post', fn () => '/app/licenses/'.License::factory()->create()->id.'/checkout', ['licenses.checkout']],
+            'consumables.index' => ['get', fn () => '/app/consumables', ['consumables.view']],
+            'consumables.store' => ['post', fn () => '/app/consumables', ['consumables.create']],
+            'consumables.update' => ['put', fn () => '/app/consumables/'.Consumable::factory()->create()->id, ['consumables.edit']],
+            'consumables.destroy' => ['delete', fn () => '/app/consumables/'.Consumable::factory()->create()->id, ['consumables.delete']],
+            'consumables.checkout' => ['post', fn () => '/app/consumables/'.Consumable::factory()->create()->id.'/checkout', ['consumables.checkout']],
             'categories.destroy' => ['delete', fn () => '/app/categories/'.Category::factory()->create()->id, ['categories.delete']],
             'manufacturers.edit' => ['get', fn () => '/app/manufacturers/'.Manufacturer::factory()->create()->id.'/edit', ['manufacturers.edit']],
 

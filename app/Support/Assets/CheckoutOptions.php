@@ -35,6 +35,13 @@ final class CheckoutOptions
         ];
     }
 
+    /** @return list<array{value: string, label: string}> every user, by name */
+    public static function users(): array
+    {
+        return User::query()->orderBy('name')->get()
+            ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all();
+    }
+
     /**
      * Who or what an asset can be checked out to.
      *
@@ -44,8 +51,7 @@ final class CheckoutOptions
     public static function assignees(?Asset $asset, array $locations = []): array
     {
         return [
-            'user' => User::query()->orderBy('name')->get()
-                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
+            'user' => self::users(),
             'location' => $locations ?: Location::options(),
             // Any other live asset; the service refuses an asset assigned to this one.
             'asset' => Asset::query()->when($asset, fn ($q) => $q->whereKeyNot($asset->id))->get()

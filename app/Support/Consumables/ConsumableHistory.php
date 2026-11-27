@@ -9,7 +9,7 @@ use App\Models\Manufacturer;
 use App\Models\Supplier;
 use Spatie\Activitylog\Models\Activity;
 
-/** The history of an consumable: changes and what was handed out, newest first. */
+/** The history of a consumable: changes and what was handed out, newest first. */
 class ConsumableHistory
 {
     private const LABELS = [
@@ -20,7 +20,7 @@ class ConsumableHistory
         'requestable' => 'Requestable', 'archived' => 'Archived', 'notes' => 'Notes',
     ];
 
-    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in'];
+    private const EVENT_LABELS = ['checked_out' => 'Checked out'];
 
     /** @var array<string, array<string, ?string>> field => id => name, per for() call */
     private static array $names = [];

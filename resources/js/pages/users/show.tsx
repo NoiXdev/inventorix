@@ -90,7 +90,7 @@ export default function UserShow({ user, assets, groups = [], effective = {}, ca
             </div>
 
             {(licenses || accessories || consumables) && (
-                <div className="mb-4 grid gap-4 md:grid-cols-3">
+                <div className={`mb-4 grid gap-4 ${['', 'md:grid-cols-1', 'md:grid-cols-2', 'md:grid-cols-3'][[licenses, accessories, consumables].filter(Boolean).length]}`}>
                     {licenses && <HeldLicenses licenses={licenses} empty="No license seats are checked out to this user." />}
                     {accessories && <HeldAccessories accessories={accessories} empty="No accessories are checked out to this user." />}
                     {consumables && <HandedConsumables consumables={consumables} />}

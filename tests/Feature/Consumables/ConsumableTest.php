@@ -11,7 +11,9 @@ use App\Models\User;
 use App\Services\ConsumableService;
 use App\Settings\AlertSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
@@ -150,5 +152,58 @@ class ConsumableTest extends TestCase
 
         Mail::assertSent(AlertsDigest::class, fn (AlertsDigest $m) => $m->licenseSections['consumable_low']->pluck('id')->all() === [$low->id]
             && str_contains($m->render(), 'Toner'));
+    }
+
+    public function test_deleting_a_consumable_keeps_what_was_handed_out(): void
+    {
+        $consumable = Consumable::factory()->create(['qty' => 3, 'name' => 'Old toner']);
+        $user = User::factory()->create();
+        $this->service()->checkOut($consumable, $user, 2);
+
+        $this->actingAs($this->actor())->delete("/app/consumables/{$consumable->id}")->assertRedirect('/app/consumables');
+
+        $this->assertSoftDeleted($consumable);
+        $this->actingAs(User::factory()->withPermissions(['users.view' => 1, 'consumables.view' => 1])->create())
+            ->get("/app/users/{$user->id}")
+            ->assertInertia(fn (Assert $p) => $p->where('consumables.0.name', 'Old toner')->where('consumables.0.deleted', true));
+    }
+
+    public function test_route_refusals(): void
+    {
+        $consumable = Consumable::factory()->create(['qty' => 3, 'archived' => true]);
+
+        $this->actingAs($this->actor())->post("/app/consumables/{$consumable->id}/checkout", ['qty' => 1])
+            ->assertSessionHasErrors('user_id');
+        $this->actingAs($this->actor())->post("/app/consumables/{$consumable->id}/checkout", ['user_id' => User::factory()->create()->id, 'qty' => 1])
+            ->assertSessionHasErrors(['qty' => 'An archived consumable cannot be checked out.']);
+    }
+
+    public function test_image_upload_and_remove(): void
+    {
+        Storage::fake();
+        $this->actingAs($this->actor())->post('/app/consumables', [
+            'name' => 'Cable', 'qty' => 1, 'requestable' => '0', 'archived' => '0',
+            'image' => UploadedFile::fake()->image('cable.png'),
+        ])->assertSessionHasNoErrors();
+        $consumable = Consumable::query()->sole();
+        $this->assertStringStartsWith('consumables/', $consumable->image);
+        Storage::assertExists($consumable->image);
+        $this->actingAs($this->actor())->get("/app/consumables/{$consumable->id}/image")->assertOk();
+
+        $path = $consumable->image;
+        $this->actingAs($this->actor())->post("/app/consumables/{$consumable->id}", [
+            '_method' => 'put', 'name' => 'Cable', 'qty' => 1, 'requestable' => '0', 'archived' => '0', 'remove_image' => '1',
+        ])->assertSessionHasNoErrors();
+        $this->assertNull($consumable->refresh()->image);
+        Storage::assertMissing($path);
+    }
+
+    public function test_the_list_does_not_query_per_row(): void
+    {
+        Consumable::factory()->count(5)->create();
+        \DB::enableQueryLog();
+        $this->actingAs($this->actor())->get('/app/consumables')->assertOk();
+        $sums = collect(\DB::getQueryLog())->filter(fn ($q) => str_contains($q['query'], 'sum("qty")') && ! str_contains($q['query'], 'handed_out'));
+        $this->assertCount(0, $sums);
     }
 }

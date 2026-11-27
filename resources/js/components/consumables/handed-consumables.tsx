@@ -7,6 +7,7 @@ export interface HandedConsumable {
     name: string;
     qty: number;
     checked_out_at: string | null;
+    deleted?: boolean;
 }
 
 /** What a user was handed, newest first. */
@@ -22,7 +23,9 @@ export function HandedConsumables({ consumables }: { consumables: HandedConsumab
                         {consumables.map((c) => (
                             <li key={c.id} className="flex items-center justify-between py-2">
                                 <span>
-                                    <Link href={`/app/consumables/${c.consumable_id}`} className="font-medium hover:underline">{c.name}</Link>
+                                    {c.deleted
+                                        ? <span className="font-medium">{c.name} <span className="text-muted-foreground">(deleted)</span></span>
+                                        : <Link href={`/app/consumables/${c.consumable_id}`} className="font-medium hover:underline">{c.name}</Link>}
                                     {c.qty > 1 && <span className="text-muted-foreground"> ×{c.qty}</span>}
                                 </span>
                                 <span className="text-xs text-muted-foreground">{c.checked_out_at ?? ''}</span>

@@ -153,7 +153,7 @@ class ConsumableController extends Controller
                 'note' => $a->note,
             ])->all(),
             'history' => ConsumableHistory::for($consumable),
-            'checkoutOptions' => Inertia::optional(fn () => $canCheckout ? ['user' => CheckoutOptions::assignees(null, [['value' => '', 'label' => '']])['user']] : null),
+            'checkoutOptions' => Inertia::optional(fn () => $canCheckout ? ['user' => CheckoutOptions::users()] : null),
         ]);
     }
 

@@ -32,7 +32,7 @@ class ConsumableAssignment extends Model
     /**
      * What a user was handed, newest first.
      *
-     * @return list<array{id: string, consumable_id: string, name: string, qty: int, checked_out_at: ?string}>
+     * @return list<array{id: string, consumable_id: string, name: string, qty: int, checked_out_at: ?string, deleted: bool}>
      */
     public static function handedTo(User $user): array
     {
@@ -45,6 +45,8 @@ class ConsumableAssignment extends Model
                 'name' => $a->consumable->name,
                 'qty' => $a->qty,
                 'checked_out_at' => $a->checked_out_at?->format('Y-m-d'),
+                // A deleted consumable has no page to link to.
+                'deleted' => $a->consumable->trashed(),
             ])->all();
     }
 }
