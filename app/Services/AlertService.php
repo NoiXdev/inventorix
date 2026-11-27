@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssetDue;
 use App\Mail\AlertsDigest;
 use App\Mail\CheckinReminder as CheckinReminderMail;
+use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\CheckinReminder;
 use App\Models\License;
@@ -52,7 +53,9 @@ class AlertService
      * Licenses that expire within the warning window or have expired (not
      * yet terminated), and licenses with fewer free seats than their minimum.
      *
-     * @return array<string, Collection<int, License>> 'license_expiring' / 'license_low' => licenses, non-empty only
+     * Also accessories with too few units left.
+     *
+     * @return array<string, Collection<int, License|Accessory>> 'license_expiring' / 'license_low' / 'accessory_low', non-empty only
      */
     public function licenseSections(): array
     {
@@ -69,7 +72,17 @@ class AlertService
             ->filter(fn (License $l) => $l->isLow((int) $l->free_seats_count))
             ->values();
 
-        return array_filter(['license_expiring' => $expiring, 'license_low' => $low], fn (Collection $c) => $c->isNotEmpty());
+        // Accessories whose remaining units are at or below their minimum (Snipe-IT's inventory alert).
+        $accessoriesLow = Accessory::query()->whereNotNull('min_amt')->where('archived', false)
+            ->withCount('checkouts')->orderBy('name')->get()
+            ->filter(fn (Accessory $a) => $a->isLowStock())
+            ->values();
+
+        return array_filter([
+            'license_expiring' => $expiring,
+            'license_low' => $low,
+            'accessory_low' => $accessoriesLow,
+        ], fn (Collection $c) => $c->isNotEmpty());
     }
 
     /** Send the overview to the configured recipients. @return int entries listed (0: nothing sent) */

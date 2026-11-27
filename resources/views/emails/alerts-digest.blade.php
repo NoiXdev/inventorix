@@ -16,6 +16,18 @@
 @foreach ($licenseSections as $key => $licenses)
 ## {{ trans('alerts.digest.section.'.$key) }}
 
+@if ($key === 'accessory_low')
+<x-mail::table>
+| {{ trans('alerts.digest.col.accessory') }} | {{ trans('alerts.digest.col.remaining') }} |
+| :--- | :--- |
+@foreach ($licenses as $accessory)
+| {{ str_replace('|', '\\|', (string) $accessory->name) }} | {{ $accessory->remaining() }} / {{ $accessory->qty }} (min. {{ $accessory->min_amt }}) |
+@endforeach
+</x-mail::table>
+
+@continue
+@endif
+
 <x-mail::table>
 | {{ trans('alerts.digest.col.license') }} | {{ trans('alerts.digest.col.seats') }} | {{ trans('alerts.digest.col.expires') }} |
 | :--- | :--- | :--- |

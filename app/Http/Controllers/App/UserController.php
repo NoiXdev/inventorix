@@ -7,10 +7,12 @@ namespace App\Http\Controllers\App;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\UserRequest;
+use App\Models\AccessoryCheckout;
 use App\Models\Asset;
 use App\Models\Group;
 use App\Models\LicenseSeat;
 use App\Models\User;
+use App\Services\AccessoryService;
 use App\Services\LicenseService;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\JsonResponse;
@@ -100,6 +102,7 @@ class UserController extends Controller
             'groups' => $user->groups()->orderBy('name')->pluck('name')->all(),
             'effective' => $user->effectivePermissions(),
             'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($user) : null,
+            'accessories' => $request->user()->can('accessories.view') ? AccessoryCheckout::heldBy($user) : null,
             // Edit / delete are only offered when the policy would allow them.
             'canManage' => $request->user()->can('manage', $user),
             'assets' => $user->assets->map(fn (Asset $a) => [
@@ -172,8 +175,9 @@ class UserController extends Controller
         }
 
         DB::transaction(function () use ($user): void {
-            // License seats come back first, with a history entry each.
+            // License seats and accessories come back first, with a history entry each.
             app(LicenseService::class)->checkInAllFor($user, 'User deleted');
+            app(AccessoryService::class)->checkInAllFor($user, 'User deleted');
             $user->delete();
         });
 

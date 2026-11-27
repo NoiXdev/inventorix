@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\App\AccessoryCheckoutController;
 use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
 use App\Http\Controllers\App\AssetAuditController;
@@ -90,7 +91,9 @@ Route::prefix('app')->name('app.')->group(function () {
         $guarded('licenses', LicenseController::class, 'licenses');
         Route::post('licenses/{license}/checkout', [LicenseSeatController::class, 'checkout'])->middleware('can:licenses.checkout')->name('licenses.checkout');
         Route::post('license-seats/{seat}/checkin', [LicenseSeatController::class, 'checkin'])->middleware('can:licenses.checkin')->name('license-seats.checkin');
-        $guarded('accessories', AccessoryController::class, 'accessories', ['show']);
+        $guarded('accessories', AccessoryController::class, 'accessories');
+        Route::post('accessories/{accessory}/checkout', [AccessoryCheckoutController::class, 'checkout'])->middleware('can:accessories.checkout')->name('accessories.checkout');
+        Route::post('accessory-checkouts/{checkout}/checkin', [AccessoryCheckoutController::class, 'checkin'])->middleware('can:accessories.checkin')->name('accessory-checkouts.checkin');
         Route::get('assets/export', [AssetExportController::class, 'index'])->middleware('can:assets.view')->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->middleware(['can:import', 'can:assets.create'])->name('assets.import');
         Route::get('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCreate'])->middleware('can:assets.checkout')->name('assets.bulk-checkout.create');

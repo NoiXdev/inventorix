@@ -38,6 +38,8 @@ enum Permission: string
     case ACCESSORIES_CREATE = 'accessories.create';
     case ACCESSORIES_EDIT = 'accessories.edit';
     case ACCESSORIES_DELETE = 'accessories.delete';
+    case ACCESSORIES_CHECKOUT = 'accessories.checkout';
+    case ACCESSORIES_CHECKIN = 'accessories.checkin';
     case MODELS_VIEW = 'models.view';
     case MODELS_CREATE = 'models.create';
     case MODELS_EDIT = 'models.edit';
@@ -97,6 +99,8 @@ enum Permission: string
             self::LICENSES_CHECKOUT => 'Check out',
             self::LICENSES_CHECKIN => 'Check in',
             self::LICENSES_KEYS => 'View product keys',
+            self::ACCESSORIES_CHECKOUT => 'Check out',
+            self::ACCESSORIES_CHECKIN => 'Check in',
             self::ASSETS_FILES => 'Manage files',
             default => ucfirst(explode('.', $this->value)[1]),
         };

@@ -6,10 +6,13 @@ use App\Enums\CategoryType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\AccessoryRequest;
 use App\Models\Accessory;
+use App\Models\AccessoryCheckout;
 use App\Models\Category;
 use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\Supplier;
+use App\Support\Accessories\AccessoryHistory;
+use App\Support\Assets\CheckoutOptions;
 use App\Support\Table\TableQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +26,7 @@ class AccessoryController extends Controller
 {
     public function index(Request $request): Response
     {
-        $accessories = TableQuery::for(Accessory::query()->with(['category', 'manufacturer', 'location']), $request)
+        $accessories = TableQuery::for(Accessory::query()->with(['category', 'manufacturer', 'location'])->withCount('checkouts'), $request)
             ->searchable(['name', 'model_number'])
             ->sortable(['name', 'model_number', 'qty', 'default_purchase_cost'])
             ->filterable(['category_id', 'manufacturer_id', 'location_id', 'archived'])
@@ -40,6 +43,7 @@ class AccessoryController extends Controller
             'model_number' => $a->model_number,
             'location_name' => $a->location_id ? $paths->get($a->location_id) : null,
             'qty' => $a->qty,
+            'remaining' => $a->remaining(),
             'min_amt' => $a->min_amt,
             'low_stock' => $a->isLowStock(),
             'default_purchase_cost' => $a->default_purchase_cost,
@@ -109,8 +113,47 @@ class AccessoryController extends Controller
         return to_route('app.accessories.index')->with('success', 'Accessory updated.');
     }
 
+    public function show(Request $request, Accessory $accessory): Response
+    {
+        $accessory->load(['category', 'manufacturer', 'location', 'defaultSupplier', 'checkouts.assigned'])->loadCount('checkouts');
+        $canCheckout = $request->user()->can('accessories.checkout');
+
+        return Inertia::render('accessories/show', [
+            'accessory' => [
+                ...$accessory->only(['id', 'name', 'model_number', 'qty', 'min_amt', 'default_purchase_cost', 'requestable', 'archived', 'notes']),
+                'image_url' => $this->imageUrl($accessory),
+                'category_name' => $accessory->category?->name,
+                'manufacturer_name' => $accessory->manufacturer?->name,
+                'location_name' => $accessory->location_id ? Location::paths(withTrashed: true)->get($accessory->location_id) : null,
+                'supplier_name' => $accessory->defaultSupplier?->name,
+                'remaining' => $accessory->remaining(),
+                'low_stock' => $accessory->isLowStock(),
+            ],
+            'checkouts' => $accessory->checkouts->sortBy('checked_out_at')->values()->map(fn (AccessoryCheckout $c) => [
+                'id' => $c->id,
+                'holder' => [
+                    'type' => $c->targetType(),
+                    'name' => $c->holderName(),
+                    'url' => match ($c->targetType()) {
+                        'user' => "/app/users/{$c->assigned_id}",
+                        'asset' => "/app/assets/{$c->assigned_id}",
+                        default => null,
+                    },
+                ],
+                'checked_out_at' => $c->checked_out_at?->format('Y-m-d'),
+                'note' => $c->note,
+            ])->all(),
+            'history' => AccessoryHistory::for($accessory),
+            'checkoutOptions' => Inertia::optional(fn () => $canCheckout ? CheckoutOptions::assignees(null) : null),
+        ]);
+    }
+
     public function destroy(Accessory $accessory): RedirectResponse
     {
+        if ($accessory->checkouts()->exists()) {
+            return back()->with('error', 'Check every unit in before deleting the accessory.');
+        }
+
         // The image is left in place on purpose: accessories are soft-deleted
         // and can be restored, so the file must outlive the row.
         $accessory->delete();

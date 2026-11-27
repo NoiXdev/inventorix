@@ -24,7 +24,8 @@ class AccessoryRequest extends FormRequest
             'model_number' => ['nullable', 'string', 'max:191'],
             'location_id' => $this->related('location_id', 'locations'),
             'default_supplier_id' => $this->related('default_supplier_id', 'suppliers'),
-            'qty' => ['required', 'integer', 'min:0', 'max:4294967295'],
+            // Not below what is checked out right now (as Snipe-IT).
+            'qty' => ['required', 'integer', 'min:'.$this->checkedOut(), 'max:4294967295'],
             'min_amt' => ['nullable', 'integer', 'min:0', 'max:4294967295'],
             'default_purchase_cost' => ['nullable', 'numeric', 'min:0', 'max:999999999999999999.99', 'decimal:0,2'],
             'requestable' => ['boolean'],
@@ -36,6 +37,18 @@ class AccessoryRequest extends FormRequest
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'remove_image' => ['nullable', 'boolean'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['qty.min' => 'The quantity cannot be lower than the :min units that are checked out.'];
+    }
+
+    private function checkedOut(): int
+    {
+        $accessory = $this->route('accessory');
+
+        return $accessory instanceof Accessory ? $accessory->checkouts()->count() : 0;
     }
 
     /**

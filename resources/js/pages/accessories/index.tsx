@@ -5,7 +5,6 @@ import AppLayout from '@/layouts/app-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Can } from '@/components/can';
-import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 import type { AccessoryOptions } from './accessory-form';
@@ -13,7 +12,7 @@ import type { AccessoryOptions } from './accessory-form';
 interface Row {
     id: string; name: string | null; image_url: string | null;
     category_name: string | null; manufacturer_name: string | null; model_number: string | null;
-    location_name: string | null; qty: number; min_amt: number | null; low_stock: boolean;
+    location_name: string | null; qty: number; remaining: number; min_amt: number | null; low_stock: boolean;
     default_purchase_cost: string | null; requestable: boolean; archived: boolean;
 }
 
@@ -39,12 +38,12 @@ const columns: ColumnDef<Row>[] = [
     { accessorKey: 'model_number', header: 'Model no.', cell: ({ row }) => row.original.model_number ?? dash },
     { id: 'location', header: 'Location', cell: ({ row }) => row.original.location_name ?? dash },
     {
-        accessorKey: 'qty', header: 'Qty',
+        accessorKey: 'qty', header: 'Available / qty',
         cell: ({ row }) => (
             <span className={row.original.low_stock ? 'inline-flex items-center gap-1 font-medium text-destructive' : undefined}
                 title={row.original.low_stock ? `At or below the minimum of ${row.original.min_amt}` : undefined}>
                 {row.original.low_stock && <AlertTriangle className="h-4 w-4" aria-label="Low stock" />}
-                {row.original.qty}
+                {row.original.remaining} / {row.original.qty}
             </span>
         ),
     },
@@ -67,7 +66,6 @@ const columns: ColumnDef<Row>[] = [
 const ARCHIVED_OPTIONS = [{ value: '0', label: 'Active' }, { value: '1', label: 'Archived' }];
 
 export default function AccessoriesIndex({ accessories, ...options }: AccessoryOptions & { accessories: { data: Row[]; meta: PaginationMeta } }) {
-    const can = useCan();
     const filters = [
         { key: 'category_id', label: 'Category', options: options.categoryOptions },
         { key: 'manufacturer_id', label: 'Manufacturer', options: options.manufacturerOptions },
@@ -83,7 +81,7 @@ export default function AccessoriesIndex({ accessories, ...options }: AccessoryO
             </div>
             <DataTable columns={columns} rows={accessories.data} pagination={accessories.meta} baseUrl="/app/accessories"
                 sortable={['name', 'model_number', 'qty', 'default_purchase_cost']} filters={filters}
-                rowHref={can('accessories.edit') ? (r) => `/app/accessories/${r.id}/edit` : undefined} />
+                rowHref={(r) => `/app/accessories/${r.id}`} />
         </AppLayout>
     );
 }

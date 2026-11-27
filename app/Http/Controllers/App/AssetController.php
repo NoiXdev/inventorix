@@ -8,6 +8,7 @@ use App\Enums\CategoryType;
 use App\Enums\StatusLabelType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\AssetRequest;
+use App\Models\AccessoryCheckout;
 use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\Attachment;
@@ -19,6 +20,7 @@ use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\StatusLabel;
 use App\Models\Supplier;
+use App\Services\AccessoryService;
 use App\Services\AuditService;
 use App\Services\CheckoutService;
 use App\Services\LicenseService;
@@ -162,6 +164,7 @@ class AssetController extends Controller
             'asset' => $this->detail($asset, $request->user()->can('incidents.view')),
             'history' => AssetHistory::for($asset),
             'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($asset) : null,
+            'accessories' => $request->user()->can('accessories.view') ? AccessoryCheckout::heldBy($asset) : null,
             // Loaded when a check-out or check-in dialog opens.
             // Loaded when a dialog opens; the check-out options list users, so
             // only for those who may check out or in.
@@ -260,11 +263,12 @@ class AssetController extends Controller
         return to_route('app.assets.index')->with('success', 'Asset updated.');
     }
 
-    public function destroy(Asset $asset, LicenseService $licenses): RedirectResponse
+    public function destroy(Asset $asset, LicenseService $licenses, AccessoryService $accessories): RedirectResponse
     {
-        DB::transaction(function () use ($asset, $licenses): void {
-            // License seats on the asset come back first, with a history entry each.
+        DB::transaction(function () use ($asset, $licenses, $accessories): void {
+            // License seats and accessories on the asset come back first, with a history entry each.
             $licenses->checkInAllFor($asset, 'Asset deleted');
+            $accessories->checkInAllFor($asset, 'Asset deleted');
             // Soft delete: the image and attachments stay so the asset can be restored.
             $asset->delete();
         });

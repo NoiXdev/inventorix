@@ -15,8 +15,8 @@ return [
         'outro' => 'Bitte melde dich bei der IT, um die Rückgabe zu vereinbaren.',
     ],
     'digest' => [
-        'subject' => 'Inventorix: :count fällige Rückgaben, Audits und Lizenzen',
-        'greeting' => 'Übersicht fälliger Rückgaben, Audits und Lizenzen',
+        'subject' => 'Inventorix: :count fällige Rückgaben, Audits, Lizenzen und Bestände',
+        'greeting' => 'Übersicht fälliger Rückgaben, Audits, Lizenzen und Bestände',
         'section' => [
             'checkin_overdue' => 'Rückgabe überfällig',
             'checkin_due' => 'Rückgabe bald fällig',
@@ -24,6 +24,7 @@ return [
             'audit_due' => 'Audit bald fällig',
             'license_expiring' => 'Lizenz läuft ab oder ist abgelaufen',
             'license_low' => 'Zu wenige freie Lizenzplätze',
+            'accessory_low' => 'Zubehör: Bestand niedrig',
         ],
         'col' => [
             'asset' => 'Asset',
@@ -34,6 +35,8 @@ return [
             'license' => 'Lizenz',
             'seats' => 'Plätze (frei / gesamt)',
             'expires' => 'Ablauf',
+            'accessory' => 'Zubehör',
+            'remaining' => 'Verfügbar / gesamt',
         ],
         'outro' => 'Diese Nachricht wurde automatisch von Inventorix versendet.',
     ],
