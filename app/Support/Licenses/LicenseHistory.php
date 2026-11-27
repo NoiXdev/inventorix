@@ -21,7 +21,7 @@ class LicenseHistory
         'termination_date' => 'Termination date', 'min_amt' => 'Minimum free seats', 'notes' => 'Notes',
     ];
 
-    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in'];
+    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in', 'accepted' => 'Accepted', 'declined' => 'Declined'];
 
     /** @return list<array<string, mixed>> */
     public static function for(License $license): array

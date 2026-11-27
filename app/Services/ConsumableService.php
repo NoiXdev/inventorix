@@ -59,6 +59,8 @@ class ConsumableService
                 ], fn ($v) => $v !== null))
                 ->log('checked_out');
 
+            app(AcceptanceService::class)->checkedOut($locked, $user, $assignment->id);
+
             return $assignment;
         });
     }

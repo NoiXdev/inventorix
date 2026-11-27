@@ -49,6 +49,7 @@ class AccessoryService
             }
 
             $when = $at ?? now();
+            $first = null;
             for ($i = 0; $i < $qty; $i++) {
                 $checkout = new AccessoryCheckout(['note' => $this->note($note)]);
                 $checkout->accessory_id = $locked->id;
@@ -56,9 +57,13 @@ class AccessoryService
                 $checkout->assigned_id = $target->id;
                 $checkout->checked_out_at = $when;
                 $checkout->save();
+                $first ??= $checkout;
             }
 
             $this->log($locked, 'checked_out', $target, $qty, $note);
+            if ($target instanceof User) {
+                app(AcceptanceService::class)->checkedOut($locked, $target, $first->id);
+            }
 
             return $qty;
         });
@@ -75,6 +80,9 @@ class AccessoryService
             $holder = $locked->assigned;
             $locked->delete();
             $this->log($locked->accessory, 'checked_in', $holder, 1, $note);
+            if ($holder instanceof User) {
+                app(AcceptanceService::class)->checkedIn($locked->accessory, $holder, $locked->id);
+            }
         });
     }
 

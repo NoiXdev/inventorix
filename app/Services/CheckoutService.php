@@ -64,8 +64,10 @@ class CheckoutService
         ?CarbonInterface $checkoutAt = null,
         ?CarbonInterface $expectedCheckin = null,
         ?string $note = null,
+        // false for a signed handover, which is its own acceptance.
+        bool $notify = true,
     ): Asset {
-        return DB::transaction(function () use ($asset, $target, $statusId, $checkoutAt, $expectedCheckin, $note): Asset {
+        return DB::transaction(function () use ($asset, $target, $statusId, $checkoutAt, $expectedCheckin, $note, $notify): Asset {
             // Re-read under a lock: two simultaneous checkouts must not both
             // see the asset as available.
             $locked = Asset::withTrashed()->whereKey($asset->id)->lockForUpdate()->firstOrFail();
@@ -98,6 +100,11 @@ class CheckoutService
 
             $this->saveLogged($locked, 'checked_out', $note);
             $this->moveAssignedAssets($locked);
+
+            if ($notify && $target instanceof User) {
+                app(AcceptanceService::class)->checkedOut($locked, $target);
+                $locked->refresh();
+            }
 
             return $asset->setRawAttributes($locked->getAttributes(), true);
         });
@@ -207,6 +214,7 @@ class CheckoutService
                 $locked->status_id = $statusId;
             }
 
+            $previousUser = $locked->assignee_type === User::class ? User::query()->find($locked->assignee_id) : null;
             $locked->assignTo(null);
             $locked->last_checkin = $checkinAt ?? now();
             $locked->expected_checkin = null;
@@ -216,6 +224,7 @@ class CheckoutService
 
             $this->saveLogged($locked, 'checked_in', $note);
             $this->moveAssignedAssets($locked);
+            app(AcceptanceService::class)->checkedIn($locked, $previousUser);
 
             return $asset->setRawAttributes($locked->getAttributes(), true);
         });

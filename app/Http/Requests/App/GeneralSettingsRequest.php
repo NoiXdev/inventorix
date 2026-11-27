@@ -14,6 +14,9 @@ class GeneralSettingsRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return ['app_name' => ['required', 'string', 'max:255']];
+        return [
+            'app_name' => ['required', 'string', 'max:255'],
+            'default_eula' => ['nullable', 'string', 'max:50000'],
+        ];
     }
 }

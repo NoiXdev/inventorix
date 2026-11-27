@@ -93,7 +93,11 @@ class HandoverService
 
                     // Issuing or lending checks the asset out, a return checks it in.
                     if ($data->type->assignsRecipientAsOwner()) {
-                        $this->checkouts->checkOut($asset, $recipient, statusId: $stateTo);
+                        // The signed handover is the acceptance: no separate request.
+                        $this->checkouts->checkOut($asset, $recipient, statusId: $stateTo, notify: false);
+                        if ($recipient !== null) {
+                            app(AcceptanceService::class)->acceptedByHandover($asset->fresh(), $recipient, $handover->id);
+                        }
                     } else {
                         $this->checkouts->checkIn($asset, statusId: $stateTo);
                     }

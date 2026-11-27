@@ -420,6 +420,7 @@ class AssetController extends Controller
             'image_url' => $this->imageUrl($asset),
             'last_checkout' => $asset->last_checkout?->toDateTimeString(),
             'last_checkin' => $asset->last_checkin?->toDateTimeString(),
+            'accepted' => $asset->accepted,
             'expected_checkin' => $asset->expected_checkin?->format('Y-m-d'),
             'last_audit_date' => $asset->last_audit_date?->format('Y-m-d'),
             'next_audit_date' => $asset->next_audit_date?->format('Y-m-d'),

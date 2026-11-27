@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AcceptanceResponseController;
+use App\Http\Controllers\App\AcceptanceController;
 use App\Http\Controllers\App\AccessoryCheckoutController;
 use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
@@ -142,6 +144,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('handovers', [HandoverController::class, 'store'])->middleware('can:handovers.create')->name('handovers.store');
         Route::get('handovers/{handover}', [HandoverController::class, 'show'])->middleware('can:handovers.view')->name('handovers.show');
         Route::middleware('can:reports.view')->group(function () {
+            Route::get('acceptances', [AcceptanceController::class, 'index'])->name('acceptances.index');
+            Route::post('acceptances/{acceptance}/remind', [AcceptanceController::class, 'remind'])->name('acceptances.remind');
             Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
             Route::get('reports/{report}/pdf', [ReportController::class, 'pdf'])->name('reports.pdf');
             Route::get('reports/{report}/export', [ReportController::class, 'export'])->name('reports.export');
@@ -174,6 +178,12 @@ Route::middleware(ApplyRuntimeSettings::class)->group(function () {
 Route::middleware(['auth', ApplyRuntimeSettings::class, 'can:assets.view'])
     ->get('/attachments/{attachment}/open', [AttachmentController::class, 'show'])
     ->name('attachments.open');
+
+// The acceptance link from the check-out mail: no login, the signature is the access control.
+Route::middleware(['signed', 'throttle:30,1', ApplyRuntimeSettings::class])->group(function () {
+    Route::get('/acceptance/{acceptance}', [AcceptanceResponseController::class, 'show'])->name('acceptances.show');
+    Route::post('/acceptance/{acceptance}', [AcceptanceResponseController::class, 'respond'])->name('acceptances.respond');
+});
 
 Route::middleware(['signed'])
     ->get('/handover-pdf/{handover}', function (Handover $handover) {

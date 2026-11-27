@@ -60,6 +60,8 @@ class AssetHistory
         'checked_out' => 'Checked out',
         'checked_in' => 'Checked in',
         'audited' => 'Audited',
+        'accepted' => 'Accepted',
+        'declined' => 'Declined',
     ];
 
     /** @return array<int, array<string, mixed>> */
@@ -72,7 +74,7 @@ class AssetHistory
         return Activity::query()
             ->where('subject_type', $asset->getMorphClass())
             ->where('subject_id', $asset->id)
-            ->whereIn('event', ['created', 'updated', 'deleted', 'checked_out', 'checked_in', 'audited'])
+            ->whereIn('event', ['created', 'updated', 'deleted', 'checked_out', 'checked_in', 'audited', 'accepted', 'declined'])
             ->with('causer')
             ->latest()
             ->latest('id')

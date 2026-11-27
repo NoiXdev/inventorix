@@ -8,6 +8,7 @@ use App\Mail\CheckinReminder as CheckinReminderMail;
 use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\CheckinReminder;
+use App\Models\CheckoutAcceptance;
 use App\Models\Consumable;
 use App\Models\License;
 use App\Models\User;
@@ -84,7 +85,13 @@ class AlertService
             ->filter(fn (Consumable $c) => $c->isLowStock())
             ->values();
 
+        // Acceptances still open three days after the link went out.
+        $acceptancesPending = CheckoutAcceptance::query()->pending()->with('user')
+            ->where(fn ($q) => $q->whereNull('sent_at')->orWhere('sent_at', '<=', now()->subDays(3)))
+            ->oldest()->get();
+
         return array_filter([
+            'acceptance_pending' => $acceptancesPending,
             'license_expiring' => $expiring,
             'license_low' => $low,
             'accessory_low' => $accessoriesLow,

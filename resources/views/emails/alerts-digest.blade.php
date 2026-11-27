@@ -16,6 +16,17 @@
 @foreach ($licenseSections as $key => $licenses)
 ## {{ trans('alerts.digest.section.'.$key) }}
 
+@if ($key === 'acceptance_pending')
+<x-mail::table>
+| {{ trans('alerts.digest.col.item') }} | {{ trans('alerts.digest.col.assignee') }} | {{ trans('alerts.digest.col.sent') }} |
+| :--- | :--- | :--- |
+@foreach ($licenses as $acceptance)
+| {{ str_replace('|', '\\|', $acceptance->item_name) }} | {{ str_replace('|', '\\|', $acceptance->user?->name ?? '—') }} | {{ ($acceptance->reminded_at ?? $acceptance->sent_at)?->format('d.m.Y') ?? '—' }} |
+@endforeach
+</x-mail::table>
+
+@continue
+@endif
 @if ($key === 'accessory_low' || $key === 'consumable_low')
 <x-mail::table>
 | {{ trans($key === 'accessory_low' ? 'alerts.digest.col.accessory' : 'alerts.digest.col.consumable') }} | {{ trans('alerts.digest.col.remaining') }} |

@@ -62,6 +62,8 @@ return [
         'title' => 'Allgemeine Einstellungen',
         'field' => [
             'app_name' => 'Anwendungsname',
+            'default_eula' => 'Standard-EULA',
+            'default_eula_help' => 'Gilt für Kategorien mit „Standard-EULA verwenden“. Mitarbeiter sehen sie, wenn sie eine Ausgabe annehmen.',
         ],
     ],
     'warranty' => [

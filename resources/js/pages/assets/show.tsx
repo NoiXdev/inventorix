@@ -26,6 +26,8 @@ interface AssetDetail {
     physical: boolean; requestable: boolean; byod: boolean | null; archived: boolean;
     notes: string | null; image_url: string | null;
     last_checkout: string | null; last_checkin: string | null; expected_checkin: string | null;
+    /** pending / accepted / declined when the category requires acceptance. */
+    accepted?: string | null;
     last_audit_date: string | null; next_audit_date: string | null;
     checkout_counter: number; checkin_counter: number; requests_counter: number;
     tags: string[]; incidentsCount?: number; created_at: string | null; updated_at: string | null;
@@ -154,6 +156,13 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                             <Field label="Last checkout">{asset.last_checkout ?? '—'}</Field>
                             <Field label="Last check-in">{asset.last_checkin ?? '—'}</Field>
                             <Field label="Expected check-in">{asset.expected_checkin ?? '—'}</Field>
+                            {asset.accepted && (
+                                <Field label="Acceptance">
+                                    <Badge variant={asset.accepted === 'declined' ? 'destructive' : asset.accepted === 'accepted' ? 'default' : 'secondary'}>
+                                        {asset.accepted === 'accepted' ? 'Accepted' : asset.accepted === 'declined' ? 'Declined' : 'Pending'}
+                                    </Badge>
+                                </Field>
+                            )}
                             <Field label="Checkouts">{asset.checkout_counter}</Field>
                             <Field label="Check-ins">{asset.checkin_counter}</Field>
                             <Field label="Requests">{asset.requests_counter}</Field>

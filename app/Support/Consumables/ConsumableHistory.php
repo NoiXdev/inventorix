@@ -20,7 +20,7 @@ class ConsumableHistory
         'requestable' => 'Requestable', 'archived' => 'Archived', 'notes' => 'Notes',
     ];
 
-    private const EVENT_LABELS = ['checked_out' => 'Checked out'];
+    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'accepted' => 'Accepted', 'declined' => 'Declined'];
 
     /** @var array<string, array<string, ?string>> field => id => name, per for() call */
     private static array $names = [];

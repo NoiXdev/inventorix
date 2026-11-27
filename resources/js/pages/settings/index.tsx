@@ -13,7 +13,7 @@ interface Props {
     t: any;
     options: { mailDrivers: { value: string; label: string }[]; mailSchemes: { value: string; label: string }[] };
     settings: {
-        general: { app_name: string };
+        general: { app_name: string; default_eula?: string };
         mail: Record<string, string | number | null>;
         storage: Record<string, string | boolean | null>;
         warranty: { enabled: boolean; recipients: string[]; lead_days: string[] };

@@ -85,6 +85,9 @@ class LicenseService
             $seat->save();
 
             $this->log($license, 'checked_out', $target instanceof User ? 'User' : 'Asset', $seat->setRelations([])->load('user', 'asset')->holderName(), $note);
+            if ($target instanceof User) {
+                app(AcceptanceService::class)->checkedOut($license, $target, $seat->id);
+            }
 
             return $seat;
         });
@@ -106,6 +109,7 @@ class LicenseService
 
             $holder = $locked->load('user', 'asset')->holderName();
             $kind = $locked->assigned_user_id !== null ? 'User' : 'Asset';
+            $holderUser = $locked->user;
             $license = $locked->license;
 
             $locked->assigned_user_id = null;
@@ -116,6 +120,9 @@ class LicenseService
             $locked->save();
 
             $this->log($license, 'checked_in', $kind, $holder, $note);
+            if ($holderUser !== null) {
+                app(AcceptanceService::class)->checkedIn($license, $holderUser, $locked->id);
+            }
 
             return $seat->setRawAttributes($locked->getAttributes(), true);
         });

@@ -52,7 +52,7 @@ class SettingsController extends Controller
                 ],
             ],
             'settings' => [
-                'general' => ['app_name' => $general->app_name],
+                'general' => ['app_name' => $general->app_name, 'default_eula' => $general->default_eula],
                 'mail' => $this->withoutSecrets([
                     'default_mailer' => $mail->default_mailer,
                     'from_address' => $mail->from_address,
@@ -266,6 +266,7 @@ class SettingsController extends Controller
     {
         $general = app(GeneralSettings::class);
         $general->app_name = $data['app_name'];
+        $general->default_eula = (string) ($data['default_eula'] ?? '');
         $general->save();
         app(ApplySettings::class)();
     }

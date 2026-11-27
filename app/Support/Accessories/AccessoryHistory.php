@@ -19,7 +19,7 @@ class AccessoryHistory
         'requestable' => 'Requestable', 'archived' => 'Archived', 'notes' => 'Notes',
     ];
 
-    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in'];
+    private const EVENT_LABELS = ['checked_out' => 'Checked out', 'checked_in' => 'Checked in', 'accepted' => 'Accepted', 'declined' => 'Declined'];
 
     /** @var array<string, array<string, ?string>> field => id => name, per for() call */
     private static array $names = [];
