@@ -3,6 +3,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, FileDown } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -38,7 +39,7 @@ export default function HandoversIndex({ handovers }: { handovers: { data: Row[]
         <AppLayout title="Handovers" breadcrumbs={[{ label: 'Handovers' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Handovers</h1>
-                <Button asChild><Link href="/app/handovers/create">New handover</Link></Button>
+                <Can permission="handovers.create"><Button asChild><Link href="/app/handovers/create">New handover</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={handovers.data} pagination={handovers.meta} baseUrl="/app/handovers"
                 sortable={['signed_at', 'type', 'recipient_name', 'assets_count']}

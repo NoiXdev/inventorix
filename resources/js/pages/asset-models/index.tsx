@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -37,8 +39,8 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/asset-models/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/asset-models/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="models.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/asset-models/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="models.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/asset-models/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
@@ -47,18 +49,19 @@ const columns: ColumnDef<Row>[] = [
 interface Props { assetModels: { data: Row[]; meta: PaginationMeta }; manufacturerOptions: Option[]; categoryOptions: Option[]; }
 
 export default function AssetModelsIndex({ assetModels, manufacturerOptions, categoryOptions }: Props) {
+    const can = useCan();
     return (
         <AppLayout title="Asset models" breadcrumbs={[{ label: 'Asset models' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Asset models</h1>
-                <Button asChild><Link href="/app/asset-models/create">New asset model</Link></Button>
+                <Can permission="models.create"><Button asChild><Link href="/app/asset-models/create">New asset model</Link></Button></Can>
             </div>
             <DataTable
                 columns={columns}
                 rows={assetModels.data}
                 pagination={assetModels.meta}
                 baseUrl="/app/asset-models"
-                rowHref={(r) => `/app/asset-models/${r.id}/edit`}
+                rowHref={can('models.edit') ? (r) => `/app/asset-models/${r.id}/edit` : undefined}
                 sortable={['asset_models.name', 'asset_models.model_number', 'manufacturer_name', 'category_name', 'assets_count']}
                 filters={[
                     { key: 'manufacturer_id', label: 'Manufacturer', options: manufacturerOptions },

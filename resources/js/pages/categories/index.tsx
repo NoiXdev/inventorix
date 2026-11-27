@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Check, Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -36,23 +38,24 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/categories/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/categories/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="categories.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/categories/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="categories.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/categories/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
 ];
 
 export default function CategoriesIndex({ categories, typeOptions }: { categories: { data: Row[]; meta: PaginationMeta }; typeOptions: Option[] }) {
+    const can = useCan();
     return (
         <AppLayout title="Categories" breadcrumbs={[{ label: 'Categories' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Categories</h1>
-                <Button asChild><Link href="/app/categories/create">New category</Link></Button>
+                <Can permission="categories.create"><Button asChild><Link href="/app/categories/create">New category</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={categories.data} pagination={categories.meta} baseUrl="/app/categories"
                 sortable={['name', 'category_type']} filters={[{ key: 'category_type', label: 'Types', options: typeOptions }]}
-                rowHref={(r) => `/app/categories/${r.id}/edit`} />
+                rowHref={can('categories.edit') ? (r) => `/app/categories/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

@@ -1,11 +1,20 @@
 import { router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
-import { UserForm } from './user-form';
+import { UserForm, type GroupOption } from './user-form';
+import type { CatalogueSection, EffectivePermission, PermissionMap } from '@/components/permissions/permission-matrix';
 
-interface Props { user: { id: string; firstname: string; lastname: string; email: string | null; login_enabled: boolean }; isSelf: boolean }
+interface Props {
+    user: { id: string; firstname: string; lastname: string; email: string | null; login_enabled: boolean; groups: string[]; permissions: PermissionMap };
+    isSelf: boolean;
+    groupOptions: GroupOption[];
+    catalogue: CatalogueSection[];
+    canAssign: boolean;
+    canAssignPrivileged: boolean;
+    effective: Record<string, EffectivePermission>;
+}
 
-export default function EditUser({ user, isSelf }: Props) {
+export default function EditUser({ user, isSelf, groupOptions, catalogue, canAssign, canAssignPrivileged, effective }: Props) {
     return (
         <AppLayout title="Edit user" breadcrumbs={[{ label: 'Users', href: '/app/users' }, { label: user.email ?? 'User' }]}>
             <div className="mb-6 flex items-center justify-between">
@@ -17,7 +26,8 @@ export default function EditUser({ user, isSelf }: Props) {
                     </Button>
                 )}
             </div>
-            <UserForm initial={user} submitUrl={`/app/users/${user.id}`} method="put" isSelf={isSelf} />
+            <UserForm initial={user} submitUrl={`/app/users/${user.id}`} method="put" isSelf={isSelf}
+                groupOptions={groupOptions} catalogue={catalogue} canAssign={canAssign} canAssignPrivileged={canAssignPrivileged} effective={effective} />
         </AppLayout>
     );
 }

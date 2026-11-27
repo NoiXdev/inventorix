@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/layouts/app-layout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
-vi.mock('@inertiajs/react', () => ({ Link: ({ children, href }: any) => <a href={href}>{children}</a>, router: { delete: vi.fn(), get: vi.fn(), visit: vi.fn() } }));
+vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { auth: { user: null, can: { 'users.edit': true, 'users.delete': true, 'users.create': true } } } }), Link: ({ children, href }: any) => <a href={href}>{children}</a>, router: { delete: vi.fn(), get: vi.fn(), visit: vi.fn() } }));
 
 import UsersIndex from '../index';
 

@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -30,28 +32,29 @@ const columns: ColumnDef<Row>[] = [
         size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/manufacturers/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => {
+                <Can permission="manufacturers.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/manufacturers/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="manufacturers.delete"><Button variant="ghost" size="icon" onClick={() => {
                     if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/manufacturers/${row.original.id}`);
-                }}><Trash2 className="h-4 w-4" /></Button>
+                }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
 ];
 
 export default function ManufacturersIndex({ manufacturers }: { manufacturers: { data: Row[]; meta: PaginationMeta } }) {
+    const can = useCan();
     return (
         <AppLayout title="Manufacturers" breadcrumbs={[{ label: 'Manufacturers' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Manufacturers</h1>
-                <Button asChild><Link href="/app/manufacturers/create">New manufacturer</Link></Button>
+                <Can permission="manufacturers.create"><Button asChild><Link href="/app/manufacturers/create">New manufacturer</Link></Button></Can>
             </div>
             <DataTable
                 columns={columns}
                 rows={manufacturers.data}
                 pagination={manufacturers.meta}
                 baseUrl="/app/manufacturers"
-                rowHref={(r) => `/app/manufacturers/${r.id}/edit`}
+                rowHref={can('manufacturers.edit') ? (r) => `/app/manufacturers/${r.id}/edit` : undefined}
                 sortable={['name', 'models_count']}
             />
         </AppLayout>

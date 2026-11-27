@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { TextField } from '@/components/form/text-field';
 import { SelectField } from '@/components/form/select-field';
+import { useCan } from '@/hooks/use-can';
 import { FormError } from '@/components/form/form-error';
 
 export interface AttachmentItem {
@@ -18,6 +19,7 @@ export interface AttachmentItem {
 interface Props { assetId: string; attachments: AttachmentItem[]; categoryOptions: { value: string; label: string }[]; }
 
 export function AssetAttachments({ assetId, attachments, categoryOptions }: Props) {
+    const canManage = useCan()('assets.files');
     const form = useForm<{ files: File[]; title: string; category: string; note: string }>({
         files: [], title: '', category: '', note: '',
     });
@@ -39,7 +41,7 @@ export function AssetAttachments({ assetId, attachments, categoryOptions }: Prop
 
     return (
         <div className="space-y-6">
-            <Card>
+            {canManage && <Card>
                 <CardContent className="py-6">
                     <form onSubmit={submit} className="space-y-4">
                         <div className="space-y-2">
@@ -67,7 +69,7 @@ export function AssetAttachments({ assetId, attachments, categoryOptions }: Prop
                         <Button type="submit" disabled={form.processing || form.data.files.length === 0}>Upload</Button>
                     </form>
                 </CardContent>
-            </Card>
+            </Card>}
 
             {attachments.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No attachments yet.</p>
@@ -82,10 +84,12 @@ export function AssetAttachments({ assetId, attachments, categoryOptions }: Prop
                                     </a>
                                     <div className="mt-1 truncate text-xs text-muted-foreground">{a.title ?? a.original_name}</div>
                                     {a.note && <div className="truncate text-xs text-muted-foreground italic">{a.note}</div>}
-                                    <Button variant="ghost" size="icon" className="absolute right-1 top-1 bg-background/80"
-                                        onClick={() => remove(a.id)} aria-label={`Delete ${a.original_name}`}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {canManage && (
+                                        <Button variant="ghost" size="icon" className="absolute right-1 top-1 bg-background/80"
+                                            onClick={() => remove(a.id)} aria-label={`Delete ${a.original_name}`}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -106,9 +110,11 @@ export function AssetAttachments({ assetId, attachments, categoryOptions }: Prop
                                     <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm hover:underline">
                                         <ExternalLink className="h-4 w-4" /> Open
                                     </a>
-                                    <Button variant="ghost" size="icon" onClick={() => remove(a.id)} aria-label={`Delete ${a.original_name}`}>
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                    {canManage && (
+                                        <Button variant="ghost" size="icon" onClick={() => remove(a.id)} aria-label={`Delete ${a.original_name}`}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             ))}
                         </div>

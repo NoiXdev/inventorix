@@ -17,12 +17,14 @@ interface Doc { id: string; title: string; category_label: string | null; attach
 interface OpenIncident { id: number; title: string; model: string | null; serial: string | null; open_date: string | null; days_open: number | null; asset_url: string | null; }
 interface Warranty { id: string; assignee: string | null; model: string | null; serial: string | null; warranty_end: string | null; days_left: number | null; asset_url: string; }
 
+// Each group of widgets is only sent when the user may see it: the asset
+// widgets need assets.view, the incidents panel needs incidents.view.
 interface Props {
-    stats: { assets: number };
-    warranty: { expired: number; soon_30: number; soon_90: number };
-    latestDocuments: Doc[];
-    openIncidents: OpenIncident[];
-    warrantyExpiring: Warranty[];
+    stats?: { assets: number };
+    warranty?: { expired: number; soon_30: number; soon_90: number };
+    latestDocuments?: Doc[];
+    openIncidents?: OpenIncident[];
+    warrantyExpiring?: Warranty[];
 }
 
 function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
@@ -44,19 +46,25 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export default function Dashboard({ stats, warranty, latestDocuments, openIncidents, warrantyExpiring }: Props) {
+    const nothing = !stats && !warranty && !latestDocuments && !openIncidents && !warrantyExpiring;
+
     return (
         <AppLayout title="Dashboard" breadcrumbs={[{ label: 'Dashboard' }]}>
             <h1 className="mb-6 text-2xl font-semibold">Dashboard</h1>
 
-            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard label="Assets" value={stats.assets} />
-                <StatCard label="Warranty expired" value={warranty.expired} tone="text-red-600 dark:text-red-400" />
-                <StatCard label="Expiring ≤ 30 days" value={warranty.soon_30} tone="text-amber-600 dark:text-amber-400" />
-                <StatCard label="Expiring ≤ 90 days" value={warranty.soon_90} tone="text-blue-600 dark:text-blue-400" />
-            </div>
+            {nothing && <p className="text-sm text-muted-foreground">Nothing to show yet: your account has no dashboard widgets.</p>}
+
+            {(stats || warranty) && (
+                <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {stats && <StatCard label="Assets" value={stats.assets} />}
+                    {warranty && <StatCard label="Warranty expired" value={warranty.expired} tone="text-red-600 dark:text-red-400" />}
+                    {warranty && <StatCard label="Expiring ≤ 30 days" value={warranty.soon_30} tone="text-amber-600 dark:text-amber-400" />}
+                    {warranty && <StatCard label="Expiring ≤ 90 days" value={warranty.soon_90} tone="text-blue-600 dark:text-blue-400" />}
+                </div>
+            )}
 
             <div className="grid gap-4 lg:grid-cols-3">
-                <Panel title="Latest documents">
+                {latestDocuments && <Panel title="Latest documents">
                     {latestDocuments.length === 0 ? <p className="text-sm text-muted-foreground">No documents.</p> : (
                         <Table>
                             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Category</TableHead><TableHead>Attached to</TableHead><TableHead>Uploaded by</TableHead></TableRow></TableHeader>
@@ -72,9 +80,9 @@ export default function Dashboard({ stats, warranty, latestDocuments, openIncide
                             </TableBody>
                         </Table>
                     )}
-                </Panel>
+                </Panel>}
 
-                <Panel title="Open incidents">
+                {openIncidents && <Panel title="Open incidents">
                     {openIncidents.length === 0 ? <p className="text-sm text-muted-foreground">No open incidents.</p> : (
                         <Table>
                             <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Model</TableHead><TableHead>Serial</TableHead><TableHead>Days open</TableHead></TableRow></TableHeader>
@@ -90,9 +98,9 @@ export default function Dashboard({ stats, warranty, latestDocuments, openIncide
                             </TableBody>
                         </Table>
                     )}
-                </Panel>
+                </Panel>}
 
-                <Panel title="Warranty expiring">
+                {warrantyExpiring && <Panel title="Warranty expiring">
                     {warrantyExpiring.length === 0 ? <p className="text-sm text-muted-foreground">No upcoming expirations.</p> : (
                         <Table>
                             <TableHeader><TableRow><TableHead>Assigned to</TableHead><TableHead>Model</TableHead><TableHead>Warranty end</TableHead><TableHead>Days left</TableHead></TableRow></TableHeader>
@@ -108,7 +116,7 @@ export default function Dashboard({ stats, warranty, latestDocuments, openIncide
                             </TableBody>
                         </Table>
                     )}
-                </Panel>
+                </Panel>}
             </div>
         </AppLayout>
     );

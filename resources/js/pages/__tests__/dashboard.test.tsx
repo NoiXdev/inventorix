@@ -44,4 +44,25 @@ describe('Dashboard', () => {
         render(<Dashboard {...base} latestDocuments={[]} openIncidents={[]} warrantyExpiring={[]} />);
         expect(screen.getAllByText(/nothing|none|no /i).length).toBeGreaterThan(0);
     });
+
+    it('renders without the asset widgets when assets.view is missing', () => {
+        render(<Dashboard openIncidents={base.openIncidents} />);
+        expect(screen.queryByText('Assets')).not.toBeInTheDocument();
+        expect(screen.queryByText('Latest documents')).not.toBeInTheDocument();
+        expect(screen.queryByText('Warranty expiring')).not.toBeInTheDocument();
+        expect(screen.getByText('Broken screen')).toBeInTheDocument();
+    });
+
+    it('renders without the incidents panel when incidents.view is missing', () => {
+        const { openIncidents, ...rest } = base;
+        void openIncidents;
+        render(<Dashboard {...rest} />);
+        expect(screen.queryByText('Open incidents')).not.toBeInTheDocument();
+        expect(screen.getByText('42')).toBeInTheDocument();
+    });
+
+    it('renders an empty state when no widget is available', () => {
+        render(<Dashboard />);
+        expect(screen.getByText(/nothing to show/i)).toBeInTheDocument();
+    });
 });

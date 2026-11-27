@@ -4,6 +4,8 @@ import { AlertTriangle, Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 import type { AccessoryOptions } from './accessory-form';
@@ -55,8 +57,8 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/accessories/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? 'this accessory'}?`)) router.delete(`/app/accessories/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="accessories.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/accessories/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="accessories.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? 'this accessory'}?`)) router.delete(`/app/accessories/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
@@ -65,6 +67,7 @@ const columns: ColumnDef<Row>[] = [
 const ARCHIVED_OPTIONS = [{ value: '0', label: 'Active' }, { value: '1', label: 'Archived' }];
 
 export default function AccessoriesIndex({ accessories, ...options }: AccessoryOptions & { accessories: { data: Row[]; meta: PaginationMeta } }) {
+    const can = useCan();
     const filters = [
         { key: 'category_id', label: 'Category', options: options.categoryOptions },
         { key: 'manufacturer_id', label: 'Manufacturer', options: options.manufacturerOptions },
@@ -76,11 +79,11 @@ export default function AccessoriesIndex({ accessories, ...options }: AccessoryO
         <AppLayout title="Accessories" breadcrumbs={[{ label: 'Accessories' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Accessories</h1>
-                <Button asChild><Link href="/app/accessories/create">New accessory</Link></Button>
+                <Can permission="accessories.create"><Button asChild><Link href="/app/accessories/create">New accessory</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={accessories.data} pagination={accessories.meta} baseUrl="/app/accessories"
                 sortable={['name', 'model_number', 'qty', 'default_purchase_cost']} filters={filters}
-                rowHref={(r) => `/app/accessories/${r.id}/edit`} />
+                rowHref={can('accessories.edit') ? (r) => `/app/accessories/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

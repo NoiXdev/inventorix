@@ -3,6 +3,7 @@ import { router, useForm } from '@inertiajs/react';
 import { Pencil, Trash2, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useCan } from '@/hooks/use-can';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -20,6 +21,7 @@ interface Props { assetId: string; incidents: IncidentItem[]; }
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function AssetIncidents({ assetId, incidents }: Props) {
+    const can = useCan();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editing, setEditing] = useState<IncidentItem | null>(null);
     const form = useForm({ title: '', open_date: today(), closed_date: '', notes: '' });
@@ -53,9 +55,11 @@ export function AssetIncidents({ assetId, incidents }: Props) {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
-                <Button onClick={openCreate}>New incident</Button>
-            </div>
+            {can('incidents.create') && (
+                <div className="flex justify-end">
+                    <Button onClick={openCreate}>New incident</Button>
+                </div>
+            )}
 
             {incidents.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No incidents yet.</p>
@@ -72,13 +76,13 @@ export function AssetIncidents({ assetId, incidents }: Props) {
                                 {i.notes && <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">{i.notes}</div>}
                             </div>
                             <div className="flex shrink-0 gap-1">
-                                <Button variant="ghost" size="icon" aria-label={`Edit ${i.title}`} onClick={() => openEdit(i)}><Pencil className="h-4 w-4" /></Button>
-                                {i.status === 'open' ? (
+                                {can('incidents.edit') && <Button variant="ghost" size="icon" aria-label={`Edit ${i.title}`} onClick={() => openEdit(i)}><Pencil className="h-4 w-4" /></Button>}
+                                {can('incidents.edit') && (i.status === 'open' ? (
                                     <Button variant="ghost" size="icon" aria-label={`Mark ${i.title} closed`} onClick={() => act(i.id, 'close')}><CheckCircle2 className="h-4 w-4" /></Button>
                                 ) : (
                                     <Button variant="ghost" size="icon" aria-label={`Reopen ${i.title}`} onClick={() => act(i.id, 'reopen')}><RotateCcw className="h-4 w-4" /></Button>
-                                )}
-                                <Button variant="ghost" size="icon" aria-label={`Delete ${i.title}`} onClick={() => remove(i.id)}><Trash2 className="h-4 w-4" /></Button>
+                                ))}
+                                {can('incidents.delete') && <Button variant="ghost" size="icon" aria-label={`Delete ${i.title}`} onClick={() => remove(i.id)}><Trash2 className="h-4 w-4" /></Button>}
                             </div>
                         </div>
                     ))}

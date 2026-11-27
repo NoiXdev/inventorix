@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\SystemStatus;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\AssetModel;
@@ -222,5 +223,43 @@ class PermissionEnforcementTest extends TestCase
         $this->actingAs($both)->get("/app/assets/{$asset->id}")
             ->assertOk()
             ->assertInertia(fn (Assert $p) => $p->has('incidents', 1)->etc());
+    }
+
+    public function test_incident_counts_are_hidden_without_incidents_view(): void
+    {
+        $asset = Incident::factory()->create()->asset;
+
+        $viewer = User::factory()->withPermissions(['assets.view' => 1])->create(['login_enabled' => true]);
+        $this->actingAs($viewer)->get('/app/assets')
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->has('assets.data.0', fn (Assert $r) => $r->missing('incidents_count')->etc())->etc());
+        $this->actingAs($viewer)->get("/app/assets/{$asset->id}")
+            ->assertOk()
+            ->assertInertia(fn (Assert $p) => $p->has('asset', fn (Assert $a) => $a->missing('incidentsCount')->etc())->etc());
+
+        $both = User::factory()->withPermissions(['assets.view' => 1, 'incidents.view' => 1])->create(['login_enabled' => true]);
+        $this->actingAs($both)->get('/app/assets')
+            ->assertInertia(fn (Assert $p) => $p->where('assets.data.0.incidents_count', 1)->etc());
+        $this->actingAs($both)->get("/app/assets/{$asset->id}")
+            ->assertInertia(fn (Assert $p) => $p->where('asset.incidentsCount', 1)->etc());
+    }
+
+    public function test_forbidden_inertia_requests_render_the_forbidden_page(): void
+    {
+        $user = User::factory()->withPermissions(['assets.view' => 1])->create(['login_enabled' => true]);
+
+        $this->actingAs($user)
+            ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => (string) app(HandleInertiaRequests::class)->version(request())])
+            ->get('/app/users')
+            ->assertForbidden()
+            ->assertHeader('X-Inertia', 'true')
+            ->assertJsonPath('component', 'errors/forbidden');
+    }
+
+    public function test_forbidden_plain_requests_keep_the_default_response(): void
+    {
+        $user = User::factory()->withPermissions(['assets.view' => 1])->create(['login_enabled' => true]);
+
+        $this->actingAs($user)->get('/app/users')->assertForbidden();
     }
 }

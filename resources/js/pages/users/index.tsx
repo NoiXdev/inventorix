@@ -3,6 +3,7 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -21,8 +22,8 @@ const columns: ColumnDef<Row>[] = [
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
                 <Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}`}><Eye className="h-4 w-4" /></Link></Button>
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? row.original.email}?`)) router.delete(`/app/users/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="users.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="users.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? row.original.email}?`)) router.delete(`/app/users/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
@@ -33,7 +34,7 @@ export default function UsersIndex({ users }: { users: { data: Row[]; meta: Pagi
         <AppLayout title="Users" breadcrumbs={[{ label: 'Users' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Users</h1>
-                <Button asChild><Link href="/app/users/create">New user</Link></Button>
+                <Can permission="users.create"><Button asChild><Link href="/app/users/create">New user</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={users.data} pagination={users.meta} baseUrl="/app/users"
                 sortable={['name', 'email', 'login_enabled', 'assets_count']}

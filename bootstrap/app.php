@@ -6,6 +6,9 @@ use App\Http\Middleware\SecureHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -30,5 +33,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('app.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Inertia requests that end in 403 get a proper in-app page instead of
+        // the bare error response; other requests keep Laravel's default.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            if ($response->getStatusCode() === 403 && $request->header('X-Inertia')) {
+                return Inertia::render('errors/forbidden')->toResponse($request)
+                    ->setStatusCode(403)
+                    ->header('X-Inertia', 'true')
+                    ->header('Vary', 'X-Inertia');
+            }
+
+            return $response;
+        });
     })->create();

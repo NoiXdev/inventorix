@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
@@ -27,22 +29,23 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/depreciations/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/depreciations/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="depreciations.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/depreciations/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="depreciations.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/depreciations/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
 ];
 
 export default function DepreciationsIndex({ depreciations }: { depreciations: { data: Row[]; meta: PaginationMeta } }) {
+    const can = useCan();
     return (
         <AppLayout title="Depreciations" breadcrumbs={[{ label: 'Depreciations' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Depreciations</h1>
-                <Button asChild><Link href="/app/depreciations/create">New depreciation</Link></Button>
+                <Can permission="depreciations.create"><Button asChild><Link href="/app/depreciations/create">New depreciation</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={depreciations.data} pagination={depreciations.meta} baseUrl="/app/depreciations"
-                sortable={['name', 'depreciation_type', 'months']} rowHref={(r) => `/app/depreciations/${r.id}/edit`} />
+                sortable={['name', 'depreciation_type', 'months']} rowHref={can('depreciations.edit') ? (r) => `/app/depreciations/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

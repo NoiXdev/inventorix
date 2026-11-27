@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 import type { Option } from './location-form';
@@ -37,12 +39,12 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/locations/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => {
+                <Can permission="locations.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/locations/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="locations.delete"><Button variant="ghost" size="icon" onClick={() => {
                     const n = row.original.assets_count;
                     const warning = n > 0 ? `\n\n${n} asset${n === 1 ? '' : 's'} will keep pointing at it.` : '';
                     if (confirm(`Delete ${row.original.name ?? 'this location'}?${warning}`)) router.delete(`/app/locations/${row.original.id}`);
-                }}><Trash2 className="h-4 w-4" /></Button>
+                }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
@@ -55,6 +57,7 @@ interface Props {
 }
 
 export default function LocationsIndex({ locations, countryOptions, parentOptions }: Props) {
+    const can = useCan();
     const filters = [
         ...(parentOptions.length > 0 ? [{ key: 'parent_id', label: 'Parent', options: parentOptions }] : []),
         ...(countryOptions.length > 0 ? [{ key: 'country', label: 'Countries', options: countryOptions }] : []),
@@ -64,11 +67,11 @@ export default function LocationsIndex({ locations, countryOptions, parentOption
         <AppLayout title="Locations" breadcrumbs={[{ label: 'Locations' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Locations</h1>
-                <Button asChild><Link href="/app/locations/create">New location</Link></Button>
+                <Can permission="locations.create"><Button asChild><Link href="/app/locations/create">New location</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={locations.data} pagination={locations.meta} baseUrl="/app/locations"
                 sortable={['name', 'city', 'country', 'assets_count']} filters={filters}
-                rowHref={(r) => `/app/locations/${r.id}/edit`} />
+                rowHref={can('locations.edit') ? (r) => `/app/locations/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

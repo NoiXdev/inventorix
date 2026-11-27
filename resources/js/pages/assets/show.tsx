@@ -9,6 +9,7 @@ import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge'
 import { AssetAttachments, type AttachmentItem } from '@/components/assets/asset-attachments';
 import { AssetIncidents, type IncidentItem } from '@/components/assets/asset-incidents';
 import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-history';
+import { useCan } from '@/hooks/use-can';
 import { CheckoutDialogs, type CheckoutOptions } from '@/components/assets/checkout-dialogs';
 
 interface AssetDetail {
@@ -24,7 +25,7 @@ interface AssetDetail {
     last_checkout: string | null; last_checkin: string | null; expected_checkin: string | null;
     last_audit_date: string | null; next_audit_date: string | null;
     checkout_counter: number; checkin_counter: number; requests_counter: number;
-    tags: string[]; incidentsCount: number; created_at: string | null; updated_at: string | null;
+    tags: string[]; incidentsCount?: number; created_at: string | null; updated_at: string | null;
 }
 
 const ASSIGNEE_LABELS = { user: 'User', location: 'Location', asset: 'Asset' } as const;
@@ -34,7 +35,8 @@ interface Props {
     asset: AssetDetail;
     attachments: AttachmentItem[];
     attachmentCategoryOptions: { value: string; label: string }[];
-    incidents: IncidentItem[];
+    /** Absent without incidents.view. */
+    incidents?: IncidentItem[];
     history: HistoryEntry[];
     customFields: { name: string; value: string | null; encrypted: boolean }[];
     checkoutBlocker: string | null;
@@ -50,7 +52,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents, history, customFields = [], checkoutBlocker, checkoutOptions }: Props) {
+export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents = [], history, customFields = [], checkoutBlocker, checkoutOptions }: Props) {
+    const can = useCan();
+    const canCheckout = asset.assignee !== null ? can('assets.checkin') : can('assets.checkout');
+    const showIncidents = can('incidents.view');
+
     return (
         <AppLayout title="Asset" breadcrumbs={[{ label: 'Assets', href: '/app/assets' }, { label: asset.name ?? asset.asset_tag ?? asset.serial ?? 'Asset' }]}>
             <div className="mb-6 flex items-center justify-between">
@@ -60,8 +66,8 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                     {asset.archived && <Badge variant="outline">Archived</Badge>}
                 </div>
                 <div className="flex gap-2">
-                    <CheckoutDialogs assetId={asset.id} checkedOut={asset.assignee !== null} blocker={checkoutBlocker} options={checkoutOptions} />
-                    <Button asChild><Link href={`/app/assets/${asset.id}/edit`}>Edit</Link></Button>
+                    {canCheckout && <CheckoutDialogs assetId={asset.id} checkedOut={asset.assignee !== null} blocker={checkoutBlocker} options={checkoutOptions} />}
+                    {can('assets.edit') && <Button asChild><Link href={`/app/assets/${asset.id}/edit`}>Edit</Link></Button>}
                 </div>
             </div>
 
@@ -69,7 +75,7 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                 <TabsList>
                     <TabsTrigger value="general">General</TabsTrigger>
                     <TabsTrigger value="attachments">Attachments</TabsTrigger>
-                    <TabsTrigger value="incidents">Incidents ({asset.incidentsCount})</TabsTrigger>
+                    {showIncidents && <TabsTrigger value="incidents">Incidents ({asset.incidentsCount ?? incidents.length})</TabsTrigger>}
                     <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
 
@@ -157,9 +163,11 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                 <TabsContent value="attachments" className="mt-4">
                     <AssetAttachments assetId={asset.id} attachments={attachments} categoryOptions={attachmentCategoryOptions} />
                 </TabsContent>
-                <TabsContent value="incidents" className="mt-4">
-                    <AssetIncidents assetId={asset.id} incidents={incidents} />
-                </TabsContent>
+                {showIncidents && (
+                    <TabsContent value="incidents" className="mt-4">
+                        <AssetIncidents assetId={asset.id} incidents={incidents} />
+                    </TabsContent>
+                )}
                 <TabsContent value="history" className="mt-4">
                     <AssetHistory history={history} />
                 </TabsContent>

@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Check, Lock, Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 import { StatusBadge } from '@/components/assets/status-badge';
@@ -32,28 +34,29 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/status-labels/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" disabled={row.original.system}
+                <Can permission="statuslabels.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/status-labels/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="statuslabels.delete"><Button variant="ghost" size="icon" disabled={row.original.system}
                     title={row.original.system ? 'Used by handovers; can be renamed but not deleted' : undefined}
                     onClick={() => {
                         const n = row.original.assets_count;
                         const warning = n > 0 ? `\n\n${n} asset${n === 1 ? '' : 's'} will keep this status.` : '';
                         if (confirm(`Delete ${row.original.name ?? 'this status'}?${warning}`)) router.delete(`/app/status-labels/${row.original.id}`);
-                    }}><Trash2 className="h-4 w-4" /></Button>
+                    }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
 ];
 
 export default function StatusLabelsIndex({ labels }: { labels: { data: Row[]; meta: PaginationMeta } }) {
+    const can = useCan();
     return (
         <AppLayout title="Status labels" breadcrumbs={[{ label: 'Status labels' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Status labels</h1>
-                <Button asChild><Link href="/app/status-labels/create">New status label</Link></Button>
+                <Can permission="statuslabels.create"><Button asChild><Link href="/app/status-labels/create">New status label</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={labels.data} pagination={labels.meta} baseUrl="/app/status-labels"
-                sortable={['name', 'assets_count']} rowHref={(r) => `/app/status-labels/${r.id}/edit`} />
+                sortable={['name', 'assets_count']} rowHref={can('statuslabels.edit') ? (r) => `/app/status-labels/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

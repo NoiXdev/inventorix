@@ -6,6 +6,8 @@ export interface NavItem {
     href: string;
     icon: LucideIcon;
     match: (path: string) => boolean;
+    /** Catalogue permission needed to see the entry; omitted = always visible. */
+    permission?: string;
 }
 
 export interface NavGroup {
@@ -24,47 +26,47 @@ export const navGroups: NavGroup[] = [
     {
         label: 'Inventory',
         items: [
-            { label: 'Assets', href: '/app/assets', icon: Package, match: (p) => p.startsWith('/app/assets') },
-            { label: 'Accessories', href: '/app/accessories', icon: Cable, match: (p) => p.startsWith('/app/accessories') },
-            { label: 'Manufacturers', href: '/app/manufacturers', icon: Factory, match: (p) => p.startsWith('/app/manufacturers') },
-            { label: 'Suppliers', href: '/app/suppliers', icon: Truck, match: (p) => p.startsWith('/app/suppliers') },
-            { label: 'Locations', href: '/app/locations', icon: MapPin, match: (p) => p.startsWith('/app/locations') },
-            { label: 'Categories', href: '/app/categories', icon: Shapes, match: (p) => p.startsWith('/app/categories') },
-            { label: 'Asset models', href: '/app/asset-models', icon: Boxes, match: (p) => p.startsWith('/app/asset-models') },
-            { label: 'Depreciations', href: '/app/depreciations', icon: TrendingDown, match: (p) => p.startsWith('/app/depreciations') },
+            { label: 'Assets', href: '/app/assets', icon: Package, match: (p) => p.startsWith('/app/assets') , permission: 'assets.view' },
+            { label: 'Accessories', href: '/app/accessories', icon: Cable, match: (p) => p.startsWith('/app/accessories') , permission: 'accessories.view' },
+            { label: 'Manufacturers', href: '/app/manufacturers', icon: Factory, match: (p) => p.startsWith('/app/manufacturers') , permission: 'manufacturers.view' },
+            { label: 'Suppliers', href: '/app/suppliers', icon: Truck, match: (p) => p.startsWith('/app/suppliers') , permission: 'suppliers.view' },
+            { label: 'Locations', href: '/app/locations', icon: MapPin, match: (p) => p.startsWith('/app/locations') , permission: 'locations.view' },
+            { label: 'Categories', href: '/app/categories', icon: Shapes, match: (p) => p.startsWith('/app/categories') , permission: 'categories.view' },
+            { label: 'Asset models', href: '/app/asset-models', icon: Boxes, match: (p) => p.startsWith('/app/asset-models') , permission: 'models.view' },
+            { label: 'Depreciations', href: '/app/depreciations', icon: TrendingDown, match: (p) => p.startsWith('/app/depreciations') , permission: 'depreciations.view' },
         ],
     },
     {
         label: 'Administration',
         items: [
-            { label: 'Users', href: '/app/users', icon: Users, match: (p) => p.startsWith('/app/users') },
-            { label: 'Status labels', href: '/app/status-labels', icon: CircleDot, match: (p) => p.startsWith('/app/status-labels') },
-            { label: 'Custom fields', href: '/app/custom-fields', icon: ListPlus, match: (p) => p.startsWith('/app/custom-fields') },
-            { label: 'Fieldsets', href: '/app/custom-fieldsets', icon: LayoutList, match: (p) => p.startsWith('/app/custom-fieldsets') },
+            { label: 'Users', href: '/app/users', icon: Users, match: (p) => p.startsWith('/app/users') , permission: 'users.view' },
+            { label: 'Status labels', href: '/app/status-labels', icon: CircleDot, match: (p) => p.startsWith('/app/status-labels') , permission: 'statuslabels.view' },
+            { label: 'Custom fields', href: '/app/custom-fields', icon: ListPlus, match: (p) => p.startsWith('/app/custom-fields') , permission: 'customfields.view' },
+            { label: 'Fieldsets', href: '/app/custom-fieldsets', icon: LayoutList, match: (p) => p.startsWith('/app/custom-fieldsets') , permission: 'customfields.view' },
         ],
     },
     {
         label: 'Operations',
         items: [
-            { label: 'Handovers', href: '/app/handovers', icon: FileSignature, match: (p) => p.startsWith('/app/handovers') },
+            { label: 'Handovers', href: '/app/handovers', icon: FileSignature, match: (p) => p.startsWith('/app/handovers') , permission: 'handovers.view' },
         ],
     },
     {
         label: 'Reports',
         items: [
-            { label: 'Reports', href: '/app/reports', icon: BarChart3, match: (p) => p.startsWith('/app/reports') },
+            { label: 'Reports', href: '/app/reports', icon: BarChart3, match: (p) => p.startsWith('/app/reports') , permission: 'reports.view' },
         ],
     },
     {
         label: 'Settings',
         items: [
-            { label: 'Settings', href: '/app/settings', icon: SettingsIcon, match: (p) => p.startsWith('/app/settings') },
+            { label: 'Settings', href: '/app/settings', icon: SettingsIcon, match: (p) => p.startsWith('/app/settings') , permission: 'superuser' },
         ],
     },
     {
         label: 'Tools',
         items: [
-            { label: 'QR Generator', href: '/app/qr-generator', icon: QrCode, match: (p) => p.startsWith('/app/qr-generator') },
+            { label: 'QR Generator', href: '/app/qr-generator', icon: QrCode, match: (p) => p.startsWith('/app/qr-generator') , permission: 'assets.create' },
         ],
     },
 ];

@@ -62,6 +62,8 @@ class AssetController extends Controller
 
         $assets = AssetTableQuery::configure($query, $request)->paginate();
 
+        $seesIncidents = $request->user()->can('incidents.view');
+
         $assets->getCollection()->transform(fn ($a) => [
             'id' => $a->id,
             'status' => $a->status_id ? [
@@ -79,7 +81,8 @@ class AssetController extends Controller
             'purchase_cost' => $a->purchase_cost,
             'archived' => (bool) $a->archived,
             'created_at' => optional($a->created_at)->format('d.m.Y'),
-            'incidents_count' => $a->incidents_count,
+            // The incident count is only exposed with incidents.view.
+            ...($seesIncidents ? ['incidents_count' => $a->incidents_count] : []),
             'custom' => $listed->mapWithKeys(fn (CustomField $f) => [$f->db_column => $a->getAttribute($f->db_column)])->all(),
         ]);
 
@@ -149,7 +152,7 @@ class AssetController extends Controller
             ->loadCount('incidents');
 
         $props = [
-            'asset' => $this->detail($asset),
+            'asset' => $this->detail($asset, $request->user()->can('incidents.view')),
             'history' => AssetHistory::for($asset),
             // Loaded when a check-out or check-in dialog opens.
             'checkoutOptions' => Inertia::optional(fn () => CheckoutOptions::for($asset)),
@@ -355,7 +358,7 @@ class AssetController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function detail(Asset $asset): array
+    private function detail(Asset $asset, bool $withIncidentsCount = true): array
     {
         return [
             'id' => $asset->id,
@@ -401,7 +404,7 @@ class AssetController extends Controller
             'checkin_counter' => $asset->checkin_counter,
             'requests_counter' => $asset->requests_counter,
             'tags' => $asset->tags->pluck('name')->all(),
-            'incidentsCount' => $asset->incidents_count,
+            ...($withIncidentsCount ? ['incidentsCount' => $asset->incidents_count] : []),
             'created_at' => optional($asset->created_at)->toDateTimeString(),
             'updated_at' => optional($asset->updated_at)->toDateTimeString(),
         ];

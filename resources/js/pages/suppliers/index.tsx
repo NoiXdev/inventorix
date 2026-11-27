@@ -3,6 +3,8 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { Pencil, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { Can } from '@/components/can';
+import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 import type { Option } from './supplier-form';
@@ -47,24 +49,25 @@ const columns: ColumnDef<Row>[] = [
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (
             <div className="flex justify-end gap-1">
-                <Button asChild variant="ghost" size="icon"><Link href={`/app/suppliers/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button>
-                <Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/suppliers/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button>
+                <Can permission="suppliers.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/suppliers/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
+                <Can permission="suppliers.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name}?`)) router.delete(`/app/suppliers/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
 ];
 
 export default function SuppliersIndex({ suppliers, countryOptions }: { suppliers: { data: Row[]; meta: PaginationMeta }; countryOptions: Option[] }) {
+    const can = useCan();
     return (
         <AppLayout title="Suppliers" breadcrumbs={[{ label: 'Suppliers' }]}>
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Suppliers</h1>
-                <Button asChild><Link href="/app/suppliers/create">New supplier</Link></Button>
+                <Can permission="suppliers.create"><Button asChild><Link href="/app/suppliers/create">New supplier</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={suppliers.data} pagination={suppliers.meta} baseUrl="/app/suppliers"
                 sortable={['name', 'city', 'country', 'contact']}
                 filters={countryOptions.length > 0 ? [{ key: 'country', label: 'Countries', options: countryOptions }] : []}
-                rowHref={(r) => `/app/suppliers/${r.id}/edit`} />
+                rowHref={can('suppliers.edit') ? (r) => `/app/suppliers/${r.id}/edit` : undefined} />
         </AppLayout>
     );
 }

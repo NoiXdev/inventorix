@@ -1,5 +1,8 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@/hooks/use-can', () => ({ useCan: () => () => true }));
+
 import { AssetIncidents } from '../asset-incidents';
 
 const open = { id: 1, title: 'Screen cracked', notes: 'dropped', open_date: '2025-01-10', closed_date: null, status: 'open' as const, created_at: '2025-01-10 09:00:00' };
