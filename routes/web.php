@@ -104,9 +104,12 @@ Route::prefix('app')->name('app.')->group(function () {
             Route::get('qr-generator/download', [GeneratorController::class, 'download'])->name('qr-generator.download');
             Route::get('qr-generator/codes', [GeneratorController::class, 'codes'])->name('qr-generator.codes');
         });
-        Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->middleware('can:users.edit')->name('users.send-reset');
+        // `manage` (UserPolicy): only a superuser may change a user who holds admin or superuser.
+        Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->middleware(['can:users.edit', 'can:manage,user'])->name('users.send-reset');
         Route::post('users/quick', [UserController::class, 'quickStore'])->middleware('can:users.create')->name('users.quick-store');
-        $guarded('users', UserController::class, 'users');
+        $guarded('users', UserController::class, 'users')
+            ->middlewareFor(['edit', 'update'], ['can:users.edit', 'can:manage,user'])
+            ->middlewareFor('destroy', ['can:users.delete', 'can:manage,user']);
         // Deprecated People namespace (merged into Users in v3). Keep for the v3 line.
         Route::permanentRedirect('people', '/app/users')->middleware('can:users.view');
         Route::permanentRedirect('people/{person}', '/app/users/{person}')->middleware('can:users.view');

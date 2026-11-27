@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Permission;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,15 @@ class Group extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);
+    }
+
+    /** Whether the group grants admin or superuser (membership is then superuser-only to change). */
+    public function isPrivileged(): bool
+    {
+        $permissions = $this->permissions ?? [];
+
+        return (int) ($permissions[Permission::ADMIN->value] ?? 0) === 1
+            || (int) ($permissions[Permission::SUPERUSER->value] ?? 0) === 1;
     }
 
     public function getActivitylogOptions(): LogOptions

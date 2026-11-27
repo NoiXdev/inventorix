@@ -4,14 +4,18 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Enums\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\UserRequest;
 use App\Models\Asset;
+use App\Models\Group;
 use App\Models\User;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +24,8 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
+    private const LAST_SUPERUSER = 'At least one active superuser must remain.';
+
     public function index(Request $request): Response
     {
         $users = TableQuery::for(User::query()->withCount('assets'), $request)
@@ -48,20 +54,25 @@ class UserController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
-        return Inertia::render('users/create');
+        return Inertia::render('users/create', $this->assignmentProps($request->user(), null));
     }
 
     public function store(UserRequest $request): RedirectResponse
     {
-        $data = $this->withName($request->validated());
+        $data = $this->withName($this->profile($request));
         $loginEnabled = (bool) ($data['login_enabled'] ?? false);
         if ($loginEnabled) {
             $data['password'] = Str::password();
         }
 
-        $user = User::create($data);
+        $user = DB::transaction(function () use ($request, $data) {
+            $user = User::create($data);
+            $this->applyAssignment($request, $user);
+
+            return $user;
+        });
 
         if ($loginEnabled && $user->email) {
             Password::sendResetLink(['email' => $user->email]);
@@ -84,6 +95,8 @@ class UserController extends Controller
                 'login_enabled' => $user->login_enabled,
                 'assets_count' => $user->assets_count,
             ],
+            'groups' => $user->groups()->orderBy('name')->pluck('name')->all(),
+            'effective' => $user->effectivePermissions(),
             'assets' => $user->assets->map(fn (Asset $a) => [
                 'id' => $a->id,
                 'name' => $a->name,
@@ -105,21 +118,31 @@ class UserController extends Controller
                 'lastname' => $user->lastname,
                 'email' => $user->email,
                 'login_enabled' => $user->login_enabled,
+                'groups' => $user->groups->pluck('id')->all(),
+                'permissions' => (object) ($user->permissions ?? []),
             ],
             'isSelf' => $user->is($request->user()),
+            'effective' => $user->permissionSources(),
+            ...$this->assignmentProps($request->user(), $user),
         ]);
     }
 
     public function update(UserRequest $request, User $user): RedirectResponse
     {
-        $data = $this->withName($request->validated());
+        $data = $this->withName($this->profile($request));
 
         // Self-guard: cannot disable your own login.
         if ($user->is($request->user()) && ! (bool) ($data['login_enabled'] ?? false)) {
             throw ValidationException::withMessages(['login_enabled' => 'You cannot disable your own login.']);
         }
 
-        $user->update($data);
+        DB::transaction(function () use ($request, $user, $data) {
+            [$permissions, $groupIds] = $this->assignment($request, $user);
+            $this->guardSuperusers($request->user(), $user, (bool) ($data['login_enabled'] ?? false), $permissions, $groupIds);
+
+            $user->update($data);
+            $this->applyAssignment($request, $user);
+        });
 
         return to_route('app.users.index')->with('success', 'User updated.');
     }
@@ -134,6 +157,10 @@ class UserController extends Controller
             ]);
         }
 
+        if ($this->isLastActiveSuperuser($user)) {
+            throw ValidationException::withMessages(['user' => self::LAST_SUPERUSER]);
+        }
+
         $user->delete();
 
         return to_route('app.users.index')->with('success', 'User deleted.');
@@ -141,7 +168,7 @@ class UserController extends Controller
 
     public function quickStore(UserRequest $request): JsonResponse
     {
-        $user = User::create(array_merge($this->withName($request->validated()), ['login_enabled' => false]));
+        $user = User::create(array_merge($this->withName($this->profile($request)), ['login_enabled' => false]));
 
         return response()->json(['id' => $user->id, 'name' => $user->name], 201);
     }
@@ -153,6 +180,146 @@ class UserController extends Controller
         Password::sendResetLink(['email' => $user->email]);
 
         return back()->with('success', 'Password reset email sent.');
+    }
+
+    /**
+     * The submitted map and group ids as they would be stored, or null when the
+     * field is not being changed. A non-superuser cannot touch admin/superuser
+     * (the request rejects changes), so keys they leave out are carried over.
+     *
+     * @return array{0: array<string, int>|null, 1: list<string>|null}
+     */
+    private function assignment(UserRequest $request, ?User $user): array
+    {
+        if (! $request->mayAssign()) {
+            return [null, null];
+        }
+
+        $validated = $request->validated();
+        $permissions = null;
+        if (array_key_exists('permissions', $validated)) {
+            $permissions = array_map('intval', (array) $validated['permissions']);
+            if (! $request->user()->isSuperuser()) {
+                foreach ([Permission::SUPERUSER, Permission::ADMIN] as $privileged) {
+                    $current = ($user?->permissions ?? [])[$privileged->value] ?? null;
+                    if ($current !== null && ! array_key_exists($privileged->value, $permissions)) {
+                        $permissions[$privileged->value] = (int) $current;
+                    }
+                }
+            }
+            $permissions = array_filter($permissions, fn (int $state) => $state === 1 || $state === -1);
+        }
+
+        $groupIds = array_key_exists('groups', $validated) ? array_values(array_unique((array) $validated['groups'])) : null;
+
+        return [$permissions, $groupIds];
+    }
+
+    /** Store the per-user map and sync groups, logging membership changes on the user. */
+    private function applyAssignment(UserRequest $request, User $user): void
+    {
+        [$permissions, $groupIds] = $this->assignment($request, $user);
+
+        if ($permissions !== null) {
+            $user->permissions = $permissions === [] ? null : $permissions;
+            $user->save();
+        }
+
+        if ($groupIds !== null) {
+            $before = $user->groups()->orderBy('name')->pluck('name')->all();
+            $user->groups()->sync($groupIds);
+            $after = $user->groups()->orderBy('name')->pluck('name')->all();
+            $user->unsetRelation('groups');
+
+            if ($before !== $after) {
+                activity('user')
+                    ->performedOn($user)
+                    ->causedBy($request->user())
+                    ->event('groups_changed')
+                    ->withChanges(['attributes' => ['groups' => $after], 'old' => ['groups' => $before]])
+                    ->log('groups_changed');
+            }
+        }
+    }
+
+    /**
+     * Guard rails: the last active superuser cannot lose superuser or login,
+     * and nobody can remove their own superuser access.
+     *
+     * @param  array<string, int>|null  $permissions
+     * @param  list<string>|null  $groupIds
+     */
+    private function guardSuperusers(User $actor, User $user, bool $loginEnabled, ?array $permissions, ?array $groupIds): void
+    {
+        $after = clone $user;
+        $after->login_enabled = $loginEnabled;
+        if ($permissions !== null) {
+            $after->permissions = $permissions;
+        }
+        $after->setRelation('groups', $groupIds !== null ? Group::whereIn('id', $groupIds)->get() : $user->groups()->get());
+
+        if (! $user->isSuperuser() || ($after->isSuperuser() && $after->login_enabled)) {
+            return;
+        }
+
+        $field = match (true) {
+            ! $after->login_enabled && $after->isSuperuser() => 'login_enabled',
+            $permissions !== null && ($permissions['superuser'] ?? null) !== (($user->permissions ?? [])['superuser'] ?? null) => 'permissions',
+            $groupIds !== null => 'groups',
+            default => 'permissions',
+        };
+
+        if ($this->isLastActiveSuperuser($user)) {
+            throw ValidationException::withMessages([$field => self::LAST_SUPERUSER]);
+        }
+
+        if ($user->is($actor) && ! $after->isSuperuser()) {
+            throw ValidationException::withMessages([$field => 'You cannot remove your own superuser access.']);
+        }
+    }
+
+    /** Whether this user is the only one left who is a superuser and can sign in. */
+    private function isLastActiveSuperuser(User $user): bool
+    {
+        if (! $user->login_enabled || ! $user->isSuperuser()) {
+            return false;
+        }
+
+        return ! User::query()
+            ->where('login_enabled', true)
+            ->whereKeyNot($user->getKey())
+            ->with('groups')
+            ->lazy()
+            ->contains(fn (User $other) => $other->isSuperuser());
+    }
+
+    /**
+     * Options and flags for the groups / permissions panel of the user form.
+     *
+     * @return array<string, mixed>
+     */
+    private function assignmentProps(User $actor, ?User $target): array
+    {
+        return [
+            'groupOptions' => Group::orderBy('name')->get()->map(fn (Group $g) => [
+                'value' => $g->id,
+                'label' => $g->name,
+                'privileged' => $g->isPrivileged(),
+            ])->all(),
+            'catalogue' => Permission::catalogue(),
+            'canAssign' => $actor->hasAccess(Permission::ADMIN) && ($target === null || ! $target->is($actor) || $actor->isSuperuser()),
+            'canAssignPrivileged' => $actor->isSuperuser(),
+        ];
+    }
+
+    /**
+     * The profile fields only; groups and permissions are applied separately.
+     *
+     * @return array<string, mixed>
+     */
+    private function profile(UserRequest $request): array
+    {
+        return Arr::except($request->validated(), ['groups', 'permissions']);
     }
 
     /**
