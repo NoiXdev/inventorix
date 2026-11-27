@@ -18,6 +18,7 @@ describe('AppSidebar', () => {
         expect(screen.getByRole('link', { name: /Assets/ })).toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /Users/ })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /Settings/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Groups/ })).not.toBeInTheDocument();
         expect(screen.queryByRole('link', { name: /Handovers/ })).not.toBeInTheDocument();
         expect(screen.getByRole('link', { name: /Dashboard/ })).toBeInTheDocument();
     });
@@ -27,6 +28,14 @@ describe('AppSidebar', () => {
         render(<AppSidebar />);
         expect(screen.getByRole('link', { name: /Users/ })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /Settings/ })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Groups/ })).toHaveAttribute('href', '/app/groups');
+    });
+
+    it('shows Groups to superusers only, not to admins', () => {
+        setCan({ admin: true, 'users.view': true });
+        render(<AppSidebar />);
+        expect(screen.getByRole('link', { name: /Users/ })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Groups/ })).not.toBeInTheDocument();
     });
 
     it('drops a group heading when all of its items are hidden', () => {
