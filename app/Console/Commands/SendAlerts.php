@@ -21,18 +21,25 @@ class SendAlerts extends Command
             return self::SUCCESS;
         }
 
+        // Reminders and the overview fail independently of each other.
+        $ok = true;
         try {
             $users = $alerts->sendReminders();
-            $listed = $alerts->sendDigest();
+            $this->info("Reminded {$users} user(s).");
         } catch (Throwable $e) {
-            $this->error('Failed to send alerts: '.$e->getMessage());
+            $this->error('Failed to send reminders: '.$e->getMessage());
             report($e);
-
-            return self::FAILURE;
+            $ok = false;
+        }
+        try {
+            $listed = $alerts->sendDigest();
+            $this->info("Overview lists {$listed} asset(s).");
+        } catch (Throwable $e) {
+            $this->error('Failed to send the overview: '.$e->getMessage());
+            report($e);
+            $ok = false;
         }
 
-        $this->info("Reminded {$users} user(s); overview lists {$listed} asset(s).");
-
-        return self::SUCCESS;
+        return $ok ? self::SUCCESS : self::FAILURE;
     }
 }

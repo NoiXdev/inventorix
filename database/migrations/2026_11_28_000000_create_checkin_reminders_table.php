@@ -15,9 +15,10 @@ return new class extends Migration
         Schema::create('checkin_reminders', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('asset_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->date('expected_checkin');
             $table->timestamp('sent_at');
-            $table->unique(['asset_id', 'expected_checkin']);
+            $table->unique(['asset_id', 'user_id', 'expected_checkin']);
         });
     }
 

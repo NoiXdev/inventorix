@@ -151,7 +151,7 @@ class AssetController extends Controller
         return to_route('app.assets.index')->with('success', 'Asset created.');
     }
 
-    public function show(Request $request, Asset $asset, CheckoutService $checkouts): Response
+    public function show(Request $request, Asset $asset, CheckoutService $checkouts, AuditService $audits): Response
     {
         $asset->load('model.manufacturer', 'model.category', 'assignee', 'location', 'rtdLocation', 'supplier', 'status', 'tags', 'attachments.uploadedBy', 'incidents')
             ->loadCount('incidents');
@@ -160,7 +160,14 @@ class AssetController extends Controller
             'asset' => $this->detail($asset, $request->user()->can('incidents.view')),
             'history' => AssetHistory::for($asset),
             // Loaded when a check-out or check-in dialog opens.
-            'checkoutOptions' => Inertia::optional(fn () => CheckoutOptions::for($asset)),
+            // Loaded when a dialog opens; the check-out options list users, so
+            // only for those who may check out or in.
+            'checkoutOptions' => Inertia::optional(fn () => $request->user()->can('assets.checkout') || $request->user()->can('assets.checkin')
+                ? CheckoutOptions::for($asset) : null),
+            'auditOptions' => Inertia::optional(fn () => $request->user()->can('assets.audit') ? [
+                'locationOptions' => Location::options(),
+                'nextAuditDate' => $audits->proposedNextAudit()?->toDateString(),
+            ] : null),
             'checkoutBlocker' => $asset->assignee_id === null ? $checkouts->checkoutBlocker($asset) : null,
             'customFields' => AssetCustomFields::forModel($asset->model_id)
                 ->map(fn (CustomField $f) => [

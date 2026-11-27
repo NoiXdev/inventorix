@@ -8,7 +8,6 @@ use App\Models\Asset;
 use App\Models\Location;
 use App\Models\StatusLabel;
 use App\Models\User;
-use App\Services\AuditService;
 
 /** The choices of the check-out and check-in forms. */
 final class CheckoutOptions
@@ -32,8 +31,6 @@ final class CheckoutOptions
             // storage, as handovers do.
             'checkoutStatusId' => StatusLabel::system(SystemStatus::IN_USE)->id,
             'checkinStatusId' => StatusLabel::system(SystemStatus::STORAGE)->id,
-            // Proposed for the audit dialog: today plus the audit interval.
-            'nextAuditDate' => app(AuditService::class)->proposedNextAudit()?->toDateString(),
             'rtdLocationName' => $asset?->rtd_location_id ? Location::paths(withTrashed: true)->get($asset->rtd_location_id) : null,
         ];
     }

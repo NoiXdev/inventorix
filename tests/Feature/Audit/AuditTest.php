@@ -146,4 +146,44 @@ class AuditTest extends TestCase
 
         $this->assertSame('2027-11-28', Asset::query()->where('name', 'Fresh laptop')->sole()->next_audit_date->toDateString());
     }
+
+    public function test_audit_needs_assets_view_too(): void
+    {
+        $asset = Asset::factory()->create();
+        $auditOnly = User::factory()->withPermissions(['assets.audit' => 1])->create();
+
+        $this->actingAs($auditOnly)->post("/app/assets/{$asset->id}/audit", [])->assertForbidden();
+        $this->actingAs($auditOnly)->get('/app/assets/audit')->assertForbidden();
+        $this->actingAs($auditOnly)->postJson('/app/assets/audit/scan', ['code' => 'x'])->assertForbidden();
+    }
+
+    public function test_dialog_options_follow_permissions(): void
+    {
+        $this->interval(12);
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->auditor())->get("/app/assets/{$asset->id}")
+            ->assertInertia(fn (Assert $p) => $p
+                ->reloadOnly('auditOptions', fn (Assert $r) => $r->where('auditOptions.nextAuditDate', '2027-11-28')->has('auditOptions.locationOptions'))
+                ->reloadOnly('checkoutOptions', fn (Assert $r) => $r->where('checkoutOptions', null)));
+    }
+
+    public function test_the_next_audit_does_not_overflow_short_months(): void
+    {
+        Carbon::setTestNow('2027-01-31 09:00:00');
+        $this->interval(1);
+        $asset = Asset::factory()->create();
+
+        $this->actingAs($this->auditor())->post("/app/assets/{$asset->id}/audit", [])->assertSessionHasNoErrors();
+
+        $this->assertSame('2027-02-28', $asset->refresh()->next_audit_date->toDateString());
+    }
+
+    public function test_scan_ignores_deleted_assets(): void
+    {
+        $asset = Asset::factory()->create(['asset_tag' => 'GONE']);
+        $asset->delete();
+
+        $this->actingAs($this->auditor())->postJson('/app/assets/audit/scan', ['code' => 'GONE'])->assertStatus(422);
+    }
 }

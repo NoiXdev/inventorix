@@ -35,19 +35,23 @@ export default function AuditScan({ locationOptions, nextAuditDate }: Props) {
     const [nextAudit, setNextAudit] = useState(nextAuditDate ?? '');
     const [note, setNote] = useState('');
     const [code, setCode] = useState('');
-    const [busy, setBusy] = useState(false);
+    const [pending, setPending] = useState(0);
     const [results, setResults] = useState<AuditScanResult[]>([]);
     const counter = useRef(0);
     const inputRef = useRef<HTMLInputElement>(null);
+    // A scanner keeps typing while a request runs: codes wait here and are
+    // sent one after another, so none is lost.
+    const queue = useRef<string[]>([]);
+    const running = useRef(false);
+    const fields = useRef({ locationId, nextAudit, note });
+    fields.current = { locationId, nextAudit, note };
 
-    const scan = async () => {
-        const value = code.trim();
-        if (value === '' || busy) return;
-        setBusy(true);
+    const auditOne = async (value: string) => {
         const key = ++counter.current;
+        const { locationId: location_id, nextAudit: next_audit_date, note: currentNote } = fields.current;
         try {
             const { data } = await axios.post('/app/assets/audit/scan', {
-                code: value, location_id: locationId, next_audit_date: nextAudit, note,
+                code: value, location_id, next_audit_date, note: currentNote,
             });
             setResults((r) => [{ key, code: value, ok: true, message: 'Audited', asset: data }, ...r]);
         } catch (e) {
@@ -55,11 +59,28 @@ export default function AuditScan({ locationOptions, nextAuditDate }: Props) {
                 ? (e.response?.data?.message as string | undefined) ?? 'The audit failed.'
                 : 'The audit failed.';
             setResults((r) => [{ key, code: value, ok: false, message }, ...r]);
-        } finally {
-            setCode('');
-            setBusy(false);
-            inputRef.current?.focus();
         }
+    };
+
+    const drain = async () => {
+        if (running.current) return;
+        running.current = true;
+        while (queue.current.length > 0) {
+            const next = queue.current.shift()!;
+            await auditOne(next);
+            setPending(queue.current.length);
+        }
+        running.current = false;
+    };
+
+    const scan = () => {
+        const value = code.trim();
+        setCode('');
+        inputRef.current?.focus();
+        if (value === '') return;
+        queue.current.push(value);
+        setPending(queue.current.length);
+        void drain();
     };
 
     const audited = results.filter((r) => r.ok).length;
@@ -96,10 +117,13 @@ export default function AuditScan({ locationOptions, nextAuditDate }: Props) {
                                 <ScanLine className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                 <Input id="audit_code" ref={inputRef} autoFocus autoComplete="off" className="pl-9" value={code}
                                     onChange={(e) => setCode(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void scan(); } }} />
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); scan(); } }} />
                             </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{audited === 1 ? '1 asset audited' : `${audited} assets audited`} in this session.</p>
+                        <p className="text-sm text-muted-foreground">
+                            {audited === 1 ? '1 asset audited' : `${audited} assets audited`} in this session.
+                            {pending > 0 && ` ${pending} waiting…`}
+                        </p>
                         {results.length > 0 && (
                             <ul className="divide-y rounded-md border text-sm" aria-label="Scan results">
                                 {results.map((r) => (

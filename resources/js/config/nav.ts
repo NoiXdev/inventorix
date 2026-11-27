@@ -6,8 +6,8 @@ export interface NavItem {
     href: string;
     icon: LucideIcon;
     match: (path: string) => boolean;
-    /** Catalogue permission needed to see the entry; omitted = always visible. */
-    permission?: string;
+    /** Catalogue permission(s) needed to see the entry, all of them; omitted = always visible. */
+    permission?: string | string[];
 }
 
 export interface NavGroup {
@@ -49,7 +49,7 @@ export const navGroups: NavGroup[] = [
     {
         label: 'Operations',
         items: [
-            { label: 'Audit', href: '/app/assets/audit', icon: ClipboardCheck, match: (p) => p === '/app/assets/audit', permission: 'assets.audit' },
+            { label: 'Audit', href: '/app/assets/audit', icon: ClipboardCheck, match: (p) => p === '/app/assets/audit', permission: ['assets.view', 'assets.audit'] },
             { label: 'Handovers', href: '/app/handovers', icon: FileSignature, match: (p) => p.startsWith('/app/handovers') , permission: 'handovers.view' },
         ],
     },

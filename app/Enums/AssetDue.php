@@ -27,10 +27,17 @@ enum AssetDue: string
         };
     }
 
-    /** Limit an asset query (the assets table may be joined) to this case. */
+    /**
+     * Limit an asset query (the assets table may be joined) to this case.
+     * Archived assets, and assets with an archived status, are never due
+     * (as in Snipe-IT).
+     */
     public function apply(Builder $query, AlertSettings $settings): Builder
     {
         $today = today();
+
+        $query->where(fn (Builder $q) => $q->where('assets.archived', false)->orWhereNull('assets.archived'))
+            ->whereDoesntHave('status', fn (Builder $q) => $q->where('archived', true));
 
         return match ($this) {
             self::AUDIT_DUE => $query->whereNotNull('assets.next_audit_date')

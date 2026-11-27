@@ -56,4 +56,14 @@ describe('AppSidebar', () => {
         render(<AppSidebar />);
         expect(screen.getByRole('link', { name: /QR Generator/ })).toBeInTheDocument();
     });
+
+    it('shows Audit only with assets.view and assets.audit', () => {
+        setCan({ 'assets.audit': true });
+        const { unmount } = render(<AppSidebar />);
+        expect(screen.queryByRole('link', { name: /^Audit$/ })).not.toBeInTheDocument();
+        unmount();
+        setCan({ 'assets.audit': true, 'assets.view': true });
+        render(<AppSidebar />);
+        expect(screen.getByRole('link', { name: /^Audit$/ })).toHaveAttribute('href', '/app/assets/audit');
+    });
 });

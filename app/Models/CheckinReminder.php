@@ -12,7 +12,7 @@ class CheckinReminder extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['asset_id', 'expected_checkin', 'sent_at'];
+    protected $fillable = ['asset_id', 'user_id', 'expected_checkin', 'sent_at'];
 
     protected function casts(): array
     {

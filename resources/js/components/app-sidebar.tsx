@@ -18,7 +18,7 @@ export function AppSidebar() {
     const statusNav = props.statusNav ?? [];
     const can = useCan();
     const groups = navGroups
-        .map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || can(item.permission)) }))
+        .map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || [item.permission].flat().every((p) => can(p))) }))
         .filter((group) => group.items.length > 0);
 
     return (

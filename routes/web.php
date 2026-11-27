@@ -91,9 +91,9 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCheckout'])->middleware('can:assets.checkout')->name('assets.bulk-checkout');
         Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
         Route::post('assets/{asset}/checkout', [AssetCheckoutController::class, 'checkout'])->middleware('can:assets.checkout')->name('assets.checkout');
-        Route::get('assets/audit', [AssetAuditController::class, 'scanPage'])->middleware('can:assets.audit')->name('assets.audit.scan-page');
-        Route::post('assets/audit/scan', [AssetAuditController::class, 'scan'])->middleware('can:assets.audit')->name('assets.audit.scan');
-        Route::post('assets/{asset}/audit', [AssetAuditController::class, 'store'])->middleware('can:assets.audit')->name('assets.audit');
+        Route::get('assets/audit', [AssetAuditController::class, 'scanPage'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit.scan-page');
+        Route::post('assets/audit/scan', [AssetAuditController::class, 'scan'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit.scan');
+        Route::post('assets/{asset}/audit', [AssetAuditController::class, 'store'])->middleware(['can:assets.view', 'can:assets.audit'])->name('assets.audit');
         Route::post('assets/{asset}/checkin', [AssetCheckoutController::class, 'checkin'])->middleware('can:assets.checkin')->name('assets.checkin');
         $guarded('assets', AssetController::class, 'assets');
         Route::post('assets/{asset}/attachments', [AssetAttachmentController::class, 'store'])->middleware('can:assets.files')->name('assets.attachments.store');

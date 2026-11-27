@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Settings\AlertSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Due and overdue check-ins and audits (Snipe-IT's expected check-in and
@@ -60,25 +61,39 @@ class AlertService
 
     /**
      * Remind each user of their assets that are due or overdue, once per
-     * asset and expected date. @return int users reminded
+     * asset, user and expected date (a new assignee is reminded again).
+     *
+     * @return int users reminded
      */
     public function sendReminders(): int
     {
         $due = $this->assets(AssetDue::CHECKIN_OVERDUE)->concat($this->assets(AssetDue::CHECKIN_DUE))
-            ->filter(fn (Asset $a) => $a->assignee instanceof User && filled($a->assignee->email))
-            ->reject(fn (Asset $a) => CheckinReminder::query()
-                ->where('asset_id', $a->id)
-                ->whereDate('expected_checkin', $a->expected_checkin)
-                ->exists());
+            ->filter(fn (Asset $a) => $a->assignee instanceof User && filled($a->assignee->email));
+
+        // Who was already reminded of which date, keyed asset|user|date.
+        $reminded = CheckinReminder::query()->whereIn('asset_id', $due->pluck('id'))->get()
+            ->map(fn (CheckinReminder $r) => $this->reminderKey($r->asset_id, $r->user_id, $r->expected_checkin->toDateString()))
+            ->flip();
+        $due = $due->reject(fn (Asset $a) => $reminded->has(
+            $this->reminderKey($a->id, $a->assignee_id, $a->expected_checkin->toDateString())
+        ));
 
         $sent = 0;
         foreach ($due->groupBy('assignee_id') as $assets) {
             /** @var User $user */
             $user = $assets->first()->assignee;
-            Mail::to($user->email)->send(new CheckinReminderMail($user, $assets->values()));
+            try {
+                Mail::to($user->email)->send(new CheckinReminderMail($user, $assets->values()));
+            } catch (Throwable $e) {
+                // One bad address must not stop the others; it is retried tomorrow.
+                report($e);
+
+                continue;
+            }
             foreach ($assets as $asset) {
                 CheckinReminder::create([
                     'asset_id' => $asset->id,
+                    'user_id' => $user->id,
                     'expected_checkin' => $asset->expected_checkin->toDateString(),
                     'sent_at' => now(),
                 ]);
@@ -87,5 +102,10 @@ class AlertService
         }
 
         return $sent;
+    }
+
+    private function reminderKey(string $assetId, string $userId, string $date): string
+    {
+        return "{$assetId}|{$userId}|{$date}";
     }
 }

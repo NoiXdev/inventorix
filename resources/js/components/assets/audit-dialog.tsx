@@ -8,14 +8,19 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ComboboxField } from '@/components/form/combobox-field';
 import { DateField } from '@/components/form/date-field';
 import { FormError } from '@/components/form/form-error';
-import type { CheckoutOptions } from './checkout-dialogs';
+
+export interface AuditOptions {
+    locationOptions: { value: string; label: string }[];
+    /** Proposed next audit date (today + audit interval), null without an interval. */
+    nextAuditDate: string | null;
+}
 
 interface Props {
     assetId: string;
     /** Where the asset is now, shown as what an empty location keeps. */
     locationName: string | null;
-    /** Loaded when the dialog opens (shared with the check-out dialogs). */
-    options?: CheckoutOptions;
+    /** Loaded when the dialog opens. */
+    options?: AuditOptions | null;
 }
 
 /** Audit an asset: confirm it was seen, optionally at another location, and set the next audit. */
@@ -23,7 +28,7 @@ export function AuditDialog({ assetId, locationName, options }: Props) {
     const [open, setOpen] = useState(false);
     const openDialog = () => {
         setOpen(true);
-        if (!options) router.reload({ only: ['checkoutOptions'] });
+        if (!options) router.reload({ only: ['auditOptions'] });
     };
 
     return (
@@ -42,7 +47,7 @@ export function AuditDialog({ assetId, locationName, options }: Props) {
     );
 }
 
-function AuditForm({ assetId, locationName, options, onDone }: { assetId: string; locationName: string | null; options: CheckoutOptions; onDone: () => void }) {
+function AuditForm({ assetId, locationName, options, onDone }: { assetId: string; locationName: string | null; options: AuditOptions; onDone: () => void }) {
     const form = useForm({ location_id: '', next_audit_date: options.nextAuditDate ?? '', note: '' });
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

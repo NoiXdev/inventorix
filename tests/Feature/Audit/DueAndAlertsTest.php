@@ -5,6 +5,7 @@ namespace Tests\Feature\Audit;
 use App\Mail\AlertsDigest;
 use App\Mail\CheckinReminder;
 use App\Models\Asset;
+use App\Models\StatusLabel;
 use App\Models\User;
 use App\Settings\AlertSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,5 +162,53 @@ class DueAndAlertsTest extends TestCase
 
         Mail::assertSent(AlertsDigest::class, 1);
         Mail::assertNotSent(CheckinReminder::class);
+    }
+
+    public function test_archived_assets_are_never_due(): void
+    {
+        $this->auditOverdue->update(['archived' => true]);
+        $archivedStatus = StatusLabel::factory()->create(['archived' => true, 'deployable' => false, 'pending' => false]);
+        $this->checkinOverdue->update(['status_id' => $archivedStatus->id]);
+
+        $this->assertSame([], $this->listed('audit_overdue'));
+        $this->assertSame([], $this->listed('checkin_overdue'));
+    }
+
+    public function test_a_failed_reminder_does_not_stop_the_others_or_the_overview(): void
+    {
+        $this->checkinOverdue->assignee->forceFill(['email' => 'bad@example.test'])->save();
+        $sent = [];
+        Mail::shouldReceive('to')->andReturnUsing(function ($to) use (&$sent) {
+            $pending = \Mockery::mock();
+            $pending->shouldReceive('send')->andReturnUsing(function ($mailable) use ($to, &$sent) {
+                if ($to === 'bad@example.test') {
+                    throw new \RuntimeException('550 mailbox unavailable');
+                }
+                $sent[] = [is_array($to) ? implode(',', $to) : $to, $mailable::class];
+            });
+
+            return $pending;
+        });
+
+        $this->artisan('alerts:send')->assertSuccessful();
+
+        $this->assertContains([$this->checkinDue->assignee->email, CheckinReminder::class], $sent);
+        $this->assertContains(['it@example.test', AlertsDigest::class], $sent);
+        // The failed one is not recorded, so it is tried again tomorrow.
+        $this->assertSame(0, \App\Models\CheckinReminder::query()->where('asset_id', $this->checkinOverdue->id)->count());
+    }
+
+    public function test_a_new_assignee_is_reminded_even_for_the_same_date(): void
+    {
+        Mail::fake();
+        $this->artisan('alerts:send')->assertSuccessful();
+
+        Mail::fake();
+        $newUser = User::factory()->withoutLogin()->create();
+        $this->checkinOverdue->forceFill(['assignee_type' => User::class, 'assignee_id' => $newUser->id])->save();
+        $this->artisan('alerts:send')->assertSuccessful();
+
+        Mail::assertSent(CheckinReminder::class, 1);
+        Mail::assertSent(CheckinReminder::class, fn (CheckinReminder $m) => $m->hasTo($newUser->email));
     }
 }

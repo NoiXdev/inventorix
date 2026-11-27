@@ -47,6 +47,21 @@ describe('Audit scan page', () => {
         expect(screen.getByText('0 assets audited in this session.')).toBeInTheDocument();
     });
 
+    it('queues scans made while a request runs and sends them in order', async () => {
+        let release: (v: unknown) => void = () => {};
+        post.mockImplementationOnce(() => new Promise((r) => { release = r; }))
+            .mockResolvedValueOnce({ data: { id: 'a2', name: 'Laptop 2', asset_tag: 'INV-2', location: null, next_audit_date: null } });
+        render(<AuditScan locationOptions={[]} nextAuditDate={null} />);
+
+        scan('INV-1');
+        scan('INV-2');
+        expect(screen.getByText(/1 waiting/)).toBeInTheDocument();
+        release({ data: { id: 'a1', name: 'Laptop 1', asset_tag: 'INV-1', location: null, next_audit_date: null } });
+
+        await waitFor(() => expect(screen.getByText('2 assets audited in this session.')).toBeInTheDocument());
+        expect(post.mock.calls.map((c) => (c[1] as { code: string }).code)).toEqual(['INV-1', 'INV-2']);
+    });
+
     it('ignores an empty scan', () => {
         render(<AuditScan locationOptions={[]} nextAuditDate={null} />);
         scan('   ');
