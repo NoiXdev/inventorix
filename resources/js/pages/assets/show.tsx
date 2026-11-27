@@ -11,6 +11,7 @@ import { AssetIncidents, type IncidentItem } from '@/components/assets/asset-inc
 import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-history';
 import { useCan } from '@/hooks/use-can';
 import { CheckoutDialogs, type CheckoutOptions } from '@/components/assets/checkout-dialogs';
+import { AuditDialog } from '@/components/assets/audit-dialog';
 
 interface AssetDetail {
     id: string; name: string | null; asset_tag: string | null; status: AssetStatus | null;
@@ -66,6 +67,7 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                     {asset.archived && <Badge variant="outline">Archived</Badge>}
                 </div>
                 <div className="flex gap-2">
+                    {can('assets.audit') && <AuditDialog assetId={asset.id} locationName={asset.location_name} options={checkoutOptions} />}
                     {canCheckout && <CheckoutDialogs assetId={asset.id} checkedOut={asset.assignee !== null} blocker={checkoutBlocker} options={checkoutOptions} />}
                     {can('assets.edit') && <Button asChild><Link href={`/app/assets/${asset.id}/edit`}>Edit</Link></Button>}
                 </div>

@@ -1,4 +1,4 @@
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,20 +21,26 @@ interface Warranty { id: string; assignee: string | null; model: string | null; 
 // widgets need assets.view, the incidents panel needs incidents.view.
 interface Props {
     stats?: { assets: number };
+    /** Counts per due case, keyed audit_due / audit_overdue / checkin_due / checkin_overdue. */
+    due?: Record<'audit_due' | 'audit_overdue' | 'checkin_due' | 'checkin_overdue', number>;
     warranty?: { expired: number; soon_30: number; soon_90: number };
     latestDocuments?: Doc[];
     openIncidents?: OpenIncident[];
     warrantyExpiring?: Warranty[];
 }
 
-function StatCard({ label, value, tone }: { label: string; value: number; tone?: string }) {
-    return (
-        <Card>
+function StatCard({ label, value, tone, href }: { label: string; value: number; tone?: string; href?: string }) {
+    const card = (
+        <Card className={href ? 'h-full transition-colors hover:bg-accent' : undefined}>
             <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">{label}</CardTitle></CardHeader>
             <CardContent className={cn('text-3xl font-semibold', tone)}>{value}</CardContent>
         </Card>
     );
+
+    return href ? <Link href={href}>{card}</Link> : card;
 }
+
+const dueHref = (key: string) => `/app/assets?filter[due]=${key}`;
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -45,8 +51,8 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
     );
 }
 
-export default function Dashboard({ stats, warranty, latestDocuments, openIncidents, warrantyExpiring }: Props) {
-    const nothing = !stats && !warranty && !latestDocuments && !openIncidents && !warrantyExpiring;
+export default function Dashboard({ stats, due, warranty, latestDocuments, openIncidents, warrantyExpiring }: Props) {
+    const nothing = !stats && !due && !warranty && !latestDocuments && !openIncidents && !warrantyExpiring;
 
     return (
         <AppLayout title="Dashboard" breadcrumbs={[{ label: 'Dashboard' }]}>
@@ -60,6 +66,15 @@ export default function Dashboard({ stats, warranty, latestDocuments, openIncide
                     {warranty && <StatCard label="Warranty expired" value={warranty.expired} tone="text-red-600 dark:text-red-400" />}
                     {warranty && <StatCard label="Expiring ≤ 30 days" value={warranty.soon_30} tone="text-amber-600 dark:text-amber-400" />}
                     {warranty && <StatCard label="Expiring ≤ 90 days" value={warranty.soon_90} tone="text-blue-600 dark:text-blue-400" />}
+                </div>
+            )}
+
+            {due && (
+                <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard label="Check-ins overdue" value={due.checkin_overdue} href={dueHref('checkin_overdue')} tone="text-red-600 dark:text-red-400" />
+                    <StatCard label="Check-ins due soon" value={due.checkin_due} href={dueHref('checkin_due')} tone="text-amber-600 dark:text-amber-400" />
+                    <StatCard label="Audits overdue" value={due.audit_overdue} href={dueHref('audit_overdue')} tone="text-red-600 dark:text-red-400" />
+                    <StatCard label="Audits due soon" value={due.audit_due} href={dueHref('audit_due')} tone="text-amber-600 dark:text-amber-400" />
                 </div>
             )}
 

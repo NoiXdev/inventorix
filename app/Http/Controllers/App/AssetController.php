@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Enums\AssetDue;
 use App\Enums\AttachmentCategory;
 use App\Enums\CategoryType;
 use App\Enums\StatusLabelType;
@@ -17,6 +18,7 @@ use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\StatusLabel;
 use App\Models\Supplier;
+use App\Services\AuditService;
 use App\Services\CheckoutService;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
@@ -100,6 +102,7 @@ class AssetController extends Controller
             'categoryOptions' => $this->options(Category::query()->where('category_type', CategoryType::ASSET)),
             'manufacturerOptions' => $this->options(Manufacturer::query()),
             'locationOptions' => Location::options(),
+            'dueOptions' => AssetDue::options(),
             'customColumns' => $listed->map(fn (CustomField $f) => ['key' => $f->db_column, 'label' => $f->name])->values()->all(),
             'importResult' => $request->session()->get('importResult'),
         ]);
@@ -117,11 +120,11 @@ class AssetController extends Controller
         ]));
     }
 
-    public function store(AssetRequest $request, CheckoutService $checkouts): RedirectResponse
+    public function store(AssetRequest $request, CheckoutService $checkouts, AuditService $audits): RedirectResponse
     {
         $forcedId = $request->validated('id');
 
-        DB::transaction(function () use ($request, $forcedId, $checkouts): void {
+        DB::transaction(function () use ($request, $forcedId, $checkouts, $audits): void {
             $asset = new Asset($this->attributes($request));
             if (! empty($forcedId)) {
                 $asset->id = $forcedId; // HasUuids only auto-generates when the key is empty
@@ -130,6 +133,8 @@ class AssetController extends Controller
             if ($file = $request->file('image')) {
                 $asset->image = $file->store('assets');
             }
+            // As Snipe-IT: a new asset is first due for audit one interval from now.
+            $asset->next_audit_date ??= $audits->proposedNextAudit();
             $asset->save();
             $asset->syncTags($request->validated('tags') ?? []);
 

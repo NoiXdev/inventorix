@@ -14,6 +14,13 @@ const base = {
 };
 
 describe('Dashboard', () => {
+    it('shows due and overdue counts linking to the filtered asset list', () => {
+        render(<Dashboard due={{ checkin_overdue: 4, checkin_due: 6, audit_overdue: 7, audit_due: 8 }} />);
+        expect(screen.getByText('Check-ins overdue').closest('a')).toHaveAttribute('href', '/app/assets?filter[due]=checkin_overdue');
+        expect(screen.getByText('Audits due soon').closest('a')).toHaveAttribute('href', '/app/assets?filter[due]=audit_due');
+        expect(screen.getByText('7')).toBeInTheDocument();
+    });
+
     it('renders the assets stat and warranty buckets', () => {
         render(<Dashboard {...base} />);
         expect(screen.getByText('42')).toBeInTheDocument();

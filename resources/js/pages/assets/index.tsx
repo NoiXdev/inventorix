@@ -40,12 +40,14 @@ const itemFor = (r: Row): LabelItem => ({
 interface Props {
     assets: { data: Row[]; meta: PaginationMeta };
     statusOptions: Option[]; categoryOptions: Option[]; manufacturerOptions: Option[]; locationOptions: Option[];
+    /** Due / overdue audits and check-ins. */
+    dueOptions?: Option[];
     /** Custom fields flagged show_in_listview. */
     customColumns?: { key: string; label: string }[];
     importResult?: { imported: number; failed: { row: number; message: string }[] } | null;
 }
 
-export default function AssetsIndex({ assets, statusOptions, categoryOptions, manufacturerOptions, locationOptions, customColumns = [], importResult }: Props) {
+export default function AssetsIndex({ assets, statusOptions, categoryOptions, manufacturerOptions, locationOptions, dueOptions = [], customColumns = [], importResult }: Props) {
     const [printItems, setPrintItems] = useState<LabelItem[] | null>(null);
     const can = useCan();
     const showIncidents = can('incidents.view');
@@ -129,6 +131,7 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
                     { key: 'category_id', label: 'Category', options: categoryOptions },
                     { key: 'manufacturer_id', label: 'Manufacturer', options: manufacturerOptions },
                     { key: 'location_id', label: 'Location', options: locationOptions },
+                    { key: 'due', label: 'Due', options: dueOptions },
                     { key: 'archived', label: 'Archived', options: [{ value: '0', label: 'Active' }, { value: '1', label: 'Archived' }] },
                 ]}
                 enableSelection

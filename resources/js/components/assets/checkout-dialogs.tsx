@@ -24,6 +24,8 @@ export interface CheckoutOptions {
     checkoutStatusId: string;
     checkinStatusId: string;
     rtdLocationName: string | null;
+    /** Proposed next audit date (today + audit interval), null without an interval. */
+    nextAuditDate?: string | null;
 }
 
 const TARGET_TYPES: { value: AssigneeType; label: string }[] = [

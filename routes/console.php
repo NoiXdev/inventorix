@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('warranty:scan-expiries')->dailyAt('07:00');
+Schedule::command('alerts:send')->dailyAt('07:05');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\App\AlertSettingsRequest;
 use App\Http\Requests\App\AuthSettingsRequest;
 use App\Http\Requests\App\GeneralSettingsRequest;
 use App\Http\Requests\App\MailSettingsRequest;
@@ -11,7 +12,9 @@ use App\Http\Requests\App\StorageSettingsRequest;
 use App\Http\Requests\App\WarrantySettingsRequest;
 use App\Mail\TestMail;
 use App\Mail\WarrantyExpiryDigest;
+use App\Services\AlertService;
 use App\Services\WarrantyScanner;
+use App\Settings\AlertSettings;
 use App\Settings\AuthSettings;
 use App\Settings\GeneralSettings;
 use App\Settings\MailSettings;
@@ -35,7 +38,7 @@ class SettingsController extends Controller
         'auth' => ['microsoft_client_secret'],
     ];
 
-    public function index(GeneralSettings $general, MailSettings $mail, StorageSettings $storage, WarrantySettings $warranty, AuthSettings $auth): Response
+    public function index(GeneralSettings $general, MailSettings $mail, StorageSettings $storage, WarrantySettings $warranty, AuthSettings $auth, AlertSettings $alerts): Response
     {
         return Inertia::render('settings/index', [
             't' => trans('settings'),
@@ -75,6 +78,13 @@ class SettingsController extends Controller
                     'enabled' => $warranty->enabled,
                     'recipients' => $warranty->recipients,
                     'lead_days' => array_map('strval', $warranty->lead_days),
+                ],
+                'alerts' => [
+                    'enabled' => $alerts->enabled,
+                    'recipients' => $alerts->recipients,
+                    'audit_interval_months' => $alerts->audit_interval_months,
+                    'audit_warning_days' => $alerts->audit_warning_days,
+                    'checkin_warning_days' => $alerts->checkin_warning_days,
                 ],
                 'auth' => $this->withoutSecrets([
                     'multi_factor_enabled' => $auth->multi_factor_enabled,
@@ -122,6 +132,34 @@ class SettingsController extends Controller
         $this->persistWarranty($request->validated());
 
         return back()->with('success', trans('settings.warranty.title'));
+    }
+
+    public function updateAlerts(AlertSettingsRequest $request): RedirectResponse
+    {
+        $this->persistAlerts($request->validated());
+
+        return back()->with('success', trans('settings.alerts.title'));
+    }
+
+    /** Save, then send the IT overview now (reminders to users are not sent). */
+    public function testAlerts(AlertSettingsRequest $request): RedirectResponse
+    {
+        $this->persistAlerts($request->validated());
+        $settings = app(AlertSettings::class)->refresh();
+
+        if ($settings->recipients === []) {
+            return back()->with('warning', trans('settings.alerts.test.no_recipients'));
+        }
+
+        try {
+            $listed = app(AlertService::class)->sendDigest();
+        } catch (Throwable $e) {
+            return back()->with('error', trans('settings.alerts.test.failure_title').': '.$e->getMessage());
+        }
+
+        return $listed === 0
+            ? back()->with('warning', trans('settings.alerts.test.empty_body'))
+            : back()->with('success', trans('settings.alerts.test.success_body', ['count' => count($settings->recipients)]));
     }
 
     public function testMail(MailTestRequest $request): RedirectResponse
@@ -176,6 +214,18 @@ class SettingsController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', trans('settings.warranty.test.failure_title').': '.$e->getMessage());
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    private function persistAlerts(array $data): void
+    {
+        $alerts = app(AlertSettings::class);
+        $alerts->enabled = (bool) $data['enabled'];
+        $alerts->recipients = array_values($data['recipients'] ?? []);
+        $alerts->audit_interval_months = (int) $data['audit_interval_months'];
+        $alerts->audit_warning_days = (int) $data['audit_warning_days'];
+        $alerts->checkin_warning_days = (int) $data['checkin_warning_days'];
+        $alerts->save();
     }
 
     /** @param array<string, mixed> $data */

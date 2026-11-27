@@ -19,6 +19,7 @@ enum Permission: string
     case ASSETS_DELETE = 'assets.delete';
     case ASSETS_CHECKOUT = 'assets.checkout';
     case ASSETS_CHECKIN = 'assets.checkin';
+    case ASSETS_AUDIT = 'assets.audit';
     case ASSETS_FILES = 'assets.files';
     case INCIDENTS_VIEW = 'incidents.view';
     case INCIDENTS_CREATE = 'incidents.create';
@@ -85,6 +86,7 @@ enum Permission: string
             self::REPORTS_VIEW => 'View reports',
             self::ASSETS_CHECKOUT => 'Check out',
             self::ASSETS_CHECKIN => 'Check in',
+            self::ASSETS_AUDIT => 'Audit',
             self::ASSETS_FILES => 'Manage files',
             default => ucfirst(explode('.', $this->value)[1]),
         };

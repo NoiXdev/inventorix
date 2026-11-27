@@ -102,6 +102,15 @@ describe('ShowAsset permissions', () => {
         expect(screen.getByRole('tab', { name: /Incidents \(1\)/ })).toBeInTheDocument();
     });
 
+    it('shows Audit only with assets.audit', () => {
+        const { unmount } = render(<ShowAsset {...showProps} />);
+        expect(screen.queryByRole('button', { name: /Audit/ })).not.toBeInTheDocument();
+        unmount();
+        setCan({ 'assets.audit': true });
+        render(<ShowAsset {...showProps} />);
+        expect(screen.getByRole('button', { name: /Audit/ })).toBeInTheDocument();
+    });
+
     it('shows Check in only with assets.checkin when checked out', () => {
         const checkedOut = { ...showProps, asset: { ...asset, assignee: { type: 'user' as const, name: 'Ada', url: null } } };
         setCan({ 'assets.checkout': true });

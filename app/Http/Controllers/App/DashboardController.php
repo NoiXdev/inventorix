@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\App;
 
+use App\Enums\AssetDue;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\Attachment;
 use App\Models\Incident;
+use App\Settings\AlertSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -41,6 +43,10 @@ class DashboardController extends Controller
 
         return [
             'stats' => ['assets' => Asset::query()->count()],
+            // Due / overdue audits and check-ins, each linking to the filtered asset list.
+            'due' => collect(AssetDue::cases())->mapWithKeys(fn (AssetDue $d) => [
+                $d->value => $d->apply(Asset::query(), app(AlertSettings::class))->count(),
+            ])->all(),
             'warranty' => [
                 'expired' => $this->warrantyEndsBetween(null, $today->copy()->subDay())->count(),
                 'soon_30' => $this->warrantyEndsBetween($today, $today->copy()->addDays(30))->count(),

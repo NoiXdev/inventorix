@@ -2,10 +2,12 @@
 
 namespace App\Support\Assets;
 
+use App\Enums\AssetDue;
 use App\Models\Asset;
 use App\Models\CustomField;
 use App\Models\Location;
 use App\Models\User;
+use App\Settings\AlertSettings;
 use App\Support\CustomFields\AssetCustomFields;
 use App\Support\Table\TableQuery;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +31,12 @@ class AssetTableQuery
             ->leftJoin('locations as assigned_locations', fn ($j) => $j->on('assigned_locations.id', '=', 'assets.assignee_id')->where('assets.assignee_type', Location::class))
             ->leftJoin('assets as assigned_assets', fn ($j) => $j->on('assigned_assets.id', '=', 'assets.assignee_id')->where('assets.assignee_type', Asset::class))
             ->leftJoin('status_labels', 'status_labels.id', '=', 'assets.status_id');
+
+        // Due / overdue audits and check-ins (Snipe-IT's due lists).
+        $due = $request->input('filter.due');
+        if (is_string($due) && ($case = AssetDue::tryFrom($due))) {
+            $case->apply($query, app(AlertSettings::class));
+        }
 
         // Custom fields shown in the list are searchable and sortable like any
         // other column.

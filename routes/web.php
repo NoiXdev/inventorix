@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\App\AccessoryController;
 use App\Http\Controllers\App\AssetAttachmentController;
+use App\Http\Controllers\App\AssetAuditController;
 use App\Http\Controllers\App\AssetCheckoutController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\AssetExportController;
@@ -90,6 +91,9 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCheckout'])->middleware('can:assets.checkout')->name('assets.bulk-checkout');
         Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
         Route::post('assets/{asset}/checkout', [AssetCheckoutController::class, 'checkout'])->middleware('can:assets.checkout')->name('assets.checkout');
+        Route::get('assets/audit', [AssetAuditController::class, 'scanPage'])->middleware('can:assets.audit')->name('assets.audit.scan-page');
+        Route::post('assets/audit/scan', [AssetAuditController::class, 'scan'])->middleware('can:assets.audit')->name('assets.audit.scan');
+        Route::post('assets/{asset}/audit', [AssetAuditController::class, 'store'])->middleware('can:assets.audit')->name('assets.audit');
         Route::post('assets/{asset}/checkin', [AssetCheckoutController::class, 'checkin'])->middleware('can:assets.checkin')->name('assets.checkin');
         $guarded('assets', AssetController::class, 'assets');
         Route::post('assets/{asset}/attachments', [AssetAttachmentController::class, 'store'])->middleware('can:assets.files')->name('assets.attachments.store');
@@ -132,6 +136,8 @@ Route::prefix('app')->name('app.')->group(function () {
             Route::put('settings/storage', [SettingsController::class, 'updateStorage'])->name('settings.storage.update');
             Route::put('settings/auth', [SettingsController::class, 'updateAuth'])->name('settings.auth.update');
             Route::put('settings/warranty', [SettingsController::class, 'updateWarranty'])->name('settings.warranty.update');
+            Route::put('settings/alerts', [SettingsController::class, 'updateAlerts'])->name('settings.alerts.update');
+            Route::post('settings/alerts/test', [SettingsController::class, 'testAlerts'])->name('settings.alerts.test');
             Route::post('settings/mail/test', [SettingsController::class, 'testMail'])->name('settings.mail.test');
             Route::post('settings/storage/test', [SettingsController::class, 'testStorage'])->name('settings.storage.test');
             Route::post('settings/warranty/test', [SettingsController::class, 'testWarranty'])->name('settings.warranty.test');

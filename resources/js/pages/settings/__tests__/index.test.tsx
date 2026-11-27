@@ -38,6 +38,14 @@ const t = {
         field: { enabled: 'Aktiviert', recipients: 'Empfänger', lead_days: 'Vorlauftage' },
         test: { action: 'Test' },
     },
+    alerts: {
+        title: 'Audits & Rückgaben',
+        field: {
+            enabled: 'Erinnerungen aktiviert', recipients: 'Übersicht an', audit_interval_months: 'Audit-Intervall',
+            audit_interval_help: 'Hilfe', audit_warning_days: 'Audit-Vorlauf', checkin_warning_days: 'Rückgabe-Vorlauf', help: 'Erklärung',
+        },
+        test: { action: 'Übersicht jetzt senden' },
+    },
     auth: {
         title: 'Auth',
         multi_factor: { section: 'MFA', field: { enabled: 'Aktiviert', force: 'Erzwingen', recoverable: 'Wiederherstellbar' } },
@@ -53,6 +61,7 @@ const props = {
         mail: { default_mailer: 'smtp', from_address: 'a@b.de', from_name: 'Ops', smtp_host: 'h', smtp_port: 25, smtp_scheme: null, smtp_username: 'u', ses_key: null, ses_region: null, postmark_message_stream_id: null, postal_domain: null },
         storage: { key: null, region: null, bucket: null, endpoint: null, use_path_style_endpoint: false, url: null },
         warranty: { enabled: false, recipients: [], lead_days: [] },
+        alerts: { enabled: true, recipients: ['it@example.test'], audit_interval_months: 12, audit_warning_days: 14, checkin_warning_days: 7 },
         auth: { multi_factor_enabled: false, multi_factor_force: false, multi_factor_recoverable: false, microsoft_enabled: false, microsoft_client_id: null, microsoft_redirect: null, microsoft_tenant: null },
     },
 };
@@ -69,5 +78,16 @@ describe('Settings', () => {
         fireEvent.click(tab);
         fireEvent.focus(tab);
         expect(screen.getByLabelText(/aktiviert/i)).toBeInTheDocument();
+    });
+
+    it('renders the Audits & returns tab with its values', () => {
+        render(<Settings {...(props as any)} />);
+        const tab = screen.getByRole('tab', { name: 'Audits & Rückgaben' });
+        fireEvent.mouseDown(tab);
+        fireEvent.click(tab);
+        fireEvent.focus(tab);
+        expect(screen.getByLabelText('Audit-Intervall')).toHaveValue(12);
+        expect(screen.getByLabelText('Rückgabe-Vorlauf')).toHaveValue(7);
+        expect(screen.getByRole('button', { name: 'Übersicht jetzt senden' })).toBeInTheDocument();
     });
 });

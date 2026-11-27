@@ -83,6 +83,25 @@ return [
             'failure_title' => 'Senden fehlgeschlagen',
         ],
     ],
+    'alerts' => [
+        'title' => 'Audits & Rückgaben',
+        'field' => [
+            'enabled' => 'Erinnerungen und tägliche Übersicht aktiviert',
+            'recipients' => 'Empfänger der täglichen Übersicht',
+            'audit_interval_months' => 'Audit-Intervall (Monate)',
+            'audit_interval_help' => 'Nach einem Audit und bei neuen Assets wird das nächste Audit so weit in die Zukunft gelegt. 0 = kein Vorschlag.',
+            'audit_warning_days' => 'Audit gilt als bald fällig (Tage vorher)',
+            'checkin_warning_days' => 'Rückgabe gilt als bald fällig (Tage vorher)',
+            'help' => 'Mitarbeiter werden einmal pro Gerät und Rückgabedatum per Mail erinnert, wenn eine Rückgabe bald fällig oder überfällig ist. Die Empfänger oben bekommen täglich eine Übersicht.',
+        ],
+        'test' => [
+            'action' => 'Übersicht jetzt senden',
+            'success_body' => 'Die Übersicht wurde an :count Empfänger gesendet.',
+            'empty_body' => 'Aktuell ist keine Rückgabe und kein Audit fällig.',
+            'no_recipients' => 'Bitte zuerst Empfänger eintragen.',
+            'failure_title' => 'Senden fehlgeschlagen',
+        ],
+    ],
     'storage' => [
         'nav' => 'Speicher',
         'title' => 'Speicher-Einstellungen',

@@ -59,6 +59,7 @@ class AssetHistory
     private const EVENT_LABELS = [
         'checked_out' => 'Checked out',
         'checked_in' => 'Checked in',
+        'audited' => 'Audited',
     ];
 
     /** @return array<int, array<string, mixed>> */
@@ -71,7 +72,7 @@ class AssetHistory
         return Activity::query()
             ->where('subject_type', $asset->getMorphClass())
             ->where('subject_id', $asset->id)
-            ->whereIn('event', ['created', 'updated', 'deleted', 'checked_out', 'checked_in'])
+            ->whereIn('event', ['created', 'updated', 'deleted', 'checked_out', 'checked_in', 'audited'])
             ->with('causer')
             ->latest()
             ->latest('id')
