@@ -57,4 +57,15 @@ class UserFactory extends Factory
             'remember_token' => null,
         ]);
     }
+
+    public function superuser(): static
+    {
+        return $this->withPermissions(['superuser' => 1]);
+    }
+
+    /** @param array<string, int> $map permission value => 1 (grant) or -1 (deny) */
+    public function withPermissions(array $map): static
+    {
+        return $this->state(fn (array $attributes) => ['permissions' => $map]);
+    }
 }
