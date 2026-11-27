@@ -76,6 +76,14 @@ class HasAccessTest extends TestCase
         $this->assertFalse($user->hasAccess('assets.delete'));
     }
 
+    public function test_user_deny_does_not_beat_admin_from_a_group(): void
+    {
+        $user = User::factory()->withPermissions(['assets.delete' => -1])->create();
+        $this->inGroup($user, ['admin']);
+
+        $this->assertTrue($user->hasAccess('assets.delete'));
+    }
+
     public function test_superuser_has_every_permission(): void
     {
         $user = User::factory()->withPermissions(['superuser' => 1])->create();

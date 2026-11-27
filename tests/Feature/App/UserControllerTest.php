@@ -166,7 +166,20 @@ class UserControllerTest extends TestCase
     public function test_cannot_delete_own_account(): void
     {
         $me = $this->actor();
-        $this->actingAs($me)->delete('/app/users/'.$me->id)->assertForbidden();
+        $this->actingAs($me)->delete('/app/users/'.$me->id)
+            ->assertSessionHasErrors(['user' => 'You cannot delete your own account.']);
+        $this->assertNotNull($me->fresh());
+    }
+
+    public function test_sole_superuser_can_update_own_profile_without_sending_login_enabled(): void
+    {
+        $me = $this->actor();
+        $this->actingAs($me)->put('/app/users/'.$me->id, [
+            'firstname' => 'Renamed', 'lastname' => 'Self', 'email' => $me->email,
+        ])->assertSessionHasNoErrors()->assertRedirect('/app/users');
+
+        $this->assertSame('Renamed', $me->fresh()->firstname);
+        $this->assertTrue($me->fresh()->login_enabled);
     }
 
     public function test_edit_returns_user_fields_and_self_flag(): void

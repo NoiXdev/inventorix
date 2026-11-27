@@ -55,9 +55,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Whether the user holds a permission: a user-level deny beats everything
-     * granted elsewhere, superuser covers all, admin covers all but the
-     * superuser-only permissions, then the user's own grant, then any group.
+     * Whether the user holds a permission: superuser covers all, admin covers
+     * all but the superuser-only permissions (both also when granted by a
+     * group, and checked before the user's own map, so a user-level deny does
+     * not beat them), then the user's own grant or deny, then any group.
      */
     public function hasAccess(Permission|string $permission): bool
     {

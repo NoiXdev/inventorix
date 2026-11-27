@@ -170,6 +170,15 @@ class PermissionEnforcementTest extends TestCase
         $this->assertNotSame(403, $status);
     }
 
+    public function test_array_handover_type_is_a_validation_error_not_a_500(): void
+    {
+        $user = User::factory()->withPermissions(['handovers.create' => 1])->create(['login_enabled' => true]);
+
+        $status = $this->actingAs($user)->post('/app/handovers', ['type' => ['issue']])->getStatusCode();
+
+        $this->assertContains($status, [302, 422]);
+    }
+
     public function test_handover_wizard_only_offers_allowed_types(): void
     {
         $only = User::factory()->withPermissions(['handovers.create' => 1])->create(['login_enabled' => true]);

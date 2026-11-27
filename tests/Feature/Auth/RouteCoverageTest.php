@@ -8,16 +8,12 @@ use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
- * Every app route must carry a `can:` middleware, apart from the few that are
+ * Every route behind `auth` must carry a `can:` middleware, apart from the few that are
  * deliberately open to any (or no) logged-in user.
  */
 class RouteCoverageTest extends TestCase
 {
     private const EXEMPT = [
-        'app.login',
-        'app.login.attempt',
-        'app.password.reset',
-        'app.password.update',
         'app.logout',
         'app.dashboard',
     ];
@@ -37,11 +33,11 @@ class RouteCoverageTest extends TestCase
 
     private function inScope(RoutingRoute $route): bool
     {
-        $name = (string) $route->getName();
-
-        if (! str_starts_with($name, 'app.') && $name !== 'attachments.open') {
+        if (! in_array('auth', $route->gatherMiddleware(), true)) {
             return false;
         }
+
+        $name = (string) $route->getName();
 
         return ! in_array($name, self::EXEMPT, true) && ! Str::endsWith($name, '.image');
     }

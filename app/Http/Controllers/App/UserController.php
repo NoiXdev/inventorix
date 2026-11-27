@@ -131,14 +131,17 @@ class UserController extends Controller
     {
         $data = $this->withName($this->profile($request));
 
+        // An absent login_enabled leaves the current value untouched.
+        $loginEnabled = (bool) ($data['login_enabled'] ?? $user->login_enabled);
+
         // Self-guard: cannot disable your own login.
-        if ($user->is($request->user()) && ! (bool) ($data['login_enabled'] ?? false)) {
+        if ($user->is($request->user()) && ! $loginEnabled) {
             throw ValidationException::withMessages(['login_enabled' => 'You cannot disable your own login.']);
         }
 
-        DB::transaction(function () use ($request, $user, $data) {
+        DB::transaction(function () use ($request, $user, $data, $loginEnabled) {
             [$permissions, $groupIds] = $this->assignment($request, $user);
-            $this->guardSuperusers($request->user(), $user, (bool) ($data['login_enabled'] ?? false), $permissions, $groupIds);
+            $this->guardSuperusers($request->user(), $user, $loginEnabled, $permissions, $groupIds);
 
             $user->update($data);
             $this->applyAssignment($request, $user);
@@ -149,7 +152,9 @@ class UserController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
-        abort_if($user->is($request->user()), 403, 'You cannot delete your own account.');
+        if ($user->is($request->user())) {
+            throw ValidationException::withMessages(['user' => 'You cannot delete your own account.']);
+        }
 
         if ($user->assets()->exists()) {
             throw ValidationException::withMessages([

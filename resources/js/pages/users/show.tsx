@@ -1,4 +1,5 @@
 import { Link, router } from '@inertiajs/react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,7 +44,7 @@ export default function UserShow({ user, assets, groups = [], effective = {} }: 
                 </div>
                 <div className="flex gap-2">
                     {can('users.edit') && <Button asChild variant="outline"><Link href={`/app/users/${user.id}/edit`}>Edit</Link></Button>}
-                    {can('users.delete') && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`); }}>Delete</Button>}
+                    {can('users.delete') && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}>Delete</Button>}
                 </div>
             </div>
 

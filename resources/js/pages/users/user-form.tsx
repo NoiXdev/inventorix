@@ -72,7 +72,7 @@ export function UserForm({ initial, submitUrl, method, isSelf, groupOptions = []
                     </FormCard>
 
                     <FormCard>
-                        <FormCardHeader title="Permissions" description="Inherit uses the groups; Grant and Deny override them for this user. Deny always wins." />
+                        <FormCardHeader title="Permissions" description="Inherit uses the groups; Grant and Deny override them for this user. Deny overrides groups, except for users with Admin or Superuser." />
                         <FormCardContent>
                             <div>
                                 <PermissionMatrix catalogue={catalogue} mode="tristate" value={data.permissions ?? {}}

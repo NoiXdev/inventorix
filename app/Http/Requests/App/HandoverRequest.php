@@ -19,7 +19,7 @@ class HandoverRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $type = HandoverType::tryFrom((string) $this->input('type'));
+        $type = is_string($t = $this->input('type')) ? HandoverType::tryFrom($t) : null;
 
         return $type === null || $this->user()->can($type->requiredPermission()->value);
     }
@@ -44,7 +44,7 @@ class HandoverRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            $type = HandoverType::tryFrom((string) $this->input('type'));
+            $type = is_string($t = $this->input('type')) ? HandoverType::tryFrom($t) : null;
             $ids = (array) $this->input('asset_ids', []);
             if ($type === null || $ids === []) {
                 return; // base rules already flagged these

@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Can } from '@/components/can';
@@ -23,7 +24,7 @@ const columns: ColumnDef<Row>[] = [
             <div className="flex justify-end gap-1">
                 <Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}`}><Eye className="h-4 w-4" /></Link></Button>
                 <Can permission="users.edit"><Button asChild variant="ghost" size="icon"><Link href={`/app/users/${row.original.id}/edit`}><Pencil className="h-4 w-4" /></Link></Button></Can>
-                <Can permission="users.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? row.original.email}?`)) router.delete(`/app/users/${row.original.id}`); }}><Trash2 className="h-4 w-4" /></Button></Can>
+                <Can permission="users.delete"><Button variant="ghost" size="icon" onClick={() => { if (confirm(`Delete ${row.original.name ?? row.original.email}?`)) router.delete(`/app/users/${row.original.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}><Trash2 className="h-4 w-4" /></Button></Can>
             </div>
         ),
     },
