@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, QrCode, Trash2 } from 'lucide-react';
+import { Eye, LogOut, Pencil, QrCode, Trash2 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -92,6 +92,9 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
                         <a href={`/app/assets/export${typeof window !== 'undefined' ? window.location.search : ''}`}>Export</a>
                     </Button>
                     <AssetImportDialog />
+                    <Button variant="outline" asChild>
+                        <Link href="/app/assets/bulk-checkout"><LogOut className="h-4 w-4" /> Bulk checkout</Link>
+                    </Button>
                     <Button asChild><Link href="/app/assets/create">New asset</Link></Button>
                 </div>
             </div>
@@ -124,7 +127,12 @@ export default function AssetsIndex({ assets, statusOptions, categoryOptions, ma
                 enableSelection
                 getRowId={(r) => r.id}
                 renderBulkActions={(rows, clear) => (
-                    <Button size="sm" onClick={() => { setPrintItems(rows.map(itemFor)); clear(); }}>QR drucken ({rows.length})</Button>
+                    <>
+                        <Button size="sm" variant="outline" onClick={() => router.get('/app/assets/bulk-checkout', { ids: rows.map((r) => r.id).join(',') })}>
+                            <LogOut className="h-4 w-4" /> Check out ({rows.length})
+                        </Button>
+                        <Button size="sm" onClick={() => { setPrintItems(rows.map(itemFor)); clear(); }}>QR drucken ({rows.length})</Button>
+                    </>
                 )}
             />
             <QrPrintModal open={!!printItems} items={printItems ?? []} onClose={() => setPrintItems(null)} />

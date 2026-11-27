@@ -102,16 +102,65 @@ function NoteField({ value, onChange, error }: { value: string; onChange: (v: st
     );
 }
 
+export interface CheckoutData {
+    assignee_type: AssigneeType;
+    assignee_id: string;
+    status_id: string;
+    checkout_at: string;
+    expected_checkin: string;
+    note: string;
+}
+
+/** A fresh check-out form: to a user, today, with the "in use" status preselected. */
+export const checkoutDefaults = (options: CheckoutOptions): CheckoutData => ({
+    assignee_type: 'user',
+    assignee_id: '',
+    status_id: options.deployableStatusOptions.some((s) => s.value === options.checkoutStatusId) ? options.checkoutStatusId : '',
+    checkout_at: today(),
+    expected_checkin: '',
+    note: '',
+});
+
+interface CheckoutFieldsProps {
+    data: CheckoutData;
+    setData: <K extends keyof CheckoutData>(key: K, value: CheckoutData[K]) => void;
+    errors: Partial<Record<string, string>>;
+    options: CheckoutOptions;
+}
+
+/** The fields of a check-out, shared by the asset dialog and the bulk checkout page. */
+export function CheckoutFields({ data, setData, errors, options }: CheckoutFieldsProps) {
+    return (
+        <>
+            <div className="grid grid-cols-2 gap-4">
+                <SelectField id="assignee_type" label="Check out to" required options={TARGET_TYPES}
+                    value={data.assignee_type}
+                    onChange={(v) => { setData('assignee_type', v as AssigneeType); setData('assignee_id', ''); }}
+                    error={errors.assignee_type} />
+                {data.assignee_type === 'user' ? (
+                    <UserPicker id="assignee_id" label="User" options={options.assigneeOptions.user} createUrl={options.userCreateUrl}
+                        value={data.assignee_id} onChange={(v) => setData('assignee_id', v)} error={errors.assignee_id} />
+                ) : (
+                    <ComboboxField id="assignee_id" label={data.assignee_type === 'location' ? 'Location' : 'Asset'} required
+                        options={options.assigneeOptions[data.assignee_type]}
+                        value={data.assignee_id} onChange={(v) => setData('assignee_id', v)} error={errors.assignee_id} />
+                )}
+            </div>
+            <SelectField id="status_id" label="Status (— keeps the current one)" nullable options={options.deployableStatusOptions}
+                value={data.status_id} onChange={(v) => setData('status_id', v)} error={errors.status_id} />
+            <div className="grid grid-cols-2 gap-4">
+                <DateField id="checkout_at" label="Checkout date" value={data.checkout_at}
+                    onChange={(v) => setData('checkout_at', v)} error={errors.checkout_at} />
+                <DateField id="expected_checkin" label="Expected check-in" value={data.expected_checkin}
+                    onChange={(v) => setData('expected_checkin', v)} error={errors.expected_checkin} />
+            </div>
+            <NoteField value={data.note} onChange={(v) => setData('note', v)} error={errors.note} />
+        </>
+    );
+}
+
 function CheckoutForm({ assetId, options, onDone }: { assetId: string; options: CheckoutOptions; onDone: () => void }) {
-    const deployable = options.deployableStatusOptions;
-    const form = useForm({
-        assignee_type: 'user' as AssigneeType,
-        assignee_id: '',
-        status_id: deployable.some((s) => s.value === options.checkoutStatusId) ? options.checkoutStatusId : '',
-        checkout_at: today(),
-        expected_checkin: '',
-        note: '',
-    });
+    const form = useForm(checkoutDefaults(options));
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -125,29 +174,7 @@ function CheckoutForm({ assetId, options, onDone }: { assetId: string; options: 
                 <DialogDescription>Assign this asset to a user, a location or another asset.</DialogDescription>
             </DialogHeader>
             <form onSubmit={submit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <SelectField id="assignee_type" label="Check out to" required options={TARGET_TYPES}
-                        value={form.data.assignee_type}
-                        onChange={(v) => form.setData((d) => ({ ...d, assignee_type: v as AssigneeType, assignee_id: '' }))}
-                        error={form.errors.assignee_type} />
-                    {form.data.assignee_type === 'user' ? (
-                        <UserPicker id="assignee_id" label="User" options={options.assigneeOptions.user} createUrl={options.userCreateUrl}
-                            value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
-                    ) : (
-                        <ComboboxField id="assignee_id" label={form.data.assignee_type === 'location' ? 'Location' : 'Asset'} required
-                            options={options.assigneeOptions[form.data.assignee_type]}
-                            value={form.data.assignee_id} onChange={(v) => form.setData('assignee_id', v)} error={form.errors.assignee_id} />
-                    )}
-                </div>
-                <SelectField id="status_id" label="Status (— keeps the current one)" nullable options={deployable}
-                    value={form.data.status_id} onChange={(v) => form.setData('status_id', v)} error={form.errors.status_id} />
-                <div className="grid grid-cols-2 gap-4">
-                    <DateField id="checkout_at" label="Checkout date" value={form.data.checkout_at}
-                        onChange={(v) => form.setData('checkout_at', v)} error={form.errors.checkout_at} />
-                    <DateField id="expected_checkin" label="Expected check-in" value={form.data.expected_checkin}
-                        onChange={(v) => form.setData('expected_checkin', v)} error={form.errors.expected_checkin} />
-                </div>
-                <NoteField value={form.data.note} onChange={(v) => form.setData('note', v)} error={form.errors.note} />
+                <CheckoutFields data={form.data} setData={form.setData} errors={form.errors} options={options} />
                 <DialogFooter>
                     <Button type="button" variant="ghost" onClick={onDone}>Cancel</Button>
                     <Button type="submit" disabled={form.processing}>Check out</Button>

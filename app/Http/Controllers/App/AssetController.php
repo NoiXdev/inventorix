@@ -5,7 +5,6 @@ namespace App\Http\Controllers\App;
 use App\Enums\AttachmentCategory;
 use App\Enums\CategoryType;
 use App\Enums\StatusLabelType;
-use App\Enums\SystemStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\AssetRequest;
 use App\Models\Asset;
@@ -18,10 +17,10 @@ use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\StatusLabel;
 use App\Models\Supplier;
-use App\Models\User;
 use App\Services\CheckoutService;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
+use App\Support\Assets\CheckoutOptions;
 use App\Support\CustomFields\AssetCustomFields;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -153,7 +152,7 @@ class AssetController extends Controller
             'asset' => $this->detail($asset),
             'history' => AssetHistory::for($asset),
             // Loaded when a check-out or check-in dialog opens.
-            'checkoutOptions' => Inertia::optional(fn () => $this->checkoutOptions($asset)),
+            'checkoutOptions' => Inertia::optional(fn () => CheckoutOptions::for($asset)),
             'checkoutBlocker' => $asset->assignee_id === null ? $checkouts->checkoutBlocker($asset) : null,
             'customFields' => AssetCustomFields::forModel($asset->model_id)
                 ->map(fn (CustomField $f) => [
@@ -284,39 +283,6 @@ class AssetController extends Controller
     }
 
     /** @return array<string, mixed> */
-    private function checkoutOptions(Asset $asset): array
-    {
-        $statuses = StatusLabel::options();
-
-        return [
-            'assigneeOptions' => $this->assigneeOptions($asset),
-            'userCreateUrl' => route('app.users.quick-store'),
-            'deployableStatusOptions' => array_values(array_filter($statuses, fn (array $s) => $s['type'] === StatusLabelType::DEPLOYABLE->value)),
-            'statusOptions' => $statuses,
-            'locationOptions' => Location::options(),
-            // Preselected: a checkout puts the asset in use, a check-in into
-            // storage, as handovers do.
-            'checkoutStatusId' => StatusLabel::system(SystemStatus::IN_USE)->id,
-            'checkinStatusId' => StatusLabel::system(SystemStatus::STORAGE)->id,
-            'rtdLocationName' => $asset->rtd_location_id ? Location::paths(withTrashed: true)->get($asset->rtd_location_id) : null,
-        ];
-    }
-
-    /** @return array<string, list<array{value: string, label: string}>> */
-    private function assigneeOptions(?Asset $asset, array $locations = []): array
-    {
-        return [
-            'user' => User::query()->orderBy('name')->get()
-                ->map(fn (User $u) => ['value' => $u->id, 'label' => $u->name ?? $u->email ?? '—'])->all(),
-            'location' => $locations ?: Location::options(),
-            // Any other live asset; the service refuses an asset assigned to this one.
-            'asset' => Asset::query()->when($asset, fn ($q) => $q->whereKeyNot($asset->id))->get()
-                ->sortBy(fn (Asset $a) => mb_strtolower($a->displayName()))
-                ->map(fn (Asset $a) => ['value' => $a->id, 'label' => $a->displayName()])->values()->all(),
-        ];
-    }
-
-    /** @return array<string, mixed> */
     private function formOptions(?Asset $asset = null): array
     {
         // An asset whose status, location, supplier or assignee location was
@@ -349,7 +315,7 @@ class AssetController extends Controller
             'rtdLocationOptions' => $rtdLocations,
             'supplierOptions' => $suppliers,
             // Only a new asset picks an assignee here.
-            'assigneeOptions' => $asset ? null : $this->assigneeOptions(null, $liveLocations),
+            'assigneeOptions' => $asset ? null : CheckoutOptions::assignees(null, $liveLocations),
             'userCreateUrl' => route('app.users.quick-store'),
             'modelOptions' => AssetModel::query()->with('manufacturer')->orderBy('name')->get()
                 ->map(fn (AssetModel $m) => ['value' => $m->id, 'label' => '('.optional($m->manufacturer)->name.') '.$m->name])->all(),

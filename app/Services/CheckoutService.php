@@ -104,6 +104,55 @@ class CheckoutService
     }
 
     /**
+     * Check several assets out to the same target, all or none: if any of
+     * them cannot be checked out, nothing changes and the exception names
+     * every asset that failed and why.
+     *
+     * @param  list<string>  $assetIds
+     * @return int the number of assets checked out
+     *
+     * @throws CheckoutNotAllowedException
+     */
+    public function checkOutMany(
+        array $assetIds,
+        Model $target,
+        ?string $statusId = null,
+        ?CarbonInterface $checkoutAt = null,
+        ?CarbonInterface $expectedCheckin = null,
+        ?string $note = null,
+    ): int {
+        return DB::transaction(function () use ($assetIds, $target, $statusId, $checkoutAt, $expectedCheckin, $note): int {
+            // Lock all rows up front, in a fixed order, so overlapping bulk
+            // checkouts wait for each other instead of deadlocking.
+            $assets = Asset::withTrashed()->whereKey($assetIds)->orderBy('id')->lockForUpdate()->get();
+            if ($assets->count() !== count(array_unique($assetIds))) {
+                throw new CheckoutNotAllowedException('Some of the selected assets no longer exist.');
+            }
+
+            $problems = [];
+            foreach ($assets as $asset) {
+                try {
+                    if ($blocker = $this->checkoutBlocker($asset)) {
+                        throw new CheckoutNotAllowedException($blocker);
+                    }
+                    $this->guardTarget($asset, $target);
+                } catch (CheckoutNotAllowedException $e) {
+                    $problems[] = $asset->displayName().': '.$e->getMessage();
+                }
+            }
+            if ($problems !== []) {
+                throw new CheckoutNotAllowedException('Nothing was checked out. '.implode(' ', $problems));
+            }
+
+            foreach ($assets as $asset) {
+                $this->checkOut($asset, $target, $statusId, $checkoutAt, $expectedCheckin, $note);
+            }
+
+            return $assets->count();
+        });
+    }
+
+    /**
      * Check the asset in: unassign it, date and count the check-in and move
      * it to $locationId, else its default location, else leave it.
      */

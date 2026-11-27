@@ -74,6 +74,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::resource('accessories', AccessoryController::class)->except('show');
         Route::get('assets/export', [AssetExportController::class, 'index'])->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->name('assets.import');
+        Route::get('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCreate'])->name('assets.bulk-checkout.create');
+        Route::post('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCheckout'])->name('assets.bulk-checkout');
         Route::get('assets/{asset}/image', [AssetController::class, 'image'])->name('assets.image');
         Route::post('assets/{asset}/checkout', [AssetCheckoutController::class, 'checkout'])->name('assets.checkout');
         Route::post('assets/{asset}/checkin', [AssetCheckoutController::class, 'checkin'])->name('assets.checkin');
