@@ -32,12 +32,13 @@ type Field = 'status_id' | 'model_id' | 'location_id' | 'rtd_location_id' | 'sup
 const YES_NO: Option[] = [{ value: '1', label: 'Yes' }, { value: '0', label: 'No' }];
 
 /** A field that may also be emptied: its "Clear" checkbox empties it on every asset. */
-function Clearable({ field, cleared, onClear, children }: { field: Field; cleared: boolean; onClear: (field: Field, on: boolean) => void; children: React.ReactNode }) {
+function Clearable({ field, label, cleared, onClear, children }: { field: Field; label: string; cleared: boolean; onClear: (field: Field, on: boolean) => void; children: React.ReactNode }) {
     return (
         <div className="space-y-1">
-            <div className={cleared ? 'pointer-events-none opacity-50' : undefined} aria-disabled={cleared}>{children}</div>
+            {/* A disabled fieldset also keeps the keyboard out of a cleared field. */}
+            <fieldset disabled={cleared} className={cleared ? 'opacity-50' : undefined}>{children}</fieldset>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Checkbox checked={cleared} onCheckedChange={(v) => onClear(field, v === true)} aria-label={`Clear ${field}`} />
+                <Checkbox checked={cleared} onCheckedChange={(v) => onClear(field, v === true)} aria-label={`Clear ${label}`} />
                 Clear on all selected assets
             </label>
         </div>
@@ -64,7 +65,9 @@ export default function BulkEdit({ availableAssets, preselectedIds, skipped, sta
         if (on) form.setData(f, '');
     };
     const set = (f: Field) => (v: string) => form.setData(f, v);
-    const clearable = (f: Field, control: React.ReactNode) => <Clearable field={f} cleared={cleared(f)} onClear={setClear}>{control}</Clearable>;
+    const clearable = (f: Field, label: string, control: React.ReactNode) => (
+        <Clearable field={f} label={label} cleared={cleared(f)} onClear={setClear}>{control}</Clearable>
+    );
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -86,32 +89,33 @@ export default function BulkEdit({ availableAssets, preselectedIds, skipped, sta
                     <CardHeader>
                         <CardTitle>Changes</CardTitle>
                         <CardDescription>
-                            Only the fields you fill in change; empty fields stay as they are on each asset. Who an asset is assigned to changes through check-out and check-in.
+                            Only the fields you fill in change; empty fields stay as they are on each asset. Who an asset is assigned to changes through
+                            check-out and check-in; checked-out assets keep a deployable or pending status. Assets checked out to an edited asset move to its new location.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <SelectField id="status_id" label="Status" nullable options={statusOptions}
                                 value={form.data.status_id} onChange={set('status_id')} error={form.errors.status_id} />
-                            {clearable('model_id', <ComboboxField id="model_id" label="Model" nullable options={modelOptions}
+                            {clearable('model_id', 'Model', <ComboboxField id="model_id" label="Model" nullable options={modelOptions}
                                 value={form.data.model_id} onChange={set('model_id')} error={form.errors.model_id} />)}
-                            {clearable('location_id', <ComboboxField id="location_id" label="Location" nullable options={locationOptions}
+                            {clearable('location_id', 'Location', <ComboboxField id="location_id" label="Location" nullable options={locationOptions}
                                 value={form.data.location_id} onChange={set('location_id')} error={form.errors.location_id} />)}
-                            {clearable('rtd_location_id', <ComboboxField id="rtd_location_id" label="Default location" nullable options={locationOptions}
+                            {clearable('rtd_location_id', 'Default location', <ComboboxField id="rtd_location_id" label="Default location" nullable options={locationOptions}
                                 value={form.data.rtd_location_id} onChange={set('rtd_location_id')} error={form.errors.rtd_location_id} />)}
-                            {clearable('supplier_id', <ComboboxField id="supplier_id" label="Supplier" nullable options={supplierOptions}
+                            {clearable('supplier_id', 'Supplier', <ComboboxField id="supplier_id" label="Supplier" nullable options={supplierOptions}
                                 value={form.data.supplier_id} onChange={set('supplier_id')} error={form.errors.supplier_id} />)}
-                            {clearable('order_number', <TextField id="order_number" label="Order number"
+                            {clearable('order_number', 'Order number', <TextField id="order_number" label="Order number"
                                 value={form.data.order_number} onChange={set('order_number')} error={form.errors.order_number} />)}
-                            {clearable('purchase_date', <DateField id="purchase_date" label="Purchase date"
+                            {clearable('purchase_date', 'Purchase date', <DateField id="purchase_date" label="Purchase date"
                                 value={form.data.purchase_date} onChange={set('purchase_date')} error={form.errors.purchase_date} />)}
-                            {clearable('purchase_cost', <NumberField id="purchase_cost" label="Purchase cost"
+                            {clearable('purchase_cost', 'Purchase cost', <NumberField id="purchase_cost" label="Purchase cost"
                                 value={form.data.purchase_cost} onChange={set('purchase_cost')} error={form.errors.purchase_cost} />)}
-                            {clearable('warranty_months', <NumberField id="warranty_months" label="Warranty (months)" step="1" min="0"
+                            {clearable('warranty_months', 'Warranty (months)', <NumberField id="warranty_months" label="Warranty (months)" step="1" min="0"
                                 value={form.data.warranty_months} onChange={set('warranty_months')} error={form.errors.warranty_months} />)}
-                            {clearable('next_audit_date', <DateField id="next_audit_date" label="Next audit"
+                            {clearable('next_audit_date', 'Next audit', <DateField id="next_audit_date" label="Next audit"
                                 value={form.data.next_audit_date} onChange={set('next_audit_date')} error={form.errors.next_audit_date} />)}
-                            {clearable('expected_checkin', <DateField id="expected_checkin" label="Expected check-in"
+                            {clearable('expected_checkin', 'Expected check-in', <DateField id="expected_checkin" label="Expected check-in"
                                 value={form.data.expected_checkin} onChange={set('expected_checkin')} error={form.errors.expected_checkin} />)}
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
@@ -122,7 +126,7 @@ export default function BulkEdit({ availableAssets, preselectedIds, skipped, sta
                             <SelectField id="depreciate" label="Depreciate" nullable options={YES_NO}
                                 value={form.data.depreciate} onChange={(v) => form.setData('depreciate', v)} error={form.errors.depreciate} />
                         </div>
-                        {clearable('notes', (
+                        {clearable('notes', 'Notes', (
                             <div className="space-y-2">
                                 <Label htmlFor="notes">Notes (replace)</Label>
                                 <Textarea id="notes" value={form.data.notes} onChange={(e) => form.setData('notes', e.target.value)} />

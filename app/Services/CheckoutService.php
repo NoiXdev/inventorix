@@ -265,8 +265,8 @@ class CheckoutService
         }
     }
 
-    /** Assets assigned to this asset are where it is. */
-    private function moveAssignedAssets(Asset $asset): void
+    /** Assets assigned to this asset are where it is. Also used when an asset's location is edited. */
+    public function moveAssignedAssets(Asset $asset): void
     {
         if ($asset->location_id === null) {
             return;

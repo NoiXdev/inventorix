@@ -97,4 +97,68 @@ class AssetBulkEditTest extends TestCase
         $this->actingAs($viewer)->get('/app/assets/bulk-edit')->assertForbidden();
         $this->actingAs($viewer)->put('/app/assets/bulk-edit', ['asset_ids' => [$asset->id], 'notes' => 'x'])->assertForbidden();
     }
+
+    public function test_checked_out_assets_keep_a_deployable_or_pending_status_and_are_not_archived(): void
+    {
+        $out = Asset::factory()->create(['name' => 'Lent laptop']);
+        $free = Asset::factory()->unassigned()->create();
+        $before = $out->status_id;
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', [
+            'asset_ids' => [$out->id, $free->id], 'status_id' => StatusLabel::system(SystemStatus::DEFECT)->id,
+        ])->assertSessionHasErrors('status_id');
+        $this->assertStringContainsString('Lent laptop', session('errors')->first('status_id'));
+        $this->assertSame($before, $out->refresh()->status_id);
+        $this->assertNotSame(StatusLabel::system(SystemStatus::DEFECT)->id, $free->refresh()->status_id);
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', ['asset_ids' => [$out->id], 'archived' => '1'])
+            ->assertSessionHasErrors('archived');
+        $this->assertFalse((bool) $out->refresh()->archived);
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', [
+            'asset_ids' => [$out->id], 'status_id' => StatusLabel::system(SystemStatus::LEND)->id,
+        ])->assertSessionHasNoErrors();
+        $this->assertSame(StatusLabel::system(SystemStatus::LEND)->id, $out->refresh()->status_id);
+    }
+
+    public function test_unassigned_assets_take_any_status_and_yes_no_fields_both_ways(): void
+    {
+        $asset = Asset::factory()->unassigned()->create(['requestable' => true, 'archived' => false]);
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', [
+            'asset_ids' => [$asset->id], 'status_id' => StatusLabel::system(SystemStatus::DEFECT)->id,
+            'requestable' => '0', 'archived' => '1', 'purchase_cost' => '1234.56',
+        ])->assertSessionHasNoErrors();
+
+        $asset->refresh();
+        $this->assertSame(SystemStatus::DEFECT, $asset->status->system_key);
+        $this->assertFalse($asset->requestable);
+        $this->assertTrue($asset->archived);
+        $this->assertSame('1234.56', (string) $asset->purchase_cost);
+    }
+
+    public function test_assets_checked_out_to_an_edited_asset_move_with_it(): void
+    {
+        $dock = Asset::factory()->unassigned()->create();
+        $child = Asset::factory()->assignedTo($dock)->create(['location_id' => $dock->location_id]);
+        $room = Location::factory()->create();
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', ['asset_ids' => [$dock->id], 'location_id' => $room->id])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($room->id, $child->refresh()->location_id);
+    }
+
+    public function test_deleted_locations_and_suppliers_are_refused(): void
+    {
+        $asset = Asset::factory()->create();
+        $location = Location::factory()->create();
+        $supplier = Supplier::factory()->create();
+        $location->delete();
+        $supplier->delete();
+
+        $this->actingAs($this->editor())->put('/app/assets/bulk-edit', [
+            'asset_ids' => [$asset->id], 'location_id' => $location->id, 'supplier_id' => $supplier->id,
+        ])->assertSessionHasErrors(['location_id', 'supplier_id']);
+    }
 }

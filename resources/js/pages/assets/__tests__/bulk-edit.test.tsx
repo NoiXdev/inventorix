@@ -37,7 +37,7 @@ describe('Bulk edit page', () => {
     it('sends only what was filled in, plus the cleared fields', () => {
         render(<BulkEdit {...props} />);
         fireEvent.change(screen.getByLabelText('Order number'), { target: { value: 'PO-7' } });
-        fireEvent.click(screen.getByLabelText('Clear notes'));
+        fireEvent.click(screen.getByLabelText('Clear Notes'));
         fireEvent.click(screen.getByRole('button', { name: 'Update 2' }));
 
         const [method, url, data] = submit.mock.calls[0];
@@ -48,10 +48,16 @@ describe('Bulk edit page', () => {
     it('clearing a field empties what was typed into it', () => {
         render(<BulkEdit {...props} />);
         fireEvent.change(screen.getByLabelText('Order number'), { target: { value: 'PO-7' } });
-        fireEvent.click(screen.getByLabelText('Clear order_number'));
+        fireEvent.click(screen.getByLabelText('Clear Order number'));
         fireEvent.click(screen.getByRole('button', { name: 'Update 2' }));
 
         expect(submit.mock.calls[0][2]).toMatchObject({ order_number: '', clear: ['order_number'] });
+    });
+
+    it('a cleared field cannot be typed into', () => {
+        render(<BulkEdit {...props} />);
+        fireEvent.click(screen.getByLabelText('Clear Order number'));
+        expect(screen.getByLabelText('Order number')).toBeDisabled();
     });
 
     it('shows who has each asset', () => {
