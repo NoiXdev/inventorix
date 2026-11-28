@@ -23,6 +23,9 @@ class User extends Authenticatable
 {
     use CausesActivity, HasFactory, HasUuids, LogsActivity, Notifiable;
 
+    /** Why the last active superuser cannot lose superuser access or login. */
+    public const LAST_SUPERUSER = 'At least one active superuser must remain.';
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -110,6 +113,16 @@ class User extends Authenticatable
     public function isSuperuser(): bool
     {
         return $this->grants(Permission::SUPERUSER);
+    }
+
+    /** Whether this user is the only one left who is a superuser and can sign in. */
+    public function isLastActiveSuperuser(): bool
+    {
+        if (! $this->login_enabled || ! $this->isSuperuser()) {
+            return false;
+        }
+
+        return ! static::activeSuperuserExists($this);
     }
 
     /** Whether anyone (optionally ignoring one user) is a superuser who can sign in. */

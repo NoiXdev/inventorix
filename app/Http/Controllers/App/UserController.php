@@ -32,8 +32,6 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
-    private const LAST_SUPERUSER = 'At least one active superuser must remain.';
-
     public function index(Request $request): Response
     {
         $users = TableQuery::for(User::query()->with('department:id,name')->withCount('assets'), $request)
@@ -128,6 +126,7 @@ class UserController extends Controller
             'consumables' => $request->user()->can('consumables.view') ? ConsumableAssignment::handedTo($user) : null,
             // Edit / delete are only offered when the policy would allow them.
             'canManage' => $request->user()->can('manage', $user),
+            'canOffboard' => UserOffboardingController::mayOffboard($request->user()),
             'assets' => $user->assets->map(fn (Asset $a) => [
                 'id' => $a->id,
                 'name' => $a->name,
@@ -198,8 +197,8 @@ class UserController extends Controller
             ]);
         }
 
-        if ($this->isLastActiveSuperuser($user)) {
-            throw ValidationException::withMessages(['user' => self::LAST_SUPERUSER]);
+        if ($user->isLastActiveSuperuser()) {
+            throw ValidationException::withMessages(['user' => User::LAST_SUPERUSER]);
         }
 
         DB::transaction(function () use ($user): void {
@@ -315,23 +314,13 @@ class UserController extends Controller
             default => 'permissions',
         };
 
-        if ($this->isLastActiveSuperuser($user)) {
-            throw ValidationException::withMessages([$field => self::LAST_SUPERUSER]);
+        if ($user->isLastActiveSuperuser()) {
+            throw ValidationException::withMessages([$field => User::LAST_SUPERUSER]);
         }
 
         if ($user->is($actor) && ! $after->isSuperuser()) {
             throw ValidationException::withMessages([$field => 'You cannot remove your own superuser access.']);
         }
-    }
-
-    /** Whether this user is the only one left who is a superuser and can sign in. */
-    private function isLastActiveSuperuser(User $user): bool
-    {
-        if (! $user->login_enabled || ! $user->isSuperuser()) {
-            return false;
-        }
-
-        return ! User::activeSuperuserExists($user);
     }
 
     /**

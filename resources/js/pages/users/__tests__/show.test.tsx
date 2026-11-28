@@ -75,4 +75,13 @@ describe('UserShow', () => {
         expect(screen.getByText('Berlin')).toBeInTheDocument();
         expect(screen.getByText('2024-01-15')).toBeInTheDocument();
     });
+
+    it('offers the offboarding page only when canOffboard', () => {
+        page.props = { auth: { user: null, can: {} } };
+        const { unmount } = render(<UserShow user={user} assets={[]} groups={[]} effective={{}} />);
+        expect(screen.queryByRole('link', { name: /Offboarding/ })).not.toBeInTheDocument();
+        unmount();
+        render(<UserShow user={user} assets={[]} groups={[]} effective={{}} canOffboard />);
+        expect(screen.getByRole('link', { name: /Offboarding/ })).toHaveAttribute('href', '/app/users/u1/offboard');
+    });
 });

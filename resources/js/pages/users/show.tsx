@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { toast } from 'sonner';
+import { UserMinus } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,8 @@ interface Props {
     effective: Record<string, boolean>;
     /** Whether the current user may edit or delete this user (UserPolicy::manage). */
     canManage?: boolean;
+    /** Whether the current user may check anything in, i.e. use the offboarding page. */
+    canOffboard?: boolean;
     /** License seats this user holds; null without licenses.view. */
     licenses?: HeldLicense[] | null;
     /** Accessories checked out to this user; null without accessories.view. */
@@ -44,7 +47,7 @@ function bySection(effective: Record<string, boolean>): [string, string[]][] {
     return [...sections.entries()];
 }
 
-export default function UserShow({ user, assets, groups = [], effective = {}, canManage = false, licenses = null, accessories = null, consumables = null }: Props) {
+export default function UserShow({ user, assets, groups = [], effective = {}, canManage = false, canOffboard = false, licenses = null, accessories = null, consumables = null }: Props) {
     const can = useCan();
     const sections = bySection(effective);
     return (
@@ -58,6 +61,7 @@ export default function UserShow({ user, assets, groups = [], effective = {}, ca
                     </Badge>
                 </div>
                 <div className="flex gap-2">
+                    {canOffboard && <Button asChild variant="outline"><Link href={`/app/users/${user.id}/offboard`}><UserMinus className="mr-1 h-4 w-4" />Offboarding</Link></Button>}
                     {can('users.edit') && canManage && <Button asChild variant="outline"><Link href={`/app/users/${user.id}/edit`}>Edit</Link></Button>}
                     {can('users.delete') && canManage && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}>Delete</Button>}
                 </div>

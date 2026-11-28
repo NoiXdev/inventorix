@@ -36,6 +36,7 @@ use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\StatusLabelController;
 use App\Http\Controllers\App\SupplierController;
 use App\Http\Controllers\App\UserController;
+use App\Http\Controllers\App\UserOffboardingController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Middleware\ApplyRuntimeSettings;
@@ -134,6 +135,8 @@ Route::prefix('app')->name('app.')->group(function () {
         });
         // `manage` (UserPolicy): only a superuser may change a user who holds admin or superuser.
         Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->middleware(['can:users.edit', 'can:manage,user'])->name('users.send-reset');
+        Route::get('users/{user}/offboard', [UserOffboardingController::class, 'create'])->middleware('can:users.view')->name('users.offboard');
+        Route::post('users/{user}/offboard', [UserOffboardingController::class, 'store'])->middleware('can:users.view')->name('users.offboard.store');
         Route::post('users/quick', [UserController::class, 'quickStore'])->middleware('can:users.create')->name('users.quick-store');
         $guarded('users', UserController::class, 'users')
             ->middlewareFor(['edit', 'update'], ['can:users.edit', 'can:manage,user'])
