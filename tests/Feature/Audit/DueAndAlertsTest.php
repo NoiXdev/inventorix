@@ -78,7 +78,7 @@ class DueAndAlertsTest extends TestCase
             ->assertInertia(fn (Assert $p) => $p->where('due', [
                 'audit_due' => 1, 'audit_overdue' => 1, 'checkin_due' => 1, 'checkin_overdue' => 1,
             ]));
-        $this->actingAs(User::factory()->create())->get('/app')
+        $this->actingAs(User::factory()->withPermissions(['reports.view' => 1])->create())->get('/app')
             ->assertInertia(fn (Assert $p) => $p->missing('due'));
     }
 

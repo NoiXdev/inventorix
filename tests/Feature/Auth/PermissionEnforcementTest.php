@@ -209,7 +209,7 @@ class PermissionEnforcementTest extends TestCase
 
     public function test_dashboard_is_open_but_hides_what_the_user_may_not_see(): void
     {
-        $nobody = User::factory()->create(['login_enabled' => true]);
+        $nobody = User::factory()->withPermissions(['reports.view' => 1])->create(['login_enabled' => true]);
 
         $this->actingAs($nobody)->get('/app')
             ->assertOk()

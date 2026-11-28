@@ -21,6 +21,7 @@ use App\Http\Controllers\App\ConsumableController;
 use App\Http\Controllers\App\CustomFieldController;
 use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\MyItemsController;
 use App\Http\Controllers\App\DepartmentController;
 use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
@@ -75,6 +76,7 @@ Route::prefix('app')->name('app.')->group(function () {
 
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('my-items', [MyItemsController::class, 'index'])->name('my-items');
         Route::get('manufacturers/{manufacturer}/image', [ManufacturerController::class, 'image'])
             ->name('manufacturers.image');
         $guarded('manufacturers', ManufacturerController::class, 'manufacturers', ['show']);

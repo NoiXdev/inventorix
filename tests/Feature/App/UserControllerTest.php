@@ -253,7 +253,7 @@ class UserControllerTest extends TestCase
         // Identity lives directly on User now (Task 1); no more live person_id lookup.
         $user = User::factory()->create(['name' => 'Ada Lovelace', 'login_enabled' => true]);
 
-        $this->actingAs($user)->get('/app')
+        $this->actingAs($user)->get('/app/my-items')
             ->assertInertia(fn (Assert $p) => $p->where('auth.user.name', 'Ada Lovelace')->etc());
     }
 
@@ -261,7 +261,7 @@ class UserControllerTest extends TestCase
     {
         $loginOnly = User::factory()->create(['name' => null, 'email' => 'svc@x.de', 'login_enabled' => true]);
 
-        $this->actingAs($loginOnly)->get('/app')
+        $this->actingAs($loginOnly)->get('/app/my-items')
             ->assertInertia(fn (Assert $p) => $p->where('auth.user.name', 'svc@x.de')->etc());
     }
 }

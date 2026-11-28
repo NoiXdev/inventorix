@@ -15,7 +15,7 @@ class InertiaSmokeTest extends TestCase
     {
         // Task 10 guards the whole /app group with `auth`, so the smoke test
         // now needs an authenticated user to reach the dashboard.
-        $user = User::factory()->create(['login_enabled' => true]);
+        $user = User::factory()->withPermissions(['reports.view' => 1])->create(['login_enabled' => true]);
 
         $this->actingAs($user)->get('/app')
             ->assertOk()

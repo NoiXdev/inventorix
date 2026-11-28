@@ -13,11 +13,11 @@ class EnsureLoginEnabledTest extends TestCase
     public function test_a_signed_in_user_whose_login_is_disabled_is_logged_out_on_the_next_request(): void
     {
         $user = User::factory()->create(['login_enabled' => true]);
-        $this->actingAs($user)->get('/app')->assertOk();
+        $this->actingAs($user)->get('/app/my-items')->assertOk();
 
         $user->forceFill(['login_enabled' => false])->save();
 
-        $this->get('/app')
+        $this->get('/app/my-items')
             ->assertRedirect(route('app.login'))
             ->assertSessionHas('error', 'This account is disabled.');
         $this->assertGuest();

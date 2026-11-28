@@ -9,6 +9,7 @@ use App\Models\Attachment;
 use App\Models\Incident;
 use App\Settings\AlertSettings;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
@@ -20,9 +21,15 @@ class DashboardController extends Controller
      * Reachable by every logged-in user; widgets whose data the user may not
      * view are left out of the props entirely.
      */
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
+
+        // Nothing to manage: the employee's landing page is their own items.
+        if (! in_array(true, $user->effectivePermissions(), true)) {
+            return to_route('app.my-items');
+        }
+
         $props = [];
 
         if ($user->can('assets.view')) {

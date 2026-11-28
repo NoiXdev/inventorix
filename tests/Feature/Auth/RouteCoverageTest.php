@@ -16,6 +16,7 @@ class RouteCoverageTest extends TestCase
     private const EXEMPT = [
         'app.logout',
         'app.dashboard',
+        'app.my-items',
     ];
 
     public function test_every_app_route_has_a_permission_check(): void

@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck, Building2, Cpu, PackagePlus } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck, Building2, Cpu, PackagePlus, Backpack } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -21,6 +21,7 @@ export const navGroups: NavGroup[] = [
         label: 'Overview',
         items: [
             { label: 'Dashboard', href: '/app', icon: LayoutDashboard, match: (p) => p === '/app' },
+            { label: 'My items', href: '/app/my-items', icon: Backpack, match: (p) => p.startsWith('/app/my-items') },
         ],
     },
     {
