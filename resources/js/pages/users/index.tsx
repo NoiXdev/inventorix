@@ -1,11 +1,12 @@
 import { Link, router } from '@inertiajs/react';
 import { type ColumnDef } from '@tanstack/react-table';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, KeyRound, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Can } from '@/components/can';
 import { Badge } from '@/components/ui/badge';
+import { useCan } from '@/hooks/use-can';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 
@@ -44,6 +45,7 @@ interface IndexProps {
 }
 
 export default function UsersIndex({ users, departmentOptions = [], locationOptions = [], managerOptions = [] }: IndexProps) {
+    const can = useCan();
     const filters = [
         { key: 'department_id', label: 'Department', options: departmentOptions },
         { key: 'location_id', label: 'Location', options: locationOptions },
@@ -58,7 +60,14 @@ export default function UsersIndex({ users, departmentOptions = [], locationOpti
             </div>
             <DataTable columns={columns} rows={users.data} pagination={users.meta} baseUrl="/app/users"
                 sortable={['name', 'email', 'login_enabled', 'assets_count', 'employee_num', 'jobtitle']} filters={filters}
-                rowHref={(r) => `/app/users/${r.id}`} />
+                rowHref={(r) => `/app/users/${r.id}`}
+                enableSelection
+                getRowId={(r) => r.id}
+                renderBulkActions={(rows, clear) => can('users.edit') ? (
+                    <Button size="sm" variant="outline" onClick={() => router.post('/app/users/bulk-enable-login', { ids: rows.map((r) => r.id) }, { preserveScroll: true, onSuccess: clear })}>
+                        <KeyRound className="h-4 w-4" /> Enable login ({rows.length})
+                    </Button>
+                ) : null} />
         </AppLayout>
     );
 }

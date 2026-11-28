@@ -1,12 +1,19 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const h = vi.hoisted(() => ({ can: {} as Record<string, boolean>, post: vi.fn() }));
 
 vi.mock('@/layouts/app-layout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
-vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { auth: { user: null, can: { 'users.edit': true, 'users.delete': true, 'users.create': true } } } }), Link: ({ children, href }: any) => <a href={href}>{children}</a>, router: { delete: vi.fn(), get: vi.fn(), visit: vi.fn() } }));
+vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { auth: { user: null, can: h.can } } }), Link: ({ children, href }: any) => <a href={href}>{children}</a>, router: { delete: vi.fn(), get: vi.fn(), visit: vi.fn(), post: h.post } }));
 
 import UsersIndex from '../index';
 
 describe('UsersIndex', () => {
+    beforeEach(() => {
+        h.can = { 'users.edit': true, 'users.delete': true, 'users.create': true };
+        h.post.mockClear();
+    });
+
     it('renders a user row with name, email and assets count', () => {
         render(<UsersIndex users={{ data: [{ id: 'u1', name: 'Ada Lovelace', email: 'ada@x.de', login_enabled: true, assets_count: 2 }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
         expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
@@ -31,5 +38,21 @@ describe('UsersIndex', () => {
     it('renders the profile columns', () => {
         render(<UsersIndex users={{ data: [{ id: 'u1', name: 'Ada', email: 'a@x.de', login_enabled: true, assets_count: 0, employee_num: 'E-7', jobtitle: 'Engineer', department_name: 'Finance', location_name: 'Berlin' }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
         for (const t of ['E-7', 'Engineer', 'Finance', 'Berlin']) expect(screen.getByText(t)).toBeInTheDocument();
+    });
+
+    const oneRow = () => render(<UsersIndex users={{ data: [{ id: 'u1', name: 'Ada', email: 'a@x.de', login_enabled: false, assets_count: 0 }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
+
+    it('posts the selected ids to enable login when the user may edit users', () => {
+        oneRow();
+        fireEvent.click(screen.getAllByRole('checkbox', { name: 'Select row' })[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Enable login \(1\)/ }));
+        expect(h.post).toHaveBeenCalledWith('/app/users/bulk-enable-login', { ids: ['u1'] }, expect.objectContaining({ preserveScroll: true }));
+    });
+
+    it('offers no bulk enable-login without users.edit', () => {
+        h.can = { 'users.create': true };
+        oneRow();
+        fireEvent.click(screen.getAllByRole('checkbox', { name: 'Select row' })[0]);
+        expect(screen.queryByRole('button', { name: /Enable login/ })).not.toBeInTheDocument();
     });
 });

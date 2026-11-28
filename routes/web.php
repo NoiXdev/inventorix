@@ -42,6 +42,7 @@ use App\Http\Controllers\App\SettingsController;
 use App\Http\Controllers\App\StatusLabelController;
 use App\Http\Controllers\App\SupplierController;
 use App\Http\Controllers\App\UserController;
+use App\Http\Controllers\App\UserBulkLoginController;
 use App\Http\Controllers\App\UserOffboardingController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
@@ -151,6 +152,7 @@ Route::prefix('app')->name('app.')->group(function () {
             Route::get('qr-generator/download', [GeneratorController::class, 'download'])->name('qr-generator.download');
             Route::get('qr-generator/codes', [GeneratorController::class, 'codes'])->name('qr-generator.codes');
         });
+        Route::post('users/bulk-enable-login', [UserBulkLoginController::class, 'enable'])->middleware('can:users.edit')->name('users.bulk-enable-login');
         // `manage` (UserPolicy): only a superuser may change a user who holds admin or superuser.
         Route::post('users/{user}/send-reset', [UserController::class, 'sendReset'])->middleware(['can:users.edit', 'can:manage,user'])->name('users.send-reset');
         Route::get('users/{user}/offboard', [UserOffboardingController::class, 'create'])->middleware('can:users.view')->name('users.offboard');
