@@ -21,6 +21,7 @@ use App\Http\Controllers\App\ConsumableController;
 use App\Http\Controllers\App\CustomFieldController;
 use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\MyAcceptanceController;
 use App\Http\Controllers\App\MyItemsController;
 use App\Http\Controllers\App\DepartmentController;
 use App\Http\Controllers\App\DepreciationController;
@@ -77,6 +78,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('my-items', [MyItemsController::class, 'index'])->name('my-items');
+        Route::get('my-items/acceptances/{acceptance}', [MyAcceptanceController::class, 'show'])->name('my-items.acceptances.show');
+        Route::post('my-items/acceptances/{acceptance}', [MyAcceptanceController::class, 'respond'])->name('my-items.acceptances.respond');
         Route::get('manufacturers/{manufacturer}/image', [ManufacturerController::class, 'image'])
             ->name('manufacturers.image');
         $guarded('manufacturers', ManufacturerController::class, 'manufacturers', ['show']);

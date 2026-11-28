@@ -17,6 +17,8 @@ class RouteCoverageTest extends TestCase
         'app.logout',
         'app.dashboard',
         'app.my-items',
+        'app.my-items.acceptances.show',
+        'app.my-items.acceptances.respond',
     ];
 
     public function test_every_app_route_has_a_permission_check(): void
