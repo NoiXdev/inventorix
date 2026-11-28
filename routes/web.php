@@ -27,6 +27,7 @@ use App\Http\Controllers\App\GeneratorController;
 use App\Http\Controllers\App\GroupController;
 use App\Http\Controllers\App\HandoverController;
 use App\Http\Controllers\App\IncidentController;
+use App\Http\Controllers\App\KitCheckoutController;
 use App\Http\Controllers\App\KitController;
 use App\Http\Controllers\App\LicenseController;
 use App\Http\Controllers\App\LicenseSeatController;
@@ -114,6 +115,8 @@ Route::prefix('app')->name('app.')->group(function () {
         $guarded('components', ComponentController::class, 'components');
         Route::post('components/{component}/checkout', [ComponentCheckoutController::class, 'checkout'])->middleware('can:components.checkout')->name('components.checkout');
         Route::post('component-assets/{componentAsset}/checkin', [ComponentCheckoutController::class, 'checkin'])->middleware('can:components.checkin')->name('component-assets.checkin');
+        Route::get('kits/{kit}/checkout', [KitCheckoutController::class, 'create'])->middleware('can:kits.checkout')->name('kits.checkout');
+        Route::post('kits/{kit}/checkout', [KitCheckoutController::class, 'store'])->middleware('can:kits.checkout')->name('kits.checkout.store');
         $guarded('kits', KitController::class, 'kits');
         Route::get('assets/export', [AssetExportController::class, 'index'])->middleware('can:assets.view')->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->middleware(['can:import', 'can:assets.create'])->name('assets.import');

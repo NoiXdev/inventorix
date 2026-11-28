@@ -7,7 +7,6 @@ use App\Http\Requests\App\KitRequest;
 use App\Models\Kit;
 use App\Models\KitItem;
 use App\Support\Table\TableQuery;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,11 +58,9 @@ class KitController extends Controller
 
     public function show(Request $request, Kit $kit): Response
     {
-        $kit->load('items.item');
-
         return Inertia::render('kits/show', [
             'kit' => $kit->only(['id', 'name', 'notes']),
-            'lines' => $this->ordered($kit->items)->map(fn (KitItem $line) => [
+            'lines' => $kit->lines()->map(fn (KitItem $line) => [
                 'id' => $line->id,
                 'type' => $line->typeKey(),
                 'item_id' => $line->item_id,
@@ -77,12 +74,10 @@ class KitController extends Controller
 
     public function edit(Kit $kit): Response
     {
-        $kit->load('items.item');
-
         return Inertia::render('kits/edit', [
             'kit' => [
                 ...$kit->only(['id', 'name', 'notes']),
-                'items' => $this->ordered($kit->items)->map(fn (KitItem $line) => [
+                'items' => $kit->lines()->map(fn (KitItem $line) => [
                     'type' => $line->typeKey(),
                     'id' => $line->item_id,
                     'qty' => $line->qty,
@@ -132,23 +127,6 @@ class KitController extends Controller
         foreach ($wanted as $line) {
             $kit->items()->create(['item_type' => KitItem::TYPES[$line['type']], 'item_id' => $line['id'], 'qty' => (int) $line['qty']]);
         }
-    }
-
-    /**
-     * Lines have no position of their own: group them by type, then by name.
-     *
-     * @param  Collection<int, KitItem>  $items  with `item` loaded
-     * @return Collection<int, KitItem>
-     */
-    private function ordered(Collection $items): Collection
-    {
-        $types = array_flip(array_values(KitItem::TYPES));
-
-        return $items->sortBy([
-            fn (KitItem $a, KitItem $b) => ($types[$a->item_type] ?? 99) <=> ($types[$b->item_type] ?? 99),
-            fn (KitItem $a, KitItem $b) => strcasecmp((string) $a->item?->name, (string) $b->item?->name),
-            fn (KitItem $a, KitItem $b) => $a->id <=> $b->id,
-        ])->values();
     }
 
     private function itemUrl(KitItem $line): ?string
