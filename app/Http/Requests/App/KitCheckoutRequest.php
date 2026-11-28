@@ -103,11 +103,11 @@ class KitCheckoutRequest extends FormRequest
             return 'An asset can only be chosen once.';
         }
 
-        $models = Asset::query()->whereIn('id', $all)->pluck('model_id', 'id');
+        $models = Asset::query()->where('archived', false)->whereIn('id', $all)->pluck('model_id', 'id');
         foreach ($modelLines as $line) {
             foreach ($chosen[$line->id] as $id) {
                 if (($models[$id] ?? null) !== $line->item_id) {
-                    return 'A chosen asset does not exist or is not a '.($line->item?->name ?? 'asset of this model').'.';
+                    return 'A chosen asset does not exist, is archived or is not a '.($line->item?->name ?? 'asset of this model').'.';
                 }
             }
         }

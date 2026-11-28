@@ -92,6 +92,22 @@ class ComponentCheckoutTest extends TestCase
         $this->service()->checkOut($trashed, Asset::factory()->create(), 1);
     }
 
+    public function test_an_asset_trashed_after_it_was_passed_in_is_refused(): void
+    {
+        $component = Component::factory()->create(['qty' => 2]);
+        $asset = Asset::factory()->create();
+        Asset::query()->whereKey($asset->id)->first()->delete(); // the passed-in instance still looks live
+
+        $this->assertFalse($asset->trashed());
+        $this->expectException(ComponentCheckoutException::class);
+        $this->expectExceptionMessage('The asset is deleted.');
+        try {
+            $this->service()->checkOut($component, $asset, 1);
+        } finally {
+            $this->assertSame(0, ComponentAsset::query()->count());
+        }
+    }
+
     public function test_partial_and_full_check_in(): void
     {
         $component = Component::factory()->create(['qty' => 5]);

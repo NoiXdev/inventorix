@@ -36,6 +36,12 @@ class ComponentService
             if ($locked === null) {
                 throw new ComponentCheckoutException('The component is deleted.');
             }
+            // Lock order is component, then asset, then component_assets row; AssetController::destroy
+            // (checkInAllFor) takes asset before component_assets, so the two never wait on each other in a cycle.
+            $liveAsset = Asset::withTrashed()->whereKey($asset->id)->lockForUpdate()->first();
+            if ($liveAsset === null || $liveAsset->trashed()) {
+                throw new ComponentCheckoutException('The asset is deleted.');
+            }
             $remaining = $locked->remaining();
             if ($remaining < $qty) {
                 throw new ComponentCheckoutException($remaining === 0
@@ -94,6 +100,8 @@ class ComponentService
     public function checkInAllFor(Asset $asset, ?string $note = null): int
     {
         return DB::transaction(function () use ($asset, $note): int {
+            // Asset first, like checkOut, so a concurrent check-out and this never lock in opposite orders.
+            Asset::withTrashed()->whereKey($asset->id)->lockForUpdate()->first();
             $units = 0;
             foreach (ComponentAsset::query()->where('asset_id', $asset->id)->pluck('id') as $id) {
                 // Re-read under the lock: a row may have been checked in meanwhile.

@@ -131,6 +131,15 @@ class KitCheckoutTest extends TestCase
         }
     }
 
+    public function test_an_archived_asset_is_rejected(): void
+    {
+        $this->laptops[1]->update(['archived' => true]);
+
+        $this->actingAs($this->admin())->post($this->url(), $this->payload())
+            ->assertSessionHasErrors('assets');
+        $this->assertNothingChanged();
+    }
+
     public function test_the_note_is_appended(): void
     {
         $this->actingAs($this->admin())->post($this->url(), $this->payload(extra: ['note' => 'Welcome']))

@@ -176,7 +176,8 @@ class KitTest extends TestCase
         $this->actingAs($this->admin())->get("/app/kits/{$kit->id}/edit")
             ->assertInertia(fn (Assert $p) => $p->component('kits/edit')
                 ->where('kit.items.0', fn ($line) => $line['type'] === 'accessory' && $line['id'] === $accessory->id)
-                ->where('accessoryOptions.0.value', $accessory->id));
+                ->where('accessoryOptions.0.value', $accessory->id)
+                ->where('accessoryOptions.0.label', $accessory->name.' (deleted)'));
     }
 
     public function test_index_rows(): void

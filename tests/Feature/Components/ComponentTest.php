@@ -119,6 +119,22 @@ class ComponentTest extends TestCase
             ->assertInertia(fn (Assert $p) => $p->component('components/show')->where('component.id', $component->id));
     }
 
+    public function test_show_does_not_link_a_deleted_asset(): void
+    {
+        $component = Component::factory()->create(['qty' => 3]);
+        $live = Asset::factory()->create(['name' => 'Live box']);
+        $gone = Asset::factory()->create(['name' => 'Gone box']);
+        foreach ([$live, $gone] as $a) {
+            ComponentAsset::create(['component_id' => $component->id, 'asset_id' => $a->id, 'assigned_qty' => 1, 'checked_out_at' => now()]);
+        }
+        $gone->delete();
+
+        $this->actingAs($this->admin())->get("/app/components/{$component->id}")
+            ->assertInertia(fn (Assert $p) => $p->component('components/show')
+                ->where('checkouts', fn ($rows) => collect($rows)->contains(fn ($r) => $r['asset']['name'] === 'Live box' && $r['asset']['url'] === "/app/assets/{$live->id}")
+                    && collect($rows)->contains(fn ($r) => $r['asset']['name'] === 'Gone box (deleted)' && $r['asset']['url'] === null)));
+    }
+
     public function test_catalogue_has_components_after_consumables(): void
     {
         $sections = array_column(Permission::catalogue(), 'section');

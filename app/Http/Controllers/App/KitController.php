@@ -155,8 +155,8 @@ class KitController extends Controller
             $keep = $held->get($class, collect())->pluck('item_id')->all();
             $options["{$key}Options"] = $class::withTrashed()
                 ->where(fn ($q) => $q->whereNull('deleted_at')->orWhereIn('id', $keep))
-                ->orderBy('name')->get(['id', 'name'])
-                ->map(fn ($m) => ['value' => $m->id, 'label' => $m->name])->values()->all();
+                ->orderBy('name')->get(['id', 'name', 'deleted_at'])
+                ->map(fn ($m) => ['value' => $m->id, 'label' => $m->trashed() ? "{$m->name} (deleted)" : $m->name])->values()->all();
         }
 
         return $options;

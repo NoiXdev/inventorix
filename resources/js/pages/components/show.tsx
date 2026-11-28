@@ -14,6 +14,7 @@ import { ComboboxField } from '@/components/form/combobox-field';
 import { NumberField } from '@/components/form/number-field';
 import { FormError } from '@/components/form/form-error';
 import { AssetHistory, type HistoryEntry } from '@/components/assets/asset-history';
+import { ComponentCheckinDialog } from '@/components/components/component-checkin-dialog';
 import { useCan } from '@/hooks/use-can';
 
 type Option = { value: string; label: string };
@@ -93,38 +94,6 @@ function CheckoutDialog({ component, options }: { component: ComponentRecord; op
                 </DialogContent>
             </Dialog>
         </>
-    );
-}
-
-function CheckinDialog({ checkout, onClose }: { checkout: Checkout; onClose: () => void }) {
-    const form = useForm({ qty: String(checkout.qty), note: '' });
-    const submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        form.post(`/app/component-assets/${checkout.id}/checkin`, { preserveScroll: true, onSuccess: onClose });
-    };
-
-    return (
-        <Dialog open onOpenChange={(o) => !o && onClose()}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Check in</DialogTitle>
-                    <DialogDescription>{checkout.qty} installed in {checkout.asset.name ?? 'this asset'}.</DialogDescription>
-                </DialogHeader>
-                <form onSubmit={submit} className="space-y-4">
-                    <NumberField id="checkin_qty" label="Quantity to check in" required step="1" min="1" max={String(checkout.qty)}
-                        value={form.data.qty} onChange={(v) => form.setData('qty', v)} error={form.errors.qty} />
-                    <div className="space-y-2">
-                        <Label htmlFor="checkin_note">Note</Label>
-                        <Textarea id="checkin_note" value={form.data.note} onChange={(e) => form.setData('note', e.target.value)} />
-                        <FormError message={form.errors.note} />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                        <Button type="submit" disabled={form.processing}>Check in</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
     );
 }
 
@@ -211,7 +180,9 @@ export default function ShowComponent({ component, checkouts, history, checkoutO
                 </TabsContent>
             </Tabs>
 
-            {checkingIn && <CheckinDialog checkout={checkingIn} onClose={() => setCheckingIn(null)} />}
+            {checkingIn && (
+                <ComponentCheckinDialog rowId={checkingIn.id} qty={checkingIn.qty} where={checkingIn.asset.name ?? 'this asset'} onClose={() => setCheckingIn(null)} />
+            )}
         </AppLayout>
     );
 }

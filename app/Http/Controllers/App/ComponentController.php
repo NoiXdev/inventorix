@@ -144,7 +144,10 @@ class ComponentController extends Controller
             'checkouts' => $component->checkouts->sortBy('checked_out_at')->values()->map(fn (ComponentAsset $c) => [
                 'id' => $c->id,
                 'qty' => $c->assigned_qty,
-                'asset' => ['name' => $c->asset?->displayName(), 'url' => $c->asset ? "/app/assets/{$c->asset_id}" : null],
+                'asset' => [
+                    'name' => $c->asset ? $c->asset->displayName().($c->asset->trashed() ? ' (deleted)' : '') : null,
+                    'url' => $c->asset && ! $c->asset->trashed() ? "/app/assets/{$c->asset_id}" : null,
+                ],
                 'checked_out_at' => $c->checked_out_at?->format('Y-m-d'),
                 'note' => $c->note,
             ])->all(),
