@@ -43,7 +43,8 @@ class ComponentService
                     : "Only {$remaining} of this component are left.");
             }
 
-            $row = ComponentAsset::query()->where('component_id', $locked->id)->where('asset_id', $asset->id)->first()
+            $row = ComponentAsset::query()->where('component_id', $locked->id)->where('asset_id', $asset->id)
+                ->lockForUpdate()->first()
                 ?? new ComponentAsset(['assigned_qty' => 0]);
             $row->component_id = $locked->id;
             $row->asset_id = $asset->id;
@@ -92,13 +93,20 @@ class ComponentService
     /** Take everything out of an asset, e.g. before deleting it. @return int units */
     public function checkInAllFor(Asset $asset, ?string $note = null): int
     {
-        $units = 0;
-        foreach (ComponentAsset::query()->where('asset_id', $asset->id)->get() as $row) {
-            $units += $row->assigned_qty;
-            $this->checkIn($row, $row->assigned_qty, $note);
-        }
+        return DB::transaction(function () use ($asset, $note): int {
+            $units = 0;
+            foreach (ComponentAsset::query()->where('asset_id', $asset->id)->pluck('id') as $id) {
+                // Re-read under the lock: a row may have been checked in meanwhile.
+                $row = ComponentAsset::query()->whereKey($id)->lockForUpdate()->first();
+                if ($row === null) {
+                    continue;
+                }
+                $units += $row->assigned_qty;
+                $this->checkIn($row, $row->assigned_qty, $note);
+            }
 
-        return $units;
+            return $units;
+        });
     }
 
     private function log(Component $component, string $event, Asset $asset, int $qty, ?string $note): void

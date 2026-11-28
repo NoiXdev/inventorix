@@ -47,6 +47,20 @@ class ComponentCheckoutTest extends TestCase
         $this->assertSame('upgrade', $entry->getProperty('note'));
     }
 
+    public function test_a_second_check_out_to_the_same_asset_adds_to_the_row(): void
+    {
+        $component = Component::factory()->create(['qty' => 5]);
+        $asset = Asset::factory()->create();
+
+        $first = $this->service()->checkOut($component, $asset, 2);
+        $second = $this->service()->checkOut($component, $asset, 1);
+
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame(1, ComponentAsset::query()->count());
+        $this->assertSame(3, $second->refresh()->assigned_qty);
+        $this->assertSame(2, Activity::query()->where('subject_id', $component->id)->where('event', 'checked_out')->count());
+    }
+
     public function test_more_than_is_left_is_refused_and_nothing_changes(): void
     {
         $component = Component::factory()->create(['qty' => 2]);

@@ -44,7 +44,7 @@ return new class extends Migration
             $table->timestamps();
             $table->creator();
             // Named: the generated name is longer than MariaDB's 64 characters.
-            $table->index(['component_id', 'asset_id'], 'component_assets_component_asset_index');
+            $table->unique(['component_id', 'asset_id'], 'component_assets_component_asset_unique');
         });
 
         // Existing read-only groups may see components too.

@@ -150,7 +150,7 @@ class ComponentController extends Controller
             ])->all(),
             'history' => ComponentHistory::for($component),
             'checkoutOptions' => Inertia::optional(fn () => $request->user()->can('components.checkout') ? Asset::query()
-                ->where('archived', false)->orderBy('name')->orderBy('asset_tag')->get()
+                ->where('archived', false)->orderBy('name')->orderBy('asset_tag')->get(['id', 'name', 'asset_tag', 'serial'])
                 ->map(fn (Asset $a) => ['value' => $a->id, 'label' => trim($a->displayName().($a->asset_tag && $a->name ? " ({$a->asset_tag})" : ''))])->all() : null),
         ]);
     }

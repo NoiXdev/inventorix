@@ -13,7 +13,7 @@ vi.mock('@/layouts/app-layout', () => ({ default: ({ children }: { children: Rea
 
 import ShowComponent from '../show';
 
-const setCan = (can: Record<string, boolean>) => { page.props = { auth: { user: null, can } };; };
+const setCan = (can: Record<string, boolean>) => { page.props = { auth: { user: null, can } }; };
 const component = {
     id: 'x1', name: 'RAM 16GB', model_number: null, serial: null, qty: 5, min_amt: 2, purchase_cost: null, purchase_date: null,
     order_number: null, notes: null, image_url: null, category_name: null, manufacturer_name: null, location_name: null,
