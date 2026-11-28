@@ -9,11 +9,19 @@ import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/components/data-table/data-table';
 import type { PaginationMeta } from '@/components/data-table/types';
 
-interface Row { id: string; name: string | null; email: string | null; login_enabled: boolean; assets_count: number }
+interface Option { value: string; label: string }
+interface Row {
+    id: string; name: string | null; email: string | null; login_enabled: boolean; assets_count: number;
+    employee_num?: string | null; jobtitle?: string | null; department_name?: string | null; location_name?: string | null;
+}
 
 const columns: ColumnDef<Row>[] = [
     { id: 'name', accessorFn: (r) => r.name, header: 'Name', cell: ({ row }) => row.original.name ?? '—' },
     { id: 'email', accessorFn: (r) => r.email, header: 'Email', cell: ({ row }) => row.original.email ?? '—' },
+    { id: 'employee_num', accessorFn: (r) => r.employee_num, header: 'Employee no.', cell: ({ row }) => row.original.employee_num ?? '—' },
+    { id: 'jobtitle', accessorFn: (r) => r.jobtitle, header: 'Job title', cell: ({ row }) => row.original.jobtitle ?? '—' },
+    { id: 'department_name', accessorFn: (r) => r.department_name, header: 'Department', cell: ({ row }) => row.original.department_name ?? '—' },
+    { id: 'location_name', accessorFn: (r) => r.location_name, header: 'Location', cell: ({ row }) => row.original.location_name ?? '—' },
     { id: 'login_enabled', accessorFn: (r) => r.login_enabled, header: 'Login', cell: ({ row }) => (
         <Badge variant={row.original.login_enabled ? 'default' : 'secondary'}>{row.original.login_enabled ? 'Enabled' : 'Disabled'}</Badge>
     ) },
@@ -30,7 +38,18 @@ const columns: ColumnDef<Row>[] = [
     },
 ];
 
-export default function UsersIndex({ users }: { users: { data: Row[]; meta: PaginationMeta } }) {
+interface IndexProps {
+    users: { data: Row[]; meta: PaginationMeta };
+    departmentOptions?: Option[]; locationOptions?: Option[]; managerOptions?: Option[];
+}
+
+export default function UsersIndex({ users, departmentOptions = [], locationOptions = [], managerOptions = [] }: IndexProps) {
+    const filters = [
+        { key: 'department_id', label: 'Department', options: departmentOptions },
+        { key: 'location_id', label: 'Location', options: locationOptions },
+        { key: 'manager_id', label: 'Manager', options: managerOptions },
+    ].filter((f) => f.options.length > 0);
+
     return (
         <AppLayout title="Users" breadcrumbs={[{ label: 'Users' }]}>
             <div className="mb-6 flex items-center justify-between">
@@ -38,7 +57,7 @@ export default function UsersIndex({ users }: { users: { data: Row[]; meta: Pagi
                 <Can permission="users.create"><Button asChild><Link href="/app/users/create">New user</Link></Button></Can>
             </div>
             <DataTable columns={columns} rows={users.data} pagination={users.meta} baseUrl="/app/users"
-                sortable={['name', 'email', 'login_enabled', 'assets_count']}
+                sortable={['name', 'email', 'login_enabled', 'assets_count', 'employee_num', 'jobtitle']} filters={filters}
                 rowHref={(r) => `/app/users/${r.id}`} />
         </AppLayout>
     );

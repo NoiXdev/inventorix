@@ -7,7 +7,9 @@ use App\Enums\Permission;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +17,8 @@ use Spatie\Activitylog\Models\Concerns\CausesActivity;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
-#[Fillable(['firstname', 'lastname', 'name', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id'])]
+#[Fillable(['firstname', 'lastname', 'name', 'email', 'password', 'login_enabled', 'remember_token', 'entra_id',
+    'employee_num', 'jobtitle', 'department_id', 'manager_id', 'location_id', 'phone', 'mobile', 'start_date', 'end_date', 'notes'])]
 class User extends Authenticatable
 {
     use CausesActivity, HasFactory, HasUuids, LogsActivity, Notifiable;
@@ -31,6 +34,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'login_enabled' => 'boolean',
             'permissions' => 'array',
+            'start_date' => 'date',
+            'end_date' => 'date',
         ];
     }
 
@@ -38,6 +43,30 @@ class User extends Authenticatable
     public function assets(): MorphMany
     {
         return $this->morphMany(Asset::class, 'assignee');
+    }
+
+    /** @return BelongsTo<Department, $this> */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class)->withTrashed();
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'manager_id');
+    }
+
+    /** @return BelongsTo<Location, $this> */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class)->withTrashed();
+    }
+
+    /** The users this user manages. @return HasMany<User, $this> */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(self::class, 'manager_id');
     }
 
     public function groups(): BelongsToMany

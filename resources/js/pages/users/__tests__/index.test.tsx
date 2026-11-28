@@ -27,4 +27,9 @@ describe('UsersIndex', () => {
         expect(screen.getByText('Ada Lovelace')).toBeInTheDocument();
         expect(screen.getByText('3')).toBeInTheDocument();
     });
+
+    it('renders the profile columns', () => {
+        render(<UsersIndex users={{ data: [{ id: 'u1', name: 'Ada', email: 'a@x.de', login_enabled: true, assets_count: 0, employee_num: 'E-7', jobtitle: 'Engineer', department_name: 'Finance', location_name: 'Berlin' }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } as never }} />);
+        for (const t of ['E-7', 'Engineer', 'Finance', 'Berlin']) expect(screen.getByText(t)).toBeInTheDocument();
+    });
 });

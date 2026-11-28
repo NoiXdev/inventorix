@@ -64,4 +64,15 @@ describe('UserShow', () => {
         expect(screen.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
+
+    it('shows the profile details with a manager link', () => {
+        page.props = { auth: { user: null, can: {} } };
+        render(<UserShow user={{ ...user, employee_num: 'E-100', jobtitle: 'Engineer', department_id: 'd1', department_name: 'Finance', manager: { id: 'm1', name: 'Boss Person' }, location_name: 'Berlin', phone: '123', start_date: '2024-01-15' }} assets={[]} groups={[]} effective={{}} />);
+        expect(screen.getByText('E-100')).toBeInTheDocument();
+        expect(screen.getByText('Engineer')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Finance' })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Boss Person' })).toHaveAttribute('href', '/app/users/m1');
+        expect(screen.getByText('Berlin')).toBeInTheDocument();
+        expect(screen.getByText('2024-01-15')).toBeInTheDocument();
+    });
 });

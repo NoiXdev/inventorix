@@ -13,7 +13,11 @@ import { StatusBadge, type AssetStatus } from '@/components/assets/status-badge'
 
 interface AssetRow { id: string; name: string | null; asset_tag: string | null; model_name: string | null; serial: string | null; status: AssetStatus | null; location_name: string | null }
 interface Props {
-    user: { id: string; name: string | null; firstname: string; lastname: string; email: string | null; login_enabled: boolean; assets_count: number };
+    user: { id: string; name: string | null; firstname: string; lastname: string; email: string | null; login_enabled: boolean; assets_count: number;
+        employee_num?: string | null; jobtitle?: string | null; department_id?: string | null; department_name?: string | null;
+        manager?: { id: string; name: string | null } | null; location_name?: string | null;
+        phone?: string | null; mobile?: string | null; start_date?: string | null; end_date?: string | null; notes?: string | null;
+    };
     assets: AssetRow[];
     /** Group names. */
     groups: string[];
@@ -58,6 +62,38 @@ export default function UserShow({ user, assets, groups = [], effective = {}, ca
                     {can('users.delete') && canManage && <Button variant="outline" onClick={() => { if (confirm('Delete this user?')) router.delete(`/app/users/${user.id}`, { onError: (errors) => toast.error(errors.user ?? 'Could not delete the user.') }); }}>Delete</Button>}
                 </div>
             </div>
+
+            <Card className="mb-6">
+                <CardHeader className="pb-2"><CardTitle className="text-base">Details</CardTitle></CardHeader>
+                <CardContent>
+                    <dl className="grid gap-x-6 gap-y-3 text-sm md:grid-cols-3">
+                        {[
+                            ['Employee number', user.employee_num],
+                            ['Job title', user.jobtitle],
+                            ['Department', user.department_name && (user.department_id
+                                ? <Link className="underline" href={`/app/users?filter[department_id]=${user.department_id}`}>{user.department_name}</Link>
+                                : user.department_name)],
+                            ['Manager', user.manager && <Link className="underline" href={`/app/users/${user.manager.id}`}>{user.manager.name ?? '—'}</Link>],
+                            ['Location', user.location_name],
+                            ['Phone', user.phone],
+                            ['Mobile', user.mobile],
+                            ['Start date', user.start_date],
+                            ['End date', user.end_date],
+                        ].map(([label, value]) => (
+                            <div key={label as string}>
+                                <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</dt>
+                                <dd>{value || '—'}</dd>
+                            </div>
+                        ))}
+                        {user.notes && (
+                            <div className="md:col-span-3">
+                                <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Notes</dt>
+                                <dd className="whitespace-pre-wrap">{user.notes}</dd>
+                            </div>
+                        )}
+                    </dl>
+                </CardContent>
+            </Card>
 
             <div className="mb-6 grid gap-4 lg:grid-cols-2">
                 <Card>

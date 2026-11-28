@@ -10,11 +10,14 @@ use App\Http\Requests\App\UserRequest;
 use App\Models\AccessoryCheckout;
 use App\Models\Asset;
 use App\Models\ConsumableAssignment;
+use App\Models\Department;
 use App\Models\Group;
 use App\Models\LicenseSeat;
+use App\Models\Location;
 use App\Models\User;
 use App\Services\AccessoryService;
 use App\Services\LicenseService;
+use App\Support\Assets\CheckoutOptions;
 use App\Support\Table\TableQuery;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,10 +36,13 @@ class UserController extends Controller
 
     public function index(Request $request): Response
     {
-        $users = TableQuery::for(User::query()->withCount('assets'), $request)
-            ->searchable(['name', 'firstname', 'lastname', 'email'])
-            ->sortable(['name', 'email', 'login_enabled', 'assets_count'])
+        $users = TableQuery::for(User::query()->with('department:id,name')->withCount('assets'), $request)
+            ->searchable(['name', 'firstname', 'lastname', 'email', 'employee_num', 'jobtitle'])
+            ->sortable(['name', 'email', 'login_enabled', 'assets_count', 'employee_num', 'jobtitle'])
+            ->filterable(['department_id', 'location_id', 'manager_id'])
             ->paginate();
+
+        $paths = Location::paths(withTrashed: true);
 
         $users->getCollection()->transform(fn (User $u) => [
             'id' => $u->id,
@@ -44,6 +50,10 @@ class UserController extends Controller
             'email' => $u->email,
             'login_enabled' => $u->login_enabled,
             'assets_count' => (int) $u->assets_count,
+            'employee_num' => $u->employee_num,
+            'jobtitle' => $u->jobtitle,
+            'department_name' => $u->department?->name,
+            'location_name' => $u->location_id ? $paths->get($u->location_id) : null,
         ]);
 
         return Inertia::render('users/index', [
@@ -56,12 +66,18 @@ class UserController extends Controller
                     'total' => $users->total(),
                 ],
             ],
+            'departmentOptions' => Department::options(),
+            'locationOptions' => Location::options(),
+            'managerOptions' => CheckoutOptions::users(),
         ]);
     }
 
     public function create(Request $request): Response
     {
-        return Inertia::render('users/create', $this->assignmentProps($request->user(), null));
+        return Inertia::render('users/create', [
+            ...$this->assignmentProps($request->user(), null),
+            ...$this->profileOptions(null),
+        ]);
     }
 
     public function store(UserRequest $request): RedirectResponse
@@ -88,7 +104,7 @@ class UserController extends Controller
 
     public function show(Request $request, User $user): Response
     {
-        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location', 'assets.status');
+        $user->loadCount('assets')->load('assets.model.manufacturer', 'assets.location', 'assets.status', 'department', 'manager:id,name');
 
         return Inertia::render('users/show', [
             'user' => [
@@ -99,6 +115,11 @@ class UserController extends Controller
                 'email' => $user->email,
                 'login_enabled' => $user->login_enabled,
                 'assets_count' => $user->assets_count,
+                ...$this->profileFields($user),
+                'department_id' => $user->department_id,
+                'department_name' => $user->department?->name,
+                'manager' => $user->manager ? ['id' => $user->manager->id, 'name' => $user->manager->name] : null,
+                'location_name' => $user->location_id ? Location::paths(withTrashed: true)->get($user->location_id) : null,
             ],
             'groups' => $user->groups()->orderBy('name')->pluck('name')->all(),
             'effective' => $user->effectivePermissions(),
@@ -128,12 +149,17 @@ class UserController extends Controller
                 'lastname' => $user->lastname,
                 'email' => $user->email,
                 'login_enabled' => $user->login_enabled,
+                ...$this->profileFields($user),
+                'department_id' => $user->department_id,
+                'manager_id' => $user->manager_id,
+                'location_id' => $user->location_id,
                 'groups' => $user->groups->pluck('id')->all(),
                 'permissions' => (object) ($user->permissions ?? []),
             ],
             'isSelf' => $user->is($request->user()),
             'effective' => $user->permissionSources(),
             ...$this->assignmentProps($request->user(), $user),
+            ...$this->profileOptions($user),
         ]);
     }
 
@@ -324,6 +350,46 @@ class UserController extends Controller
             'catalogue' => Permission::catalogue(),
             'canAssign' => $actor->hasAccess(Permission::ADMIN) && ($target === null || ! $target->is($actor) || $actor->isSuperuser()),
             'canAssignPrivileged' => $actor->isSuperuser(),
+        ];
+    }
+
+    /**
+     * Pickers of the profile section. On edit, the user's own department and
+     * location stay offered even when deleted since, and the user is not
+     * offered as their own manager.
+     *
+     * @return array<string, list<array{value: string, label: string}>>
+     */
+    private function profileOptions(?User $user): array
+    {
+        $departments = Department::options();
+        if ($user?->department_id && ! collect($departments)->contains('value', $user->department_id)) {
+            $departments[] = ['value' => $user->department_id, 'label' => $user->department?->name];
+        }
+
+        $locations = Location::options();
+        if ($user?->location_id && ! collect($locations)->contains('value', $user->location_id)) {
+            $locations[] = ['value' => $user->location_id, 'label' => Location::paths(withTrashed: true)->get($user->location_id)];
+        }
+
+        return [
+            'departmentOptions' => $departments,
+            'locationOptions' => $locations,
+            'managerOptions' => array_values(array_filter(CheckoutOptions::users(), fn (array $o) => $o['value'] !== $user?->id)),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function profileFields(User $user): array
+    {
+        return [
+            'employee_num' => $user->employee_num,
+            'jobtitle' => $user->jobtitle,
+            'phone' => $user->phone,
+            'mobile' => $user->mobile,
+            'start_date' => $user->start_date?->toDateString(),
+            'end_date' => $user->end_date?->toDateString(),
+            'notes' => $user->notes,
         ];
     }
 

@@ -106,4 +106,11 @@ describe('UserForm groups and permissions', () => {
         render(<UserForm submitUrl="/app/users" method="post" catalogue={catalogue} groupOptions={groupOptions} canAssign canAssignPrivileged />);
         expect(initials[0]).toMatchObject({ groups: [], permissions: {} });
     });
+
+    it('renders the profile fields', () => {
+        render(<UserForm submitUrl="/app/users" method="post" departmentOptions={[{ value: 'd1', label: 'Finance' }]} />);
+        for (const label of ['Employee number', 'Job title', 'Department', 'Manager', 'Location', 'Phone', 'Mobile', 'Start date', 'End date', 'Notes']) {
+            expect(screen.getByLabelText(label)).toBeInTheDocument();
+        }
+    });
 });

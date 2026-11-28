@@ -10,6 +10,7 @@ use App\Models\User;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\Validator;
 
 class UserRequest extends FormRequest
@@ -31,6 +32,16 @@ class UserRequest extends FormRequest
                 'required_if:login_enabled,true', 'nullable', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($this->route('user')),
             ],
+            'employee_num' => ['nullable', 'string', 'max:191'],
+            'jobtitle' => ['nullable', 'string', 'max:255'],
+            'department_id' => ['nullable', 'uuid', $this->liveOrCurrent('departments', 'department_id')],
+            'manager_id' => ['nullable', 'uuid', Rule::exists('users', 'id'), ...($this->target() ? [Rule::notIn([$this->target()->id])] : [])],
+            'location_id' => ['nullable', 'uuid', $this->liveOrCurrent('locations', 'location_id')],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'mobile' => ['nullable', 'string', 'max:50'],
+            'start_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', ...($this->filled('start_date') ? ['after_or_equal:start_date'] : [])],
+            'notes' => ['nullable', 'string', 'max:10000'],
             // Group membership and the per-user map need admin, and only a
             // superuser may change their own.
             'groups' => $assign ? ['sometimes', 'array'] : ['prohibited'],
@@ -84,6 +95,19 @@ class UserRequest extends FormRequest
                 }
             }
         }];
+    }
+
+    /** A live row, or the one the user already has (it may have been deleted since). */
+    private function liveOrCurrent(string $table, string $column): Exists
+    {
+        $target = $this->target();
+        $unchanged = $target !== null
+            && $target->{$column} !== null
+            && $this->input($column) === $target->{$column};
+
+        $exists = Rule::exists($table, 'id');
+
+        return $unchanged ? $exists : $exists->whereNull('deleted_at');
     }
 
     private function target(): ?User
