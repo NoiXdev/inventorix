@@ -36,7 +36,7 @@ class OffboardingRequest extends FormRequest
             'items' => [$this->boolean('disable_login') ? 'nullable' : 'required', 'array'],
             'items.*' => ['array:type,id,action'],
             'items.*.type' => ['required', Rule::in(array_keys(self::MODULES))],
-            'items.*.id' => ['required', 'uuid'],
+            'items.*.id' => ['required', 'uuid', 'distinct'],
             'items.*.action' => ['required', Rule::in(['checkin', 'transfer'])],
             'transfer_to' => [
                 Rule::requiredIf($transfers), 'nullable', 'uuid', Rule::exists('users', 'id'),

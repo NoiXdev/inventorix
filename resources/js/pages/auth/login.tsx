@@ -1,11 +1,13 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TextField } from '@/components/form/text-field';
 import { FormError } from '@/components/form/form-error';
+import type { PageProps } from '@/types';
 
 export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
     const form = useForm({ email: '', password: '', remember: false });
+    const flashError = usePage<PageProps>().props.flash?.error;
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -18,6 +20,7 @@ export default function Login({ entraEnabled }: { entraEnabled: boolean }) {
             <Card className="w-full max-w-sm">
                 <CardHeader><CardTitle>Sign in to Inventorix</CardTitle></CardHeader>
                 <CardContent className="space-y-6">
+                    {flashError && <p role="alert" className="text-sm text-destructive">{flashError}</p>}
                     <form onSubmit={submit} className="space-y-4">
                         <TextField id="email" label="Email" value={form.data.email} autoComplete="username"
                             onChange={(v) => form.setData('email', v)} error={form.errors.email} autoFocus required />

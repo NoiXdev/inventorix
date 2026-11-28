@@ -184,8 +184,14 @@ export default function UserOffboard({
                         )}
                         {anyAssetCheckin && (
                             <>
-                                <SelectField id="status_id" label="Status of checked-in assets (— keeps the current one)" nullable options={statusOptions}
-                                    value={form.data.status_id} onChange={(v) => form.setData('status_id', v)} error={errors.status_id} />
+                                <div>
+                                    <SelectField id="status_id" label="Status of checked-in assets" nullable options={statusOptions}
+                                        value={form.data.status_id} onChange={(v) => form.setData('status_id', v)} error={errors.status_id} />
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {statusOptions.some((s) => s.value === checkinStatusId) && 'Pre-set to the default check-in status. '}
+                                        Empty: each asset keeps its current status.
+                                    </p>
+                                </div>
                                 <div>
                                     <ComboboxField id="location_id" label="Location of checked-in assets" nullable options={locationOptions}
                                         value={form.data.location_id} onChange={(v) => form.setData('location_id', v)} error={errors.location_id} />

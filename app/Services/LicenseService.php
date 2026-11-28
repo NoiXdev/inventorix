@@ -129,6 +129,50 @@ class LicenseService
     }
 
     /**
+     * Move a seat checked out to a user straight to another user: the same
+     * seat changes hands, so it is never retired (not even for a license
+     * that is not reassignable) and needs no free seat. The history shows a
+     * check-in for the old holder and a check-out for the new one.
+     *
+     * @throws LicenseSeatException
+     */
+    public function transfer(LicenseSeat $seat, User $to, ?string $note = null): LicenseSeat
+    {
+        return DB::transaction(function () use ($seat, $to, $note): LicenseSeat {
+            $locked = LicenseSeat::query()->whereKey($seat->id)->lockForUpdate()->firstOrFail();
+            if ($locked->assigned_user_id === null) {
+                throw new LicenseSeatException('The seat is not checked out to a user.');
+            }
+            if ($locked->assigned_user_id === $to->id) {
+                throw new LicenseSeatException('The seat is already checked out to this user.');
+            }
+
+            $license = $locked->license;
+            if ($license->trashed()) {
+                throw new LicenseSeatException('The license is deleted.');
+            }
+            $from = $locked->load('user')->user;
+            $fromName = $locked->holderName();
+
+            $locked->assigned_user_id = $to->id;
+            $locked->assigned_asset_id = null;
+            $locked->checked_out_at = now();
+            $locked->notes = $this->note($note);
+            $locked->save();
+
+            $this->log($license, 'checked_in', 'User', $fromName, $note);
+            if ($from !== null) {
+                app(AcceptanceService::class)->checkedIn($license, $from, $locked->id);
+            }
+
+            $this->log($license, 'checked_out', 'User', $locked->setRelations([])->load('user', 'asset')->holderName(), $note);
+            app(AcceptanceService::class)->checkedOut($license, $to, $locked->id);
+
+            return $seat->setRawAttributes($locked->getAttributes(), true);
+        });
+    }
+
+    /**
      * Check in every seat a user or an asset holds, e.g. before the user or
      * asset is deleted (as Snipe-IT does), so the history shows it and seats
      * of licenses that are not reassignable are used up. @return int seats

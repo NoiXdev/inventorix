@@ -11,6 +11,7 @@ use App\Models\Asset;
 use App\Models\LicenseSeat;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 /**
  * Offboarding a user: everything they hold (assets, license seats,
@@ -64,6 +65,8 @@ class OffboardingService
 
             if ($disableLogin) {
                 $user->login_enabled = false;
+                // Ends "remember me" logins; EnsureLoginEnabled ends open sessions.
+                $user->setRememberToken(Str::random(60));
                 $user->save();
             }
 
@@ -84,8 +87,8 @@ class OffboardingService
 
                 return;
             }
-            // A transfer keeps the asset's status and location.
-            $this->assets->checkIn($asset, locationId: $asset->location_id, note: $note);
+            // A transfer keeps the asset's status and location (even none).
+            $this->assets->checkIn($asset, note: $note, keepLocation: true);
             $this->assets->checkOut($asset, $transferTo, note: $note);
         } catch (CheckoutNotAllowedException $e) {
             throw $this->failed($asset->displayName(), $e);
@@ -101,10 +104,10 @@ class OffboardingService
         }
 
         try {
-            $this->licenses->checkIn($seat, $note);
-            if ($transferTo !== null) {
-                $this->licenses->checkOut($seat->license, $transferTo, $note);
-            }
+            // A transfer hands on the same seat: never retired, no free seat needed.
+            $transferTo === null
+                ? $this->licenses->checkIn($seat, $note)
+                : $this->licenses->transfer($seat, $transferTo, $note);
         } catch (LicenseSeatException $e) {
             throw $this->failed($name, $e);
         }

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Users;
 
 use App\Enums\SystemStatus;
+use App\Http\Middleware\EnsureLoginEnabled;
 use App\Models\Accessory;
 use App\Models\AccessoryCheckout;
 use App\Models\Asset;
@@ -242,6 +243,8 @@ class OffboardingTest extends TestCase
 
     public function test_disable_login_is_refused_for_the_last_active_superuser(): void
     {
+        // EnsureLoginEnabled would sign a disabled actor out; it is bypassed here.
+        $this->withoutMiddleware(EnsureLoginEnabled::class);
         $actor = User::factory()->superuser()->create(['login_enabled' => false]);
         $last = User::factory()->superuser()->create(['login_enabled' => true]);
         $asset = Asset::factory()->assignedTo($last)->create();
@@ -314,5 +317,121 @@ class OffboardingTest extends TestCase
         $viewer = User::factory()->withPermissions(['users.view' => 1])->create();
         $this->actingAs($viewer)->get("/app/users/{$this->leaver->id}")
             ->assertInertia(fn (Assert $page) => $page->where('canOffboard', false));
+    }
+
+    public function test_transferring_a_seat_of_a_non_reassignable_license_moves_the_same_seat(): void
+    {
+        $license = License::factory()->seats(1)->create(['name' => 'Fixed', 'reassignable' => false]);
+        $seat = app(LicenseService::class)->checkOut($license, $this->leaver);
+        $heir = User::factory()->create();
+
+        $this->actingAs($this->actor())->post($this->url(), [
+            'items' => [['type' => 'license_seat', 'id' => $seat->id, 'action' => 'transfer']],
+            'transfer_to' => $heir->id,
+        ])->assertSessionHasNoErrors()
+            ->assertSessionHas('success', 'Offboarding done: 0 checked in, 1 transferred.');
+
+        $seat->refresh();
+        $this->assertSame($heir->id, $seat->assigned_user_id);
+        $this->assertFalse((bool) $seat->retired);
+        $this->assertSame(1, LicenseSeat::query()->where('license_id', $license->id)->count());
+        $events = Activity::query()->where('subject_id', $license->id)->orderBy('id')->pluck('event')->all();
+        $this->assertSame(['checked_out', 'checked_in', 'checked_out'], array_values(array_filter($events, fn ($e) => in_array($e, ['checked_in', 'checked_out'], true))));
+    }
+
+    public function test_asset_transfer_keeps_a_missing_location(): void
+    {
+        $asset = $this->asset(['location_id' => null, 'rtd_location_id' => Location::factory()->create()->id]);
+        $heir = User::factory()->create();
+
+        $this->actingAs($this->actor())->post($this->url(), [
+            'items' => [['type' => 'asset', 'id' => $asset->id, 'action' => 'transfer']],
+            'transfer_to' => $heir->id,
+        ])->assertSessionHasNoErrors();
+
+        $asset->refresh();
+        $this->assertSame($heir->id, $asset->assignee_id);
+        $this->assertNull($asset->location_id);
+    }
+
+    public function test_the_same_item_twice_is_a_validation_error(): void
+    {
+        $asset = $this->asset();
+
+        $this->actingAs($this->actor())->post($this->url(), [
+            'items' => [
+                ['type' => 'asset', 'id' => $asset->id, 'action' => 'checkin'],
+                ['type' => 'asset', 'id' => $asset->id, 'action' => 'checkin'],
+            ],
+        ])->assertSessionHasErrors('items.0.id');
+
+        $this->assertSame($this->leaver->id, $asset->refresh()->assignee_id);
+    }
+
+    public function test_a_seat_held_by_someone_else_is_refused(): void
+    {
+        $other = User::factory()->create();
+        $license = License::factory()->seats(2)->create(['name' => 'Office']);
+        $foreign = app(LicenseService::class)->checkOut($license, $other);
+        $mine = $this->seat();
+
+        $this->actingAs($this->actor())->post($this->url(), [
+            'items' => [
+                ['type' => 'license_seat', 'id' => $mine->id, 'action' => 'checkin'],
+                ['type' => 'license_seat', 'id' => $foreign->id, 'action' => 'checkin'],
+            ],
+        ])->assertSessionHasErrors('items');
+
+        $this->assertSame($other->id, $foreign->refresh()->assigned_user_id);
+        $this->assertSame($this->leaver->id, $mine->refresh()->assigned_user_id);
+    }
+
+    public function test_an_accessory_checkout_held_by_someone_else_is_refused(): void
+    {
+        $other = User::factory()->create();
+        $accessory = Accessory::factory()->create(['name' => 'Dock', 'qty' => 3]);
+        app(AccessoryService::class)->checkOut($accessory, $other);
+        $foreign = AccessoryCheckout::query()->where('accessory_id', $accessory->id)->firstOrFail();
+
+        $this->actingAs($this->actor())->post($this->url(), [
+            'items' => [['type' => 'accessory_checkout', 'id' => $foreign->id, 'action' => 'checkin']],
+        ])->assertSessionHasErrors('items');
+
+        $this->assertSame($other->id, $foreign->refresh()->assigned_id);
+    }
+
+    public function test_checking_in_a_seat_needs_licenses_checkin(): void
+    {
+        $seat = $this->seat();
+
+        $this->actingAs($this->actor(['licenses.checkin' => -1]))->post($this->url(), [
+            'items' => [['type' => 'license_seat', 'id' => $seat->id, 'action' => 'checkin']],
+        ])->assertSessionHasErrors('items');
+
+        $this->assertSame($this->leaver->id, $seat->refresh()->assigned_user_id);
+    }
+
+    public function test_checking_in_an_accessory_needs_accessories_checkin(): void
+    {
+        $checkout = $this->accessoryCheckout();
+
+        $this->actingAs($this->actor(['accessories.checkin' => -1]))->post($this->url(), [
+            'items' => [['type' => 'accessory_checkout', 'id' => $checkout->id, 'action' => 'checkin']],
+        ])->assertSessionHasErrors('items');
+
+        $this->assertNotNull(AccessoryCheckout::query()->find($checkout->id));
+    }
+
+    public function test_disabling_login_rotates_the_remember_token(): void
+    {
+        $this->leaver->forceFill(['remember_token' => 'old-token'])->save();
+
+        $this->actingAs($this->actor())->post($this->url(), ['items' => [], 'disable_login' => true])
+            ->assertSessionHasNoErrors();
+
+        $this->leaver->refresh();
+        $this->assertFalse($this->leaver->login_enabled);
+        $this->assertNotSame('old-token', $this->leaver->remember_token);
+        $this->assertSame(60, strlen((string) $this->leaver->remember_token));
     }
 }

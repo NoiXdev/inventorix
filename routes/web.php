@@ -40,6 +40,7 @@ use App\Http\Controllers\App\UserOffboardingController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
 use App\Http\Middleware\ApplyRuntimeSettings;
+use App\Http\Middleware\EnsureLoginEnabled;
 use App\Models\Handover;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -59,7 +60,7 @@ Route::prefix('app')->name('app.')->group(function () {
     // Every route carries a `can:` check (see RouteCoverageTest); only logout,
     // the dashboard (widgets are filtered) and the `*/image` routes are open
     // to any logged-in user.
-    Route::middleware(['auth', ApplyRuntimeSettings::class])->group(function () {
+    Route::middleware(['auth', EnsureLoginEnabled::class, ApplyRuntimeSettings::class])->group(function () {
         // Resource routes mapped onto the section's view/create/edit/delete permissions.
         $guarded = fn (string $name, string $controller, string $section, array $except = []) => Route::resource($name, $controller)
             ->except($except)
@@ -180,7 +181,7 @@ Route::middleware(ApplyRuntimeSettings::class)->group(function () {
         ->name('auth.microsoft.callback');
 });
 
-Route::middleware(['auth', ApplyRuntimeSettings::class, 'can:assets.view'])
+Route::middleware(['auth', EnsureLoginEnabled::class, ApplyRuntimeSettings::class, 'can:assets.view'])
     ->get('/attachments/{attachment}/open', [AttachmentController::class, 'show'])
     ->name('attachments.open');
 

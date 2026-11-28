@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Http\Middleware\EnsureLoginEnabled;
 use App\Models\Group;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -404,6 +405,8 @@ class UserPermissionAssignmentTest extends TestCase
     public function test_last_active_superuser_cannot_be_demoted_disabled_or_deleted(): void
     {
         // The actor is a superuser whose own login is disabled, so the target is the last active one.
+        // EnsureLoginEnabled would sign a disabled actor out; it is bypassed here.
+        $this->withoutMiddleware(EnsureLoginEnabled::class);
         $actor = $this->superuser(['login_enabled' => false]);
         $target = $this->superuser();
 

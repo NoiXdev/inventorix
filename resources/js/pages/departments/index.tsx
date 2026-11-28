@@ -15,11 +15,18 @@ interface Row {
 
 const dash = <span className="text-muted-foreground">—</span>;
 
+/** The users count, linking to the users list filtered to the department (as the user page does). */
+function UsersCount({ row }: { row: Row }) {
+    const can = useCan();
+    if (!can('users.view')) return <>{row.users_count}</>;
+    return <Link className="underline" href={`/app/users?filter[department_id]=${row.id}`}>{row.users_count}</Link>;
+}
+
 const columns: ColumnDef<Row>[] = [
     { accessorKey: 'name', header: 'Name' },
     { id: 'manager_name', header: 'Manager', cell: ({ row }) => row.original.manager_name ?? dash },
     { id: 'location_name', header: 'Location', cell: ({ row }) => row.original.location_name ?? dash },
-    { accessorKey: 'users_count', header: 'Users' },
+    { accessorKey: 'users_count', header: 'Users', cell: ({ row }) => <UsersCount row={row.original} /> },
     {
         id: 'actions', header: '', size: 96,
         cell: ({ row }) => (

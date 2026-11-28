@@ -178,7 +178,13 @@ class UserController extends Controller
             [$permissions, $groupIds] = $this->assignment($request, $user);
             $this->guardSuperusers($request->user(), $user, $loginEnabled, $permissions, $groupIds);
 
-            $user->update($data);
+            $wasEnabled = (bool) $user->login_enabled;
+            $user->fill($data);
+            if ($wasEnabled && ! $loginEnabled) {
+                // Ends "remember me" logins; EnsureLoginEnabled ends open sessions.
+                $user->setRememberToken(Str::random(60));
+            }
+            $user->save();
             $this->applyAssignment($request, $user);
         });
 

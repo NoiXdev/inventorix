@@ -101,7 +101,7 @@ return [
         'test' => [
             'action' => 'Übersicht jetzt senden',
             'success_body' => 'Die Übersicht wurde an :count Empfänger gesendet.',
-            'empty_body' => 'Aktuell ist keine Rückgabe und kein Audit fällig.',
+            'empty_body' => 'Aktuell ist nichts fällig.',
             'no_recipients' => 'Bitte zuerst Empfänger eintragen.',
             'failure_title' => 'Senden fehlgeschlagen',
         ],

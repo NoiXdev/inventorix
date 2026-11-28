@@ -198,7 +198,9 @@ class CheckoutService
 
     /**
      * Check the asset in: unassign it, date and count the check-in and move
-     * it to $locationId, else its default location, else leave it.
+     * it to $locationId, else its default location, else leave it. With
+     * $keepLocation the asset stays exactly where it is (even with no
+     * location), e.g. when it is checked in only to be handed on.
      */
     public function checkIn(
         Asset $asset,
@@ -206,8 +208,9 @@ class CheckoutService
         ?string $locationId = null,
         ?CarbonInterface $checkinAt = null,
         ?string $note = null,
+        bool $keepLocation = false,
     ): Asset {
-        return DB::transaction(function () use ($asset, $statusId, $locationId, $checkinAt, $note): Asset {
+        return DB::transaction(function () use ($asset, $statusId, $locationId, $checkinAt, $note, $keepLocation): Asset {
             $locked = Asset::withTrashed()->whereKey($asset->id)->lockForUpdate()->firstOrFail();
 
             if ($statusId !== null) {
@@ -220,7 +223,9 @@ class CheckoutService
             $locked->expected_checkin = null;
             $locked->accepted = null;
             $locked->checkin_counter++;
-            $locked->location_id = $locationId ?? $locked->rtd_location_id ?? $locked->location_id;
+            if (! $keepLocation) {
+                $locked->location_id = $locationId ?? $locked->rtd_location_id ?? $locked->location_id;
+            }
 
             $this->saveLogged($locked, 'checked_in', $note);
             $this->moveAssignedAssets($locked);

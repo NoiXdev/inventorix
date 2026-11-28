@@ -128,6 +128,18 @@ class OffboardingDueTest extends TestCase
         });
     }
 
+    public function test_a_leaving_user_without_a_name_is_shown_by_email(): void
+    {
+        Mail::fake();
+        $user = $this->leaving('2026-12-03');
+        $user->forceFill(['name' => null, 'email' => 'nameless@example.test'])->saveQuietly();
+        $this->holdAsset($user);
+
+        $this->assertSame(1, app(AlertService::class)->sendDigest());
+
+        Mail::assertSent(AlertsDigest::class, fn (AlertsDigest $mail) => str_contains($mail->render(), 'nameless@example.test'));
+    }
+
     public function test_setting_is_validated_and_saved(): void
     {
         $payload = [
