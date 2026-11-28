@@ -14,6 +14,7 @@ import { CheckoutDialogs, type CheckoutOptions } from '@/components/assets/check
 import { AuditDialog, type AuditOptions } from '@/components/assets/audit-dialog';
 import { HeldLicenses, type HeldLicense } from '@/components/licenses/held-licenses';
 import { HeldAccessories, type HeldAccessory } from '@/components/accessories/held-accessories';
+import { InstalledComponents, type InstalledComponent } from '@/components/components/installed-components';
 
 interface AssetDetail {
     id: string; name: string | null; asset_tag: string | null; status: AssetStatus | null;
@@ -51,6 +52,8 @@ interface Props {
     licenses?: HeldLicense[] | null;
     /** Accessories checked out to this asset; null without accessories.view. */
     accessories?: HeldAccessory[] | null;
+    /** Components installed in this asset; null without components.view. */
+    components?: InstalledComponent[] | null;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -62,7 +65,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     );
 }
 
-export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents = [], history, customFields = [], checkoutBlocker, checkoutOptions, auditOptions, licenses, accessories }: Props) {
+export default function ShowAsset({ asset, attachments, attachmentCategoryOptions, incidents = [], history, customFields = [], checkoutBlocker, checkoutOptions, auditOptions, licenses, accessories, components }: Props) {
     const can = useCan();
     const canCheckout = asset.assignee !== null ? can('assets.checkin') : can('assets.checkout');
     const showIncidents = can('incidents.view');
@@ -89,12 +92,18 @@ export default function ShowAsset({ asset, attachments, attachmentCategoryOption
                     {showIncidents && <TabsTrigger value="incidents">Incidents ({asset.incidentsCount ?? incidents.length})</TabsTrigger>}
                     {licenses && <TabsTrigger value="licenses">Licenses ({licenses.length})</TabsTrigger>}
                     {accessories && <TabsTrigger value="accessories">Accessories ({accessories.length})</TabsTrigger>}
+                    {components && <TabsTrigger value="components">Components ({components.length})</TabsTrigger>}
                     <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
 
                 {accessories && (
                     <TabsContent value="accessories" className="mt-4">
                         <HeldAccessories accessories={accessories} empty="No accessories are checked out to this asset." />
+                    </TabsContent>
+                )}
+                {components && (
+                    <TabsContent value="components" className="mt-4">
+                        <InstalledComponents components={components} empty="No components are installed in this asset." />
                     </TabsContent>
                 )}
                 {licenses && (

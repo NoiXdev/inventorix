@@ -14,6 +14,7 @@ use App\Http\Controllers\App\AssetImportController;
 use App\Http\Controllers\App\AssetModelController;
 use App\Http\Controllers\App\AuthController;
 use App\Http\Controllers\App\CategoryController;
+use App\Http\Controllers\App\ComponentCheckoutController;
 use App\Http\Controllers\App\ComponentController;
 use App\Http\Controllers\App\ConsumableCheckoutController;
 use App\Http\Controllers\App\ConsumableController;
@@ -110,6 +111,8 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('components/{component}/image', [ComponentController::class, 'image'])
             ->name('components.image');
         $guarded('components', ComponentController::class, 'components');
+        Route::post('components/{component}/checkout', [ComponentCheckoutController::class, 'checkout'])->middleware('can:components.checkout')->name('components.checkout');
+        Route::post('component-assets/{componentAsset}/checkin', [ComponentCheckoutController::class, 'checkin'])->middleware('can:components.checkin')->name('component-assets.checkin');
         Route::get('assets/export', [AssetExportController::class, 'index'])->middleware('can:assets.view')->name('assets.export');
         Route::post('assets/import', [AssetImportController::class, 'store'])->middleware(['can:import', 'can:assets.create'])->name('assets.import');
         Route::get('assets/bulk-checkout', [AssetCheckoutController::class, 'bulkCreate'])->middleware('can:assets.checkout')->name('assets.bulk-checkout.create');

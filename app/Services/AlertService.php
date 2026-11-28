@@ -9,6 +9,7 @@ use App\Models\Accessory;
 use App\Models\Asset;
 use App\Models\CheckinReminder;
 use App\Models\CheckoutAcceptance;
+use App\Models\Component;
 use App\Models\Consumable;
 use App\Models\License;
 use App\Models\User;
@@ -58,7 +59,7 @@ class AlertService
      *
      * Also accessories and consumables with too few units left.
      *
-     * @return array<string, Collection<int, License|Accessory|Consumable>> 'license_expiring' / 'license_low' / 'accessory_low' / 'consumable_low', non-empty only
+     * @return array<string, Collection<int, License|Accessory|Component|Consumable>> 'license_expiring' / 'license_low' / 'accessory_low' / 'component_low' / 'consumable_low', non-empty only
      */
     public function licenseSections(): array
     {
@@ -81,6 +82,11 @@ class AlertService
             ->filter(fn (Accessory $a) => $a->isLowStock())
             ->values();
 
+        $componentsLow = Component::query()->whereNotNull('min_amt')
+            ->withSum('checkouts as checked_out', 'assigned_qty')->orderBy('name')->get()
+            ->filter(fn (Component $c) => $c->isLowStock())
+            ->values();
+
         $consumablesLow = Consumable::query()->whereNotNull('min_amt')->where('archived', false)
             ->withSum('assignments as handed_out', 'qty')->orderBy('name')->get()
             ->filter(fn (Consumable $c) => $c->isLowStock())
@@ -97,6 +103,7 @@ class AlertService
             'license_expiring' => $expiring,
             'license_low' => $low,
             'accessory_low' => $accessoriesLow,
+            'component_low' => $componentsLow,
             'consumable_low' => $consumablesLow,
         ], fn (Collection $c) => $c->isNotEmpty());
     }

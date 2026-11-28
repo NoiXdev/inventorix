@@ -27,6 +27,7 @@ return [
             'license_expiring' => 'Lizenz läuft ab oder ist abgelaufen',
             'license_low' => 'Zu wenige freie Lizenzplätze',
             'accessory_low' => 'Zubehör: Bestand niedrig',
+            'component_low' => 'Komponenten: Bestand niedrig',
             'consumable_low' => 'Verbrauchsmaterial: Bestand niedrig',
         ],
         'col' => [
@@ -39,6 +40,7 @@ return [
             'seats' => 'Plätze (frei / gesamt)',
             'expires' => 'Ablauf',
             'accessory' => 'Zubehör',
+            'component' => 'Komponente',
             'item' => 'Gegenstand',
             'sent' => 'Link gesendet',
             'consumable' => 'Verbrauchsmaterial',

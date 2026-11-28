@@ -13,6 +13,7 @@ use App\Models\Asset;
 use App\Models\AssetModel;
 use App\Models\Attachment;
 use App\Models\Category;
+use App\Models\ComponentAsset;
 use App\Models\CustomField;
 use App\Models\Incident;
 use App\Models\LicenseSeat;
@@ -23,6 +24,7 @@ use App\Models\Supplier;
 use App\Services\AccessoryService;
 use App\Services\AuditService;
 use App\Services\CheckoutService;
+use App\Services\ComponentService;
 use App\Services\LicenseService;
 use App\Support\Assets\AssetHistory;
 use App\Support\Assets\AssetTableQuery;
@@ -165,6 +167,7 @@ class AssetController extends Controller
             'history' => AssetHistory::for($asset),
             'licenses' => $request->user()->can('licenses.view') ? LicenseSeat::heldBy($asset) : null,
             'accessories' => $request->user()->can('accessories.view') ? AccessoryCheckout::heldBy($asset) : null,
+            'components' => $request->user()->can('components.view') ? ComponentAsset::installedIn($asset) : null,
             // Loaded when a check-out or check-in dialog opens.
             // Loaded when a dialog opens; the check-out options list users, so
             // only for those who may check out or in.
@@ -263,12 +266,13 @@ class AssetController extends Controller
         return to_route('app.assets.index')->with('success', 'Asset updated.');
     }
 
-    public function destroy(Asset $asset, LicenseService $licenses, AccessoryService $accessories): RedirectResponse
+    public function destroy(Asset $asset, LicenseService $licenses, AccessoryService $accessories, ComponentService $components): RedirectResponse
     {
-        DB::transaction(function () use ($asset, $licenses, $accessories): void {
+        DB::transaction(function () use ($asset, $licenses, $accessories, $components): void {
             // License seats and accessories on the asset come back first, with a history entry each.
             $licenses->checkInAllFor($asset, 'Asset deleted');
             $accessories->checkInAllFor($asset, 'Asset deleted');
+            $components->checkInAllFor($asset, 'Asset deleted');
             // Soft delete: the image and attachments stay so the asset can be restored.
             $asset->delete();
         });

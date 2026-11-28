@@ -5,11 +5,14 @@ namespace App\Http\Controllers\App;
 use App\Enums\CategoryType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\ComponentRequest;
+use App\Models\Asset;
 use App\Models\Category;
 use App\Models\Component;
+use App\Models\ComponentAsset;
 use App\Models\Location;
 use App\Models\Manufacturer;
 use App\Models\Supplier;
+use App\Support\Components\ComponentHistory;
 use App\Support\Table\TableQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -121,10 +124,9 @@ class ComponentController extends Controller
         return to_route('app.components.index')->with('success', 'Component updated.');
     }
 
-    /** Details only for now; the installed list and check-out come with the full page. */
-    public function show(Component $component): Response
+    public function show(Request $request, Component $component): Response
     {
-        $component->load(['category', 'manufacturer', 'location', 'supplier'])->loadSum('checkouts as checked_out', 'assigned_qty');
+        $component->load(['category', 'manufacturer', 'location', 'supplier', 'checkouts.asset'])->loadSum('checkouts as checked_out', 'assigned_qty');
 
         return Inertia::render('components/show', [
             'component' => [
@@ -139,6 +141,17 @@ class ComponentController extends Controller
                 'remaining' => $component->remaining(),
                 'low_stock' => $component->isLowStock(),
             ],
+            'checkouts' => $component->checkouts->sortBy('checked_out_at')->values()->map(fn (ComponentAsset $c) => [
+                'id' => $c->id,
+                'qty' => $c->assigned_qty,
+                'asset' => ['name' => $c->asset?->displayName(), 'url' => $c->asset ? "/app/assets/{$c->asset_id}" : null],
+                'checked_out_at' => $c->checked_out_at?->format('Y-m-d'),
+                'note' => $c->note,
+            ])->all(),
+            'history' => ComponentHistory::for($component),
+            'checkoutOptions' => Inertia::optional(fn () => $request->user()->can('components.checkout') ? Asset::query()
+                ->where('archived', false)->orderBy('name')->orderBy('asset_tag')->get()
+                ->map(fn (Asset $a) => ['value' => $a->id, 'label' => trim($a->displayName().($a->asset_tag && $a->name ? " ({$a->asset_tag})" : ''))])->all() : null),
         ]);
     }
 

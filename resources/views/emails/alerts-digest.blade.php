@@ -38,9 +38,9 @@
 
 @continue
 @endif
-@if ($key === 'accessory_low' || $key === 'consumable_low')
+@if (in_array($key, ['accessory_low', 'component_low', 'consumable_low'], true))
 <x-mail::table>
-| {{ trans($key === 'accessory_low' ? 'alerts.digest.col.accessory' : 'alerts.digest.col.consumable') }} | {{ trans('alerts.digest.col.remaining') }} |
+| {{ trans('alerts.digest.col.'.explode('_', $key)[0]) }} | {{ trans('alerts.digest.col.remaining') }} |
 | :--- | :--- |
 @foreach ($licenses as $accessory)
 | {{ str_replace('|', '\\|', (string) $accessory->name) }} | {{ $accessory->remaining() }} / {{ $accessory->qty }} (min. {{ $accessory->min_amt }}) |
