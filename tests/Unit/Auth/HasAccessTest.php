@@ -117,7 +117,7 @@ class HasAccessTest extends TestCase
     public function test_catalogue_sections_are_in_order(): void
     {
         $this->assertSame(
-            ['global', 'assets', 'incidents', 'handovers', 'licenses', 'accessories', 'consumables', 'models', 'categories', 'manufacturers', 'suppliers', 'locations', 'statuslabels', 'customfields', 'depreciations', 'users'],
+            ['global', 'assets', 'incidents', 'handovers', 'licenses', 'accessories', 'consumables', 'models', 'categories', 'manufacturers', 'suppliers', 'locations', 'statuslabels', 'customfields', 'depreciations', 'departments', 'users'],
             array_column(Permission::catalogue(), 'section'),
         );
     }

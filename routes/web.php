@@ -19,6 +19,7 @@ use App\Http\Controllers\App\ConsumableController;
 use App\Http\Controllers\App\CustomFieldController;
 use App\Http\Controllers\App\CustomFieldsetController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\DepartmentController;
 use App\Http\Controllers\App\DepreciationController;
 use App\Http\Controllers\App\GeneratorController;
 use App\Http\Controllers\App\GroupController;
@@ -87,6 +88,7 @@ Route::prefix('app')->name('app.')->group(function () {
         Route::get('suppliers/{supplier}/image', [SupplierController::class, 'image'])
             ->name('suppliers.image');
         $guarded('suppliers', SupplierController::class, 'suppliers', ['show']);
+        $guarded('departments', DepartmentController::class, 'departments', ['show']);
         $guarded('status-labels', StatusLabelController::class, 'statuslabels', ['show']);
         $guarded('custom-fields', CustomFieldController::class, 'customfields', ['show']);
         $guarded('custom-fieldsets', CustomFieldsetController::class, 'customfields', ['show']);

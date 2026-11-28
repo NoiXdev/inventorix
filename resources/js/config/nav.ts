@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck, Building2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -42,6 +42,7 @@ export const navGroups: NavGroup[] = [
         label: 'Administration',
         items: [
             { label: 'Users', href: '/app/users', icon: Users, match: (p) => p.startsWith('/app/users') , permission: 'users.view' },
+            { label: 'Departments', href: '/app/departments', icon: Building2, match: (p) => p.startsWith('/app/departments'), permission: 'departments.view' },
             { label: 'Groups', href: '/app/groups', icon: UsersRound, match: (p) => p.startsWith('/app/groups'), permission: 'superuser' },
             { label: 'Status labels', href: '/app/status-labels', icon: CircleDot, match: (p) => p.startsWith('/app/status-labels') , permission: 'statuslabels.view' },
             { label: 'Custom fields', href: '/app/custom-fields', icon: ListPlus, match: (p) => p.startsWith('/app/custom-fields') , permission: 'customfields.view' },

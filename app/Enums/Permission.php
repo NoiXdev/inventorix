@@ -77,6 +77,10 @@ enum Permission: string
     case DEPRECIATIONS_CREATE = 'depreciations.create';
     case DEPRECIATIONS_EDIT = 'depreciations.edit';
     case DEPRECIATIONS_DELETE = 'depreciations.delete';
+    case DEPARTMENTS_VIEW = 'departments.view';
+    case DEPARTMENTS_CREATE = 'departments.create';
+    case DEPARTMENTS_EDIT = 'departments.edit';
+    case DEPARTMENTS_DELETE = 'departments.delete';
     case USERS_VIEW = 'users.view';
     case USERS_CREATE = 'users.create';
     case USERS_EDIT = 'users.edit';
@@ -137,6 +141,7 @@ enum Permission: string
             'statuslabels' => 'Status labels',
             'customfields' => 'Custom fields',
             'depreciations' => 'Depreciations',
+            'departments' => 'Departments',
             'users' => 'Users',
         ];
     }
