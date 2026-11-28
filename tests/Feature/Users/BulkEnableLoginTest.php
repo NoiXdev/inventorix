@@ -73,6 +73,23 @@ class BulkEnableLoginTest extends TestCase
         $this->assertFalse($admin->fresh()->login_enabled);
     }
 
+    public function test_refused_when_the_target_holds_a_permission_the_actor_lacks(): void
+    {
+        $plain = $this->disabledUser();
+        $powerful = $this->disabledUser(['name' => 'Pete Powerful']);
+        $powerful->permissions = ['assets.delete' => 1];
+        $powerful->save();
+
+        $actor = User::factory()->withPermissions(['users.view' => 1, 'users.edit' => 1])->create();
+
+        $this->actingAs($actor)
+            ->post(self::URL, ['ids' => [$plain->id, $powerful->id]])
+            ->assertSessionHasErrors('ids');
+
+        $this->assertFalse($plain->fresh()->login_enabled);
+        $this->assertFalse($powerful->fresh()->login_enabled);
+    }
+
     public function test_needs_users_edit(): void
     {
         $target = $this->disabledUser();

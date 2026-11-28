@@ -66,4 +66,11 @@ describe('AppSidebar', () => {
         render(<AppSidebar />);
         expect(screen.getByRole('link', { name: /^Audit$/ })).toHaveAttribute('href', '/app/assets/audit');
     });
+
+    it('hides Dashboard for a user without any permission but keeps My items', () => {
+        setCan({});
+        render(<AppSidebar />);
+        expect(screen.queryByRole('link', { name: /Dashboard/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /My items/ })).toBeInTheDocument();
+    });
 });

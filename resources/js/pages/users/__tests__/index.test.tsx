@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({ can: {} as Record<string, boolean>, post: vi.fn() }));
@@ -7,6 +8,8 @@ vi.mock('@/layouts/app-layout', () => ({ default: ({ children }: { children: Rea
 vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { auth: { user: null, can: h.can } } }), Link: ({ children, href }: any) => <a href={href}>{children}</a>, router: { delete: vi.fn(), get: vi.fn(), visit: vi.fn(), post: h.post } }));
 
 import UsersIndex from '../index';
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 
 describe('UsersIndex', () => {
     beforeEach(() => {
@@ -52,7 +55,22 @@ describe('UsersIndex', () => {
     it('offers no bulk enable-login without users.edit', () => {
         h.can = { 'users.create': true };
         oneRow();
-        fireEvent.click(screen.getAllByRole('checkbox', { name: 'Select row' })[0]);
+        expect(screen.queryAllByRole('checkbox', { name: 'Select row' })).toHaveLength(0);
         expect(screen.queryByRole('button', { name: /Enable login/ })).not.toBeInTheDocument();
+    });
+
+    it('shows an error toast when the bulk enable-login batch is rejected', () => {
+        oneRow();
+        fireEvent.click(screen.getAllByRole('checkbox', { name: 'Select row' })[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Enable login \(1\)/ }));
+        const opts = h.post.mock.calls[0][2];
+        opts.onError({ ids: 'Ada Admin cannot be managed.' });
+        expect(toast.error).toHaveBeenCalledWith('Ada Admin cannot be managed.');
+    });
+
+    it('has no selection column without users.edit', () => {
+        h.can = {};
+        oneRow();
+        expect(screen.queryAllByRole('checkbox', { name: 'Select row' })).toHaveLength(0);
     });
 });

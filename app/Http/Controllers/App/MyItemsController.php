@@ -26,10 +26,19 @@ class MyItemsController extends Controller
             ->where('assignee_type', User::class)->where('assignee_id', $user->id)
             ->with('model')->orderBy('name')->get();
 
-        $latest = CheckoutAcceptance::query()
+        // assets.accepted is reset on check-in and set on check-out/answer, so it reflects the current checkout;
+        // answered acceptances of earlier checkouts therefore never leak into the status.
+        $acceptances = CheckoutAcceptance::query()
             ->where('user_id', $user->id)->where('item_type', 'asset')->whereIn('item_id', $assets->modelKeys())
-            ->orderBy('created_at')->get()
-            ->groupBy('item_id')->map(fn ($rows) => $rows->last()->status());
+            ->get()->groupBy('item_id');
+        $status = function (Asset $a) use ($acceptances): ?string {
+            $rows = $acceptances[$a->id] ?? collect();
+            if ($rows->contains(fn (CheckoutAcceptance $r) => $r->status() === 'pending')) {
+                return 'pending';
+            }
+
+            return $rows->isNotEmpty() && in_array($a->accepted, ['accepted', 'declined'], true) ? $a->accepted : null;
+        };
 
         return Inertia::render('my-items/index', [
             'assets' => $assets->map(fn (Asset $a) => [
@@ -39,7 +48,7 @@ class MyItemsController extends Controller
                 'model' => $a->model?->name,
                 'serial' => $a->serial,
                 'checked_out_at' => $a->last_checkout?->format('Y-m-d'),
-                'acceptance' => $latest[$a->id] ?? null,
+                'acceptance' => $status($a),
                 'href' => $link('assets.view', 'assets', $a->id),
             ])->values()->all(),
             'licenses' => collect(LicenseSeat::heldBy($user))->map(fn (array $s) => [

@@ -17,8 +17,11 @@ export function AppSidebar() {
     const statusFilter = new URLSearchParams(query).get('filter[status_id]');
     const statusNav = props.statusNav ?? [];
     const can = useCan();
+    // Same rule as DashboardController: without any permission the dashboard just redirects to My items.
+    const authCan = props.auth?.can;
+    const hasAnyPermission = !!authCan && !Array.isArray(authCan) && Object.values(authCan).some((v) => v === true);
     const groups = navGroups
-        .map((group) => ({ ...group, items: group.items.filter((item) => !item.permission || [item.permission].flat().every((p) => can(p))) }))
+        .map((group) => ({ ...group, items: group.items.filter((item) => (item.href !== '/app' || hasAnyPermission) && (!item.permission || [item.permission].flat().every((p) => can(p)))) }))
         .filter((group) => group.items.length > 0);
 
     return (

@@ -61,10 +61,10 @@ export default function UsersIndex({ users, departmentOptions = [], locationOpti
             <DataTable columns={columns} rows={users.data} pagination={users.meta} baseUrl="/app/users"
                 sortable={['name', 'email', 'login_enabled', 'assets_count', 'employee_num', 'jobtitle']} filters={filters}
                 rowHref={(r) => `/app/users/${r.id}`}
-                enableSelection
+                enableSelection={can('users.edit')}
                 getRowId={(r) => r.id}
                 renderBulkActions={(rows, clear) => can('users.edit') ? (
-                    <Button size="sm" variant="outline" onClick={() => router.post('/app/users/bulk-enable-login', { ids: rows.map((r) => r.id) }, { preserveScroll: true, onSuccess: clear })}>
+                    <Button size="sm" variant="outline" onClick={() => router.post('/app/users/bulk-enable-login', { ids: rows.map((r) => r.id) }, { preserveScroll: true, onSuccess: clear, onError: (e) => toast.error(e.ids ?? 'Could not enable login.') })}>
                         <KeyRound className="h-4 w-4" /> Enable login ({rows.length})
                     </Button>
                 ) : null} />

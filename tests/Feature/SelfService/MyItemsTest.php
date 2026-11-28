@@ -110,6 +110,26 @@ class MyItemsTest extends TestCase
         });
     }
 
+    public function test_acceptance_status_reflects_only_the_current_checkout(): void
+    {
+        $user = User::factory()->withPermissions([])->create();
+        $asset = Asset::factory()->assignedTo($user)->create(['accepted' => null]);
+        // Accepted on an earlier checkout; the item was checked in (accepted reset) and handed out again without a new request.
+        $old = $this->acceptance($user, $asset, ['accepted_at' => now()->subDays(10)]);
+        $old->forceFill(['created_at' => now()->subDays(10)])->save();
+
+        $this->actingAs($user)->get('/app/my-items')->assertInertia(function (Assert $page) use ($asset) {
+            $rows = collect($page->toArray()['props']['assets'])->keyBy('id');
+            $this->assertNull($rows[$asset->id]['acceptance']);
+        });
+
+        $asset->forceFill(['accepted' => 'accepted'])->save();
+        $this->actingAs($user)->get('/app/my-items')->assertInertia(function (Assert $page) use ($asset) {
+            $rows = collect($page->toArray()['props']['assets'])->keyBy('id');
+            $this->assertSame('accepted', $rows[$asset->id]['acceptance']);
+        });
+    }
+
     public function test_pending_acceptances_are_listed(): void
     {
         $user = User::factory()->withPermissions([])->create();

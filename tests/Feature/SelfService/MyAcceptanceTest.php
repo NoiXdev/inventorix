@@ -71,7 +71,9 @@ class MyAcceptanceTest extends TestCase
         $this->actingAs($user)->post("/app/my-items/acceptances/{$a->id}", ['decision' => 'decline', 'note' => 'Wrong device'])
             ->assertRedirect('/app/my-items');
 
-        $this->assertNotNull($a->fresh()->declined_at);
+        $a->refresh();
+        $this->assertNotNull($a->declined_at);
+        $this->assertSame('Wrong device', $a->note);
     }
 
     public function test_an_answered_acceptance_shows_an_error(): void
