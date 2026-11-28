@@ -51,6 +51,11 @@ enum Permission: string
     case COMPONENTS_DELETE = 'components.delete';
     case COMPONENTS_CHECKOUT = 'components.checkout';
     case COMPONENTS_CHECKIN = 'components.checkin';
+    case KITS_VIEW = 'kits.view';
+    case KITS_CREATE = 'kits.create';
+    case KITS_EDIT = 'kits.edit';
+    case KITS_DELETE = 'kits.delete';
+    case KITS_CHECKOUT = 'kits.checkout';
     case MODELS_VIEW = 'models.view';
     case MODELS_CREATE = 'models.create';
     case MODELS_EDIT = 'models.edit';
@@ -119,6 +124,7 @@ enum Permission: string
             self::CONSUMABLES_CHECKOUT => 'Check out',
             self::COMPONENTS_CHECKOUT => 'Check out',
             self::COMPONENTS_CHECKIN => 'Check in',
+            self::KITS_CHECKOUT => 'Check out',
             self::ASSETS_FILES => 'Manage files',
             default => ucfirst(explode('.', $this->value)[1]),
         };
@@ -142,6 +148,7 @@ enum Permission: string
             'accessories' => 'Accessories',
             'consumables' => 'Consumables',
             'components' => 'Components',
+            'kits' => 'Kits',
             'models' => 'Asset models',
             'categories' => 'Categories',
             'manufacturers' => 'Manufacturers',

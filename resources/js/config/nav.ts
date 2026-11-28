@@ -1,4 +1,4 @@
-import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck, Building2, Cpu } from 'lucide-react';
+import { BarChart3, LayoutDashboard, Boxes, Cable, LayoutList, ListPlus, CircleDot, Shapes, TrendingDown, Factory, FileSignature, MapPin, Package, QrCode, Settings as SettingsIcon, Truck, Users, UsersRound, ClipboardCheck, KeyRound, Droplets, BadgeCheck, Building2, Cpu, PackagePlus } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface NavItem {
@@ -31,6 +31,7 @@ export const navGroups: NavGroup[] = [
             { label: 'Accessories', href: '/app/accessories', icon: Cable, match: (p) => p.startsWith('/app/accessories') , permission: 'accessories.view' },
             { label: 'Consumables', href: '/app/consumables', icon: Droplets, match: (p) => p.startsWith('/app/consumables'), permission: 'consumables.view' },
             { label: 'Components', href: '/app/components', icon: Cpu, match: (p) => p.startsWith('/app/components'), permission: 'components.view' },
+            { label: 'Kits', href: '/app/kits', icon: PackagePlus, match: (p) => p.startsWith('/app/kits'), permission: 'kits.view' },
             { label: 'Manufacturers', href: '/app/manufacturers', icon: Factory, match: (p) => p.startsWith('/app/manufacturers') , permission: 'manufacturers.view' },
             { label: 'Suppliers', href: '/app/suppliers', icon: Truck, match: (p) => p.startsWith('/app/suppliers') , permission: 'suppliers.view' },
             { label: 'Locations', href: '/app/locations', icon: MapPin, match: (p) => p.startsWith('/app/locations') , permission: 'locations.view' },
