@@ -86,6 +86,7 @@ class SettingsController extends Controller
                     'audit_warning_days' => $alerts->audit_warning_days,
                     'checkin_warning_days' => $alerts->checkin_warning_days,
                     'license_warning_days' => $alerts->license_warning_days,
+                    'offboarding_warning_days' => $alerts->offboarding_warning_days,
                 ],
                 'auth' => $this->withoutSecrets([
                     'multi_factor_enabled' => $auth->multi_factor_enabled,
@@ -227,6 +228,7 @@ class SettingsController extends Controller
         $alerts->audit_warning_days = (int) $data['audit_warning_days'];
         $alerts->checkin_warning_days = (int) $data['checkin_warning_days'];
         $alerts->license_warning_days = (int) $data['license_warning_days'];
+        $alerts->offboarding_warning_days = (int) $data['offboarding_warning_days'];
         $alerts->save();
     }
 

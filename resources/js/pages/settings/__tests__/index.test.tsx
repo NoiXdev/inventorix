@@ -42,7 +42,7 @@ const t = {
         title: 'Audits & Rückgaben',
         field: {
             enabled: 'Erinnerungen aktiviert', recipients: 'Übersicht an', audit_interval_months: 'Audit-Intervall',
-            audit_interval_help: 'Hilfe', audit_warning_days: 'Audit-Vorlauf', checkin_warning_days: 'Rückgabe-Vorlauf', license_warning_days: 'Lizenz-Vorlauf', help: 'Erklärung',
+            audit_interval_help: 'Hilfe', audit_warning_days: 'Audit-Vorlauf', checkin_warning_days: 'Rückgabe-Vorlauf', license_warning_days: 'Lizenz-Vorlauf', offboarding_warning_days: 'Offboarding-Vorlauf', help: 'Erklärung',
         },
         test: { action: 'Übersicht jetzt senden' },
     },
@@ -61,7 +61,7 @@ const props = {
         mail: { default_mailer: 'smtp', from_address: 'a@b.de', from_name: 'Ops', smtp_host: 'h', smtp_port: 25, smtp_scheme: null, smtp_username: 'u', ses_key: null, ses_region: null, postmark_message_stream_id: null, postal_domain: null },
         storage: { key: null, region: null, bucket: null, endpoint: null, use_path_style_endpoint: false, url: null },
         warranty: { enabled: false, recipients: [], lead_days: [] },
-        alerts: { enabled: true, recipients: ['it@example.test'], audit_interval_months: 12, audit_warning_days: 14, checkin_warning_days: 7, license_warning_days: 30 },
+        alerts: { enabled: true, recipients: ['it@example.test'], audit_interval_months: 12, audit_warning_days: 14, checkin_warning_days: 7, license_warning_days: 30, offboarding_warning_days: 14 },
         auth: { multi_factor_enabled: false, multi_factor_force: false, multi_factor_recoverable: false, microsoft_enabled: false, microsoft_client_id: null, microsoft_redirect: null, microsoft_tenant: null },
     },
 };

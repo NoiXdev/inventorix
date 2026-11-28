@@ -22,6 +22,7 @@ class AlertSettingsRequest extends FormRequest
             'audit_warning_days' => ['required', 'integer', 'min:0', 'max:365'],
             'checkin_warning_days' => ['required', 'integer', 'min:0', 'max:365'],
             'license_warning_days' => ['required', 'integer', 'min:0', 'max:365'],
+            'offboarding_warning_days' => ['required', 'integer', 'min:0', 'max:365'],
         ];
     }
 }

@@ -136,7 +136,7 @@ class DueAndAlertsTest extends TestCase
     {
         $payload = [
             'enabled' => true, 'recipients' => ['a@example.test'],
-            'audit_interval_months' => 24, 'audit_warning_days' => 30, 'checkin_warning_days' => 3, 'license_warning_days' => 30,
+            'audit_interval_months' => 24, 'audit_warning_days' => 30, 'checkin_warning_days' => 3, 'license_warning_days' => 30, 'offboarding_warning_days' => 14,
         ];
 
         $this->actingAs(User::factory()->withPermissions(['admin' => 1])->create())
@@ -159,7 +159,7 @@ class DueAndAlertsTest extends TestCase
 
         $this->actingAs(User::factory()->superuser()->create())->post('/app/settings/alerts/test', [
             'enabled' => true, 'recipients' => ['it@example.test'],
-            'audit_interval_months' => 12, 'audit_warning_days' => 14, 'checkin_warning_days' => 7, 'license_warning_days' => 30,
+            'audit_interval_months' => 12, 'audit_warning_days' => 14, 'checkin_warning_days' => 7, 'license_warning_days' => 30, 'offboarding_warning_days' => 14,
         ])->assertSessionHas('success');
 
         Mail::assertSent(AlertsDigest::class, 1);

@@ -14,6 +14,7 @@ use App\Models\License;
 use App\Models\User;
 use App\Settings\AlertSettings;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -91,12 +92,41 @@ class AlertService
             ->oldest()->get();
 
         return array_filter([
+            'offboarding_due' => $this->offboardingDue(),
             'acceptance_pending' => $acceptancesPending,
             'license_expiring' => $expiring,
             'license_low' => $low,
             'accessory_low' => $accessoriesLow,
             'consumable_low' => $consumablesLow,
         ], fn (Collection $c) => $c->isNotEmpty());
+    }
+
+    /**
+     * Users whose end date is within the warning window (or past) and who
+     * still hold an asset, a license seat or an accessory, soonest first.
+     * Carries assets_count, seats_count and accessories_count.
+     *
+     * @return Collection<int, User>
+     */
+    public function offboardingDue(): Collection
+    {
+        $assets = DB::table('assets')->selectRaw('count(*)')
+            ->whereColumn('assets.assignee_id', 'users.id')->where('assets.assignee_type', User::class)->whereNull('assets.deleted_at');
+        $seats = DB::table('license_seats')->selectRaw('count(*)')->whereColumn('license_seats.assigned_user_id', 'users.id');
+        $accessories = DB::table('accessory_checkouts')->selectRaw('count(*)')
+            ->whereColumn('accessory_checkouts.assigned_id', 'users.id')->where('accessory_checkouts.assigned_type', User::class);
+
+        return User::query()
+            ->whereNotNull('end_date')
+            ->whereDate('end_date', '<=', today()->addDays($this->settings->offboarding_warning_days))
+            ->select('users.*')
+            ->selectSub($assets, 'assets_count')
+            ->selectSub($seats, 'seats_count')
+            ->selectSub($accessories, 'accessories_count')
+            ->orderBy('end_date')
+            ->get()
+            ->filter(fn (User $u) => $u->assets_count + $u->seats_count + $u->accessories_count > 0)
+            ->values();
     }
 
     /** Send the overview to the configured recipients. @return int entries listed (0: nothing sent) */

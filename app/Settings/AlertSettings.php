@@ -29,6 +29,9 @@ class AlertSettings extends Settings
     /** A license counts as expiring this many days before its expiration date. */
     public int $license_warning_days;
 
+    /** A user with items counts as leaving this many days before their end date. */
+    public int $offboarding_warning_days;
+
     public static function group(): string
     {
         return 'alerts';

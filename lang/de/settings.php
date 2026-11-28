@@ -95,6 +95,7 @@ return [
             'audit_warning_days' => 'Audit gilt als bald fällig (Tage vorher)',
             'checkin_warning_days' => 'Rückgabe gilt als bald fällig (Tage vorher)',
             'license_warning_days' => 'Lizenz gilt als bald ablaufend (Tage vorher)',
+            'offboarding_warning_days' => 'Offboarding-Erinnerung (Tage vor Enddatum)',
             'help' => 'Mitarbeiter werden einmal pro Gerät und Rückgabedatum per Mail erinnert, wenn eine Rückgabe bald fällig oder überfällig ist. Die Empfänger oben bekommen täglich eine Übersicht.',
         ],
         'test' => [

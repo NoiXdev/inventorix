@@ -27,6 +27,17 @@
 
 @continue
 @endif
+@if ($key === 'offboarding_due')
+<x-mail::table>
+| {{ trans('alerts.digest.col.user') }} | {{ trans('alerts.digest.col.end_date') }} | {{ trans('alerts.digest.col.assets') }} | {{ trans('alerts.digest.col.seats_held') }} | {{ trans('alerts.digest.col.accessories') }} |
+| :--- | :--- | :--- | :--- | :--- |
+@foreach ($licenses as $leaving)
+| [{{ str_replace(['|', '[', ']'], ['\\|', '\\[', '\\]'], $leaving->name) }}]({{ route('app.users.offboard', $leaving) }}) | {{ $leaving->end_date->format('d.m.Y') }} | {{ $leaving->assets_count }} | {{ $leaving->seats_count }} | {{ $leaving->accessories_count }} |
+@endforeach
+</x-mail::table>
+
+@continue
+@endif
 @if ($key === 'accessory_low' || $key === 'consumable_low')
 <x-mail::table>
 | {{ trans($key === 'accessory_low' ? 'alerts.digest.col.accessory' : 'alerts.digest.col.consumable') }} | {{ trans('alerts.digest.col.remaining') }} |
