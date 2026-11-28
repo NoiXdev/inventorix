@@ -43,7 +43,10 @@ class KitRequest extends FormRequest
             $seen = [];
 
             foreach ((array) $this->input('items', []) as $i => $line) {
-                $class = KitItem::TYPES[$line['type'] ?? null] ?? null;
+                if (! is_array($line) || ! is_string($line['type'] ?? null) || $validator->errors()->has("items.$i.type")) {
+                    continue;
+                }
+                $class = KitItem::TYPES[$line['type']] ?? null;
                 $id = $line['id'] ?? null;
                 if (! $class || ! is_string($id) || $validator->errors()->has("items.$i.id")) {
                     continue;

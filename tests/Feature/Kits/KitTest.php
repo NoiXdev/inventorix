@@ -93,6 +93,15 @@ class KitTest extends TestCase
         ])->assertSessionHasErrors('items.0.type');
     }
 
+    public function test_malformed_line_type_is_a_validation_error(): void
+    {
+        $this->actingAs($this->admin())->post('/app/kits', [
+            'name' => 'X', 'items' => [['type' => ['x'], 'id' => AssetModel::factory()->create()->id, 'qty' => 1]],
+        ])->assertSessionHasErrors('items.0.type');
+
+        $this->actingAs($this->admin())->post('/app/kits', ['name' => 'X', 'items' => ['nope']])->assertSessionHasErrors();
+    }
+
     public function test_item_must_exist_and_be_live(): void
     {
         $gone = Accessory::factory()->create();
